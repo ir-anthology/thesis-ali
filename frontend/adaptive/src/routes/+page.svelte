@@ -90,6 +90,7 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
 
@@ -97,27 +98,28 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1rem;
+    padding: 0.625rem 1rem;
     background-color: var(--bg-primary);
     border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
   }
 
   .app-title {
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: var(--text-primary);
     letter-spacing: -0.01em;
   }
 
   .clear-btn {
-    padding: 0.3125rem 0.75rem;
-    font-size: 0.8125rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
     font-weight: 500;
     font-family: inherit;
     background-color: transparent;
     color: var(--text-secondary);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.15s ease, color 0.15s ease;
   }
@@ -130,5 +132,15 @@
   .clear-btn:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+  }
+
+  @media (max-width: 640px) {
+    .app-header {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .app-title {
+      font-size: 0.875rem;
+    }
   }
 </style>

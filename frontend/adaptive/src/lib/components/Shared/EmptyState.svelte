@@ -35,7 +35,7 @@
     justify-content: center;
     height: 100%;
     text-align: center;
-    padding: 1.5rem;
+    padding: 1rem;
   }
 
   .empty-icon {
@@ -45,7 +45,7 @@
   }
 
   .empty-title {
-    font-size: 1.125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.375rem;
@@ -55,10 +55,27 @@
   .empty-description {
     color: var(--text-secondary);
     max-width: 320px;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
   }
 
   .empty-actions {
-    margin-top: 1.5rem;
+    margin-top: 1.25rem;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  @media (max-width: 640px) {
+    .empty-state {
+      padding: 0.75rem;
+    }
+
+    .empty-title {
+      font-size: 1rem;
+    }
+
+    .empty-description {
+      font-size: 0.75rem;
+    }
   }
 </style>
