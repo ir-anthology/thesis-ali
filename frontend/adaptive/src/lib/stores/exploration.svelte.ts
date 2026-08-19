@@ -43,6 +43,11 @@ function createExplorationStore() {
   let loading = $state(false);
   let error = $state<string | null>(null);
 
+  let resultsByTurn = $state<Map<string, ResultState>>(new Map());
+  let observationsByTurn = $state<Map<string, Observation[]>>(new Map());
+  let suggestionsByTurn = $state<Map<string, FollowUpQuestion[]>>(new Map());
+  let filtersByTurn = $state<Map<string, Filter[]>>(new Map());
+
   function generateId(): string {
     return crypto.randomUUID();
   }
@@ -104,6 +109,12 @@ function createExplorationStore() {
           ? { ...t, content: response.result.title || 'Here are the results:', loading: false }
           : t
       );
+
+      resultsByTurn = new Map(resultsByTurn).set(assistantTurn.id, response.result);
+      observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.interpretation.observations);
+      suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.interpretation.suggestions);
+      filtersByTurn = new Map(filtersByTurn).set(assistantTurn.id, response.exploration.filters);
+
       result = response.result;
       observations = response.interpretation.observations;
       suggestions = response.interpretation.suggestions;
@@ -186,6 +197,10 @@ function createExplorationStore() {
     selectedEntities = [];
     loading = false;
     error = null;
+    resultsByTurn = new Map();
+    observationsByTurn = new Map();
+    suggestionsByTurn = new Map();
+    filtersByTurn = new Map();
     clearSessionStorage();
   }
 
@@ -197,7 +212,11 @@ function createExplorationStore() {
       sorting,
       result,
       observations,
-      suggestions
+      suggestions,
+      resultsByTurn: Object.fromEntries(resultsByTurn),
+      observationsByTurn: Object.fromEntries(observationsByTurn),
+      suggestionsByTurn: Object.fromEntries(suggestionsByTurn),
+      filtersByTurn: Object.fromEntries(filtersByTurn)
     });
   }
 
@@ -212,6 +231,10 @@ function createExplorationStore() {
     result = saved.result;
     observations = saved.observations;
     suggestions = saved.suggestions;
+    resultsByTurn = new Map(Object.entries(saved.resultsByTurn || {}));
+    observationsByTurn = new Map(Object.entries(saved.observationsByTurn || {}));
+    suggestionsByTurn = new Map(Object.entries(saved.suggestionsByTurn || {}));
+    filtersByTurn = new Map(Object.entries(saved.filtersByTurn || {}));
     loading = false;
     error = null;
 
@@ -248,6 +271,18 @@ function createExplorationStore() {
     },
     get error(): string | null {
       return error;
+    },
+    get resultsByTurn(): Map<string, ResultState> {
+      return resultsByTurn;
+    },
+    get observationsByTurn(): Map<string, Observation[]> {
+      return observationsByTurn;
+    },
+    get suggestionsByTurn(): Map<string, FollowUpQuestion[]> {
+      return suggestionsByTurn;
+    },
+    get filtersByTurn(): Map<string, Filter[]> {
+      return filtersByTurn;
     },
     sendMessage,
     applyFilter,
