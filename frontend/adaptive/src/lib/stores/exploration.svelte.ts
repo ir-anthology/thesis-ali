@@ -1,3 +1,18 @@
+/**
+ * Exploration Store
+ *
+ * This module manages the entire exploration state using Svelte 5 runes.
+ * It provides a reactive store that handles:
+ * - Conversation history (user and assistant turns)
+ * - Active filters and sorting
+ * - Current result data and visualizations
+ * - LLM-generated observations and follow-up suggestions
+ * - Session persistence for state recovery
+ *
+ * The store uses mock data for demonstration purposes.
+ * In production, it would integrate with a backend API.
+ */
+
 import type {
   ConversationTurn,
   Filter,

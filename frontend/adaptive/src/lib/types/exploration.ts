@@ -1,7 +1,31 @@
+/**
+ * Exploration State Types
+ *
+ * This module defines the core data types for the Scholarly Explorer application.
+ * The types model a conversation-driven exploration of scholarly knowledge graphs,
+ * where the UI adapts dynamically based on user queries and interactions.
+ *
+ * Key Concepts:
+ * - Conversation: A series of user/assistant turns that form the exploration context
+ * - Facet: The primary dimension of exploration (author, venue, year, publication)
+ * - Result: The structured data returned from the knowledge graph
+ * - Observation: LLM-generated insights about the current exploration state
+ * - Follow-up: Suggested next questions based on the current context
+ */
+
+/** The primary dimensions for exploring scholarly data */
 export type Facet = 'author' | 'venue' | 'year' | 'publication';
+
+/** The type of visualization to render for result data */
 export type ResultType = 'facet_table' | 'entity_list' | 'comparison' | 'timeline' | 'summary';
+
+/** Sort direction for table columns */
 export type SortDirection = 'asc' | 'desc';
+
+/** The role of a message in the conversation */
 export type MessageRole = 'user' | 'assistant';
+
+/** The status of an exploration response from the backend */
 export type ResponseStatus = 'answerable' | 'unsupported' | 'error';
 
 export interface ConversationTurn {
