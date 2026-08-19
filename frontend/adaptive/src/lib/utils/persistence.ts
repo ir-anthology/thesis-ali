@@ -11,13 +11,17 @@ import type {
 const STORAGE_KEY = 'scholarly-explorer-state';
 
 export interface PersistedState {
-  conversation: SerializedConversationTurn[];
+  conversation: ConversationTurn[];
   filters: Filter[];
   targetFacet: Facet | null;
   sorting: SortState | null;
   result: ResultState | null;
   observations: Observation[];
   suggestions: FollowUpQuestion[];
+  resultsByTurn?: Record<string, ResultState>;
+  observationsByTurn?: Record<string, Observation[]>;
+  suggestionsByTurn?: Record<string, FollowUpQuestion[]>;
+  filtersByTurn?: Record<string, Filter[]>;
 }
 
 interface SerializedConversationTurn {
@@ -53,11 +57,32 @@ export function deserializeConversation(
   }));
 }
 
-export function saveToSessionStorage(state: PersistedState): void {
+export function saveToSessionStorage(state: {
+  conversation: ConversationTurn[];
+  filters: Filter[];
+  targetFacet: Facet | null;
+  sorting: SortState | null;
+  result: ResultState | null;
+  observations: Observation[];
+  suggestions: FollowUpQuestion[];
+  resultsByTurn?: Record<string, ResultState>;
+  observationsByTurn?: Record<string, Observation[]>;
+  suggestionsByTurn?: Record<string, FollowUpQuestion[]>;
+  filtersByTurn?: Record<string, Filter[]>;
+}): void {
   try {
     const serialized = {
-      ...state,
-      conversation: serializeConversation(state.conversation)
+      conversation: serializeConversation(state.conversation),
+      filters: state.filters,
+      targetFacet: state.targetFacet,
+      sorting: state.sorting,
+      result: state.result,
+      observations: state.observations,
+      suggestions: state.suggestions,
+      resultsByTurn: state.resultsByTurn,
+      observationsByTurn: state.observationsByTurn,
+      suggestionsByTurn: state.suggestionsByTurn,
+      filtersByTurn: state.filtersByTurn
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
   } catch {
@@ -72,8 +97,17 @@ export function loadFromSessionStorage(): PersistedState | null {
 
     const parsed = JSON.parse(raw);
     return {
-      ...parsed,
-      conversation: deserializeConversation(parsed.conversation || [])
+      conversation: deserializeConversation(parsed.conversation || []),
+      filters: parsed.filters || [],
+      targetFacet: parsed.targetFacet || null,
+      sorting: parsed.sorting || null,
+      result: parsed.result || null,
+      observations: parsed.observations || [],
+      suggestions: parsed.suggestions || [],
+      resultsByTurn: parsed.resultsByTurn || {},
+      observationsByTurn: parsed.observationsByTurn || {},
+      suggestionsByTurn: parsed.suggestionsByTurn || {},
+      filtersByTurn: parsed.filtersByTurn || {}
     };
   } catch {
     console.warn('Failed to load state from sessionStorage');
