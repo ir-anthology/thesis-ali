@@ -32,7 +32,14 @@
   });
 </script>
 
-<div class="conversation-container" bind:this={container}>
+<div
+  class="conversation-container"
+  bind:this={container}
+  role="log"
+  aria-label="Conversation history"
+  aria-live="polite"
+  aria-relevant="additions"
+>
   {#if conversation.length === 0}
     <EmptyState
       title="Welcome to Scholarly Explorer"

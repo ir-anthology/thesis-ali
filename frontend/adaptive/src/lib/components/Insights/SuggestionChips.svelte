@@ -11,11 +11,15 @@
 </script>
 
 {#if suggestions.length > 0}
-  <div class="suggestions">
-    <p class="suggestions-label">You could explore:</p>
-    <div class="suggestions-list">
+  <div class="suggestions" role="group" aria-label="Suggested follow-up questions">
+    <p class="suggestions-label" id="suggestions-heading">You could explore:</p>
+    <div class="suggestions-list" aria-labelledby="suggestions-heading">
       {#each suggestions as suggestion (suggestion.id)}
-        <button class="suggestion-chip" onclick={() => onSelect(suggestion)}>
+        <button
+          class="suggestion-chip"
+          onclick={() => onSelect(suggestion)}
+          aria-label="Ask: {suggestion.text}"
+        >
           {suggestion.text}
         </button>
       {/each}
