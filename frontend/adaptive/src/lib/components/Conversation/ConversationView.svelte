@@ -9,7 +9,7 @@
     results,
     observations,
     suggestions,
-    filters,
+    filtersByTurn,
     onRemoveFilter,
     onSelectSuggestion
   }: {
@@ -17,7 +17,7 @@
     results: Map<string, ResultState>;
     observations: Map<string, Observation[]>;
     suggestions: Map<string, FollowUpQuestion[]>;
-    filters: Filter[];
+    filtersByTurn: Map<string, Filter[]>;
     onRemoveFilter: (filter: Filter) => void;
     onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
   } = $props();
@@ -69,7 +69,7 @@
           result={results.get(turn.id) || null}
           observations={observations.get(turn.id) || []}
           suggestions={suggestions.get(turn.id) || []}
-          {filters}
+          filters={filtersByTurn.get(turn.id) || []}
           {onRemoveFilter}
           {onSelectSuggestion}
         />

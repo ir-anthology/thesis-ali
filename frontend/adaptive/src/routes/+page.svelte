@@ -20,38 +20,11 @@
     initialized = true;
   });
 
-  let resultsMap = $derived.by(() => {
-    const map = new Map();
-    const assistantTurns = exploration.conversation.filter(
-      (t) => t.role === 'assistant' && !t.loading
-    );
-    if (assistantTurns.length > 0 && exploration.result) {
-      map.set(assistantTurns[assistantTurns.length - 1].id, exploration.result);
-    }
-    return map;
-  });
+  let resultsMap = $derived(exploration.resultsByTurn);
 
-  let observationsMap = $derived.by(() => {
-    const map = new Map();
-    const assistantTurns = exploration.conversation.filter(
-      (t) => t.role === 'assistant' && !t.loading
-    );
-    if (assistantTurns.length > 0 && exploration.observations.length > 0) {
-      map.set(assistantTurns[assistantTurns.length - 1].id, exploration.observations);
-    }
-    return map;
-  });
+  let observationsMap = $derived(exploration.observationsByTurn);
 
-  let suggestionsMap = $derived.by(() => {
-    const map = new Map();
-    const assistantTurns = exploration.conversation.filter(
-      (t) => t.role === 'assistant' && !t.loading
-    );
-    if (assistantTurns.length > 0 && exploration.suggestions.length > 0) {
-      map.set(assistantTurns[assistantTurns.length - 1].id, exploration.suggestions);
-    }
-    return map;
-  });
+  let suggestionsMap = $derived(exploration.suggestionsByTurn);
 </script>
 
 <svelte:head>
@@ -74,7 +47,7 @@
     results={resultsMap}
     observations={observationsMap}
     suggestions={suggestionsMap}
-    filters={exploration.filters}
+    filtersByTurn={exploration.filtersByTurn}
     onRemoveFilter={(f) => exploration.removeFilter(f)}
     onSelectSuggestion={(s) => exploration.selectSuggestion(s)}
   />
