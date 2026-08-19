@@ -15,6 +15,8 @@
 
   let sortField = $state<string | null>(null);
   let sortDirection = $state<'asc' | 'desc'>('asc');
+  let focusedRowIndex = $state(-1);
+  let tableElement: HTMLTableElement | undefined = $state();
 
   function handleSort(column: ResultColumn): void {
     if (!column.sortable) return;
@@ -25,6 +27,43 @@
       sortDirection = 'asc';
     }
     onSort?.({ field: sortField, direction: sortDirection });
+  }
+
+  function handleKeydown(event: KeyboardEvent, rowIndex: number): void {
+    const rows = tableElement?.querySelectorAll('tbody tr');
+    if (!rows) return;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        if (rowIndex < rows.length - 1) {
+          focusedRowIndex = rowIndex + 1;
+          (rows[focusedRowIndex] as HTMLElement).focus();
+        }
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        if (rowIndex > 0) {
+          focusedRowIndex = rowIndex - 1;
+          (rows[focusedRowIndex] as HTMLElement).focus();
+        }
+        break;
+      case 'Home':
+        event.preventDefault();
+        focusedRowIndex = 0;
+        (rows[0] as HTMLElement).focus();
+        break;
+      case 'End':
+        event.preventDefault();
+        focusedRowIndex = rows.length - 1;
+        (rows[rows.length - 1] as HTMLElement).focus();
+        break;
+      case 'Escape':
+        event.preventDefault();
+        focusedRowIndex = -1;
+        (event.target as HTMLElement).blur();
+        break;
+    }
   }
 
   let sortedRows = $derived.by(() => {
@@ -56,19 +95,21 @@
   {/if}
 
   <div class="table-wrapper">
-    <table>
+    <table bind:this={tableElement} role="grid" aria-label={title || 'Data table'}>
       <thead>
-        <tr>
+        <tr role="row">
           {#each columns as column}
             <th
+              role="columnheader"
               class:sortable={column.sortable}
               class:sorted={sortField === column.key}
               onclick={() => handleSort(column)}
+              aria-sort={sortField === column.key ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
             >
               <span class="th-content">
                 {column.label}
                 {#if sortField === column.key}
-                  <span class="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  <span class="sort-indicator" aria-hidden="true">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 {/if}
               </span>
             </th>
@@ -77,9 +118,15 @@
       </thead>
       <tbody>
         {#each sortedRows as row, i (i)}
-          <tr>
+          <tr
+            role="row"
+            tabindex={focusedRowIndex === i ? 0 : -1}
+            onkeydown={(e) => handleKeydown(e, i)}
+            onfocus={() => focusedRowIndex = i}
+            class:focused={focusedRowIndex === i}
+          >
             {#each columns as column}
-              <td>
+              <td role="gridcell">
                 {#if column.type === 'badge'}
                   <span class="cell-badge">{row[column.key]}</span>
                 {:else}
@@ -180,8 +227,15 @@
     background-color: var(--bg-secondary);
   }
 
+  tbody tr.focused td {
+    background-color: var(--accent-light);
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
   tbody tr {
     transition: background-color 0.1s ease;
+    outline: none;
   }
 
   .cell-badge {
