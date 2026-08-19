@@ -97,7 +97,7 @@
   <div class="table-wrapper">
     <table bind:this={tableElement} role="grid" aria-label={title || 'Data table'}>
       <thead>
-        <tr role="row">
+        <tr>
           {#each columns as column}
             <th
               role="columnheader"
@@ -119,7 +119,6 @@
       <tbody>
         {#each sortedRows as row, i (i)}
           <tr
-            role="row"
             tabindex={focusedRowIndex === i ? 0 : -1}
             onkeydown={(e) => handleKeydown(e, i)}
             onfocus={() => focusedRowIndex = i}
