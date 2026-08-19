@@ -10,6 +10,11 @@ import type {
   ExplorationResponse
 } from '$lib/types/exploration';
 import { mockResponses } from '$lib/data/mock-responses';
+import {
+  saveToSessionStorage,
+  loadFromSessionStorage,
+  clearSessionStorage
+} from '$lib/utils/persistence';
 
 function createExplorationStore() {
   let conversation = $state<ConversationTurn[]>([]);
@@ -112,6 +117,7 @@ function createExplorationStore() {
     }
 
     loading = false;
+    saveState();
   }
 
   function applyFilter(filter: Filter): void {
@@ -165,6 +171,36 @@ function createExplorationStore() {
     selectedEntities = [];
     loading = false;
     error = null;
+    clearSessionStorage();
+  }
+
+  function saveState(): void {
+    saveToSessionStorage({
+      conversation,
+      filters,
+      targetFacet,
+      sorting,
+      result,
+      observations,
+      suggestions
+    });
+  }
+
+  function loadState(): boolean {
+    const saved = loadFromSessionStorage();
+    if (!saved) return false;
+
+    conversation = saved.conversation;
+    filters = saved.filters;
+    targetFacet = saved.targetFacet;
+    sorting = saved.sorting;
+    result = saved.result;
+    observations = saved.observations;
+    suggestions = saved.suggestions;
+    loading = false;
+    error = null;
+
+    return true;
   }
 
   return {
@@ -207,7 +243,9 @@ function createExplorationStore() {
     clearSelection,
     selectSuggestion,
     retry,
-    clearExploration
+    clearExploration,
+    saveState,
+    loadState
   };
 }
 
