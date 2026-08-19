@@ -1,12 +1,13 @@
 <script lang="ts">
+  import type { Filter } from '$lib/types/exploration';
   import Pill from '$lib/components/Shared/Pill.svelte';
 
   let {
     filters,
     onRemove
   }: {
-    filters: { facet: string; value: string; label: string }[];
-    onRemove: (filter: { facet: string; value: string; label: string }) => void;
+    filters: Filter[];
+    onRemove: (filter: Filter) => void;
   } = $props();
 </script>
 

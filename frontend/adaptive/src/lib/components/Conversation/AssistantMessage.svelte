@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, Filter } from '$lib/types/exploration';
   import Spinner from '$lib/components/Shared/Spinner.svelte';
   import ExplorationRenderer from '$lib/components/Results/ExplorationRenderer.svelte';
   import FilterBar from '$lib/components/Controls/FilterBar.svelte';
@@ -19,8 +19,8 @@
     result: ResultState | null;
     observations: Observation[];
     suggestions: FollowUpQuestion[];
-    filters: { facet: string; value: string; label: string }[];
-    onRemoveFilter: (filter: { facet: string; value: string; label: string }) => void;
+    filters: Filter[];
+    onRemoveFilter: (filter: Filter) => void;
     onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
   } = $props();
 
