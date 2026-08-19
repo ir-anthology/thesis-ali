@@ -92,32 +92,26 @@
         <p>Ask a question about the scholarly literature to begin exploring.</p>
         <div class="examples">
           <p class="example-title">Try asking:</p>
-          <ul>
-            <li
-              role="button"
-              tabindex="0"
+          <div class="example-list">
+            <button
+              class="example-btn"
               onclick={() => explorationStore.submitQuestion('Who are the most prolific authors?')}
-              onkeydown={(e) => { if (e.key === 'Enter') explorationStore.submitQuestion('Who are the most prolific authors?'); }}
             >
               "Who are the most prolific authors?"
-            </li>
-            <li
-              role="button"
-              tabindex="0"
+            </button>
+            <button
+              class="example-btn"
               onclick={() => explorationStore.submitQuestion('Which venues have the most publications?')}
-              onkeydown={(e) => { if (e.key === 'Enter') explorationStore.submitQuestion('Which venues have the most publications?'); }}
             >
               "Which venues have the most publications?"
-            </li>
-            <li
-              role="button"
-              tabindex="0"
+            </button>
+            <button
+              class="example-btn"
               onclick={() => explorationStore.submitQuestion('How has publication output changed over time?')}
-              onkeydown={(e) => { if (e.key === 'Enter') explorationStore.submitQuestion('How has publication output changed over time?'); }}
             >
               "How has publication output changed over time?"
-            </li>
-          </ul>
+            </button>
+          </div>
         </div>
       </div>
     {/if}
@@ -216,25 +210,30 @@
     letter-spacing: 0.03em;
   }
 
-  .examples ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  .example-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
-  .examples li {
+  .example-btn {
+    display: block;
+    width: 100%;
     padding: 0.3125rem 0;
+    background: none;
+    border: none;
     font-size: 0.8125rem;
     color: var(--text-secondary);
+    text-align: left;
     cursor: pointer;
     transition: color 0.15s ease;
   }
 
-  .examples li:hover {
+  .example-btn:hover {
     color: var(--accent);
   }
 
-  .examples li:focus-visible {
+  .example-btn:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: 2px;
