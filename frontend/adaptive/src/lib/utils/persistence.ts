@@ -70,6 +70,7 @@ export function saveToSessionStorage(state: {
   observationsByTurn?: Record<string, Observation[]>;
   suggestionsByTurn?: Record<string, FollowUpQuestion[]>;
   filtersByTurn?: Record<string, Filter[]>;
+  sparqlByTurn?: Record<string, string>;
 }): void {
   try {
     const serialized = {
@@ -83,7 +84,8 @@ export function saveToSessionStorage(state: {
       resultsByTurn: state.resultsByTurn,
       observationsByTurn: state.observationsByTurn,
       suggestionsByTurn: state.suggestionsByTurn,
-      filtersByTurn: state.filtersByTurn
+      filtersByTurn: state.filtersByTurn,
+      sparqlByTurn: state.sparqlByTurn
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
   } catch {
