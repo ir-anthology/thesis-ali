@@ -200,7 +200,7 @@ ORDER BY ?year`,
       sort: { field: 'year', direction: 'asc' }
     },
     result: {
-      type: 'timeline',
+      type: 'facet_table',
       title: 'Publication Activity Over Time',
       columns: [
         { key: 'year', label: 'Year', type: 'text' },
@@ -259,7 +259,7 @@ GROUP BY ?venueName`,
       sort: null
     },
     result: {
-      type: 'comparison',
+      type: 'facet_table',
       title: 'SIGIR vs CHIIR',
       columns: [
         { key: 'metric', label: 'Metric', type: 'text' },
@@ -316,7 +316,7 @@ GROUP BY ?venueName`,
       sort: null
     },
     result: {
-      type: 'summary',
+      type: 'facet_table',
       title: 'Why SIGIR Is Prominent',
       columns: [],
       rows: []
@@ -356,7 +356,7 @@ GROUP BY ?venueName`,
       sort: null
     },
     result: {
-      type: 'summary',
+      type: 'facet_table',
       title: '',
       columns: [],
       rows: []
