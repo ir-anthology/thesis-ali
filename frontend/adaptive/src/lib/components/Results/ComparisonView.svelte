@@ -13,10 +13,6 @@
 </script>
 
 <div class="comparison-container">
-  {#if title}
-    <div class="comparison-header">{title}</div>
-  {/if}
-
   <div class="comparison-table-wrapper">
     <table>
       <thead>
@@ -45,17 +41,6 @@
     border-radius: 6px;
     overflow: hidden;
     border: 1px solid var(--code-border);
-  }
-
-  .comparison-header {
-    padding: 0.375rem 0.625rem;
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--code-border);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 
   .comparison-table-wrapper {
