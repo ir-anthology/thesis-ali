@@ -12,22 +12,28 @@
   } = $props();
 
   let showSparql = $state(true);
-
-  function toggle(): void {
-    showSparql = !showSparql;
-  }
 </script>
 
 <div class="result-box">
   {#if sparqlQuery}
-    <div class="result-header">
+    <div class="result-tabs" role="tablist" aria-label="Result view">
       <button
-        class="toggle-btn"
-        onclick={toggle}
-        title={showSparql ? 'Show Result View' : 'Show SPARQL Query'}
-        aria-label={showSparql ? 'Show Result View' : 'Show SPARQL Query'}
+        class="tab-btn"
+        class:active={showSparql}
+        onclick={() => showSparql = true}
+        role="tab"
+        aria-selected={showSparql}
       >
-        {showSparql ? 'Result' : 'Sparql'}
+        Sparql Query
+      </button>
+      <button
+        class="tab-btn"
+        class:active={!showSparql}
+        onclick={() => showSparql = false}
+        role="tab"
+        aria-selected={!showSparql}
+      >
+        Result Table
       </button>
     </div>
   {/if}
@@ -51,38 +57,38 @@
     overflow: hidden;
   }
 
-  .result-header {
+  .result-tabs {
     display: flex;
-    justify-content: flex-end;
-    padding: 0.25rem 0.5rem;
     border-bottom: 1px solid var(--border);
     background-color: var(--bg-secondary);
   }
 
-  .toggle-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.125rem 0.5rem;
-    font-size: 0.6875rem;
+  .tab-btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
     font-weight: 500;
     font-family: inherit;
     background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 4px;
+    border: none;
+    border-bottom: 2px solid transparent;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
   }
 
-  .toggle-btn:hover {
-    background-color: var(--accent-light);
+  .tab-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+  }
+
+  .tab-btn.active {
     color: var(--accent);
-    border-color: var(--accent);
+    border-bottom-color: var(--accent);
+    background-color: var(--bg-primary);
   }
 
-  .toggle-btn:focus-visible {
+  .tab-btn:focus-visible {
     outline: 2px solid var(--accent);
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 </style>
