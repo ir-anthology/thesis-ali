@@ -53,7 +53,7 @@
           <span>Thinking about the question...</span>
         </div>
       {:else if message.content}
-        <p>{message.content}</p>
+        <p class="query-text">{message.content}</p>
       {/if}
 
       {#if filters.length > 0 && status === 'answerable'}
@@ -140,8 +140,12 @@
     margin: 0;
   }
 
+  .message-body .query-text {
+    margin-bottom: 0.75rem;
+  }
+
   .message-body p + p {
-    margin-top: 1.25rem;
+    margin-top: 0.75rem;
   }
 
   .loading {
