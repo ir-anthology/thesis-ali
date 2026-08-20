@@ -4,6 +4,22 @@ export const mockResponses: Record<string, ExplorationResponse> = {
   'prolific-authors': {
     status: 'answerable',
     conversation: [],
+    sparql_query: `PREFIX schema: <http://schema.org/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?author
+       (COUNT(?pub) AS ?publications)
+       (COUNT(DISTINCT ?venue) AS ?venues)
+       (CONCAT(MIN(STR(?year)), "\u2013", MAX(STR(?year))) AS ?years)
+WHERE {
+  ?pub a schema:ScholarlyArticle ;
+       dcterms:creator ?author ;
+       schema:isPartOf ?venue ;
+       dcterms:date ?year .
+}
+GROUP BY ?author
+ORDER BY DESC(?publications)
+LIMIT 5`,
     exploration: {
       targetFacet: 'author',
       filters: [],
@@ -45,6 +61,23 @@ export const mockResponses: Record<string, ExplorationResponse> = {
   'filtered-years': {
     status: 'answerable',
     conversation: [],
+    sparql_query: `PREFIX schema: <http://schema.org/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?author
+       (COUNT(?pub) AS ?publications)
+       (COUNT(DISTINCT ?venue) AS ?venues)
+       (CONCAT(MIN(STR(?year)), "\u2013", MAX(STR(?year))) AS ?years)
+WHERE {
+  ?pub a schema:ScholarlyArticle ;
+       dcterms:creator ?author ;
+       schema:isPartOf ?venue ;
+       dcterms:date ?year .
+  FILTER(?year >= 2020 && ?year <= 2025)
+}
+GROUP BY ?author
+ORDER BY DESC(?publications)
+LIMIT 5`,
     exploration: {
       targetFacet: 'author',
       filters: [{ facet: 'year', value: '2020-2025', label: '2020–2025' }],
@@ -86,6 +119,23 @@ export const mockResponses: Record<string, ExplorationResponse> = {
   venues: {
     status: 'answerable',
     conversation: [],
+    sparql_query: `PREFIX schema: <http://schema.org/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?venue
+       (COUNT(?pub) AS ?publications)
+       (COUNT(DISTINCT ?author) AS ?authors)
+       (CONCAT(MIN(STR(?year)), "\u2013", MAX(STR(?year))) AS ?years)
+WHERE {
+  ?pub a schema:ScholarlyArticle ;
+       dcterms:creator ?author ;
+       schema:isPartOf ?venue ;
+       dcterms:date ?year .
+  FILTER(?year >= 2020 && ?year <= 2025)
+}
+GROUP BY ?venue
+ORDER BY DESC(?publications)
+LIMIT 5`,
     exploration: {
       targetFacet: 'venue',
       filters: [],
@@ -127,6 +177,23 @@ export const mockResponses: Record<string, ExplorationResponse> = {
   timeline: {
     status: 'answerable',
     conversation: [],
+    sparql_query: `PREFIX schema: <http://schema.org/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?year
+       (COUNT(IF(?venueName = "SIGIR", ?pub, NULL)) AS ?SIGIR)
+       (COUNT(IF(?venueName = "CHIIR", ?pub, NULL)) AS ?CHIIR)
+       (COUNT(IF(?venueName = "CHI", ?pub, NULL)) AS ?CHI)
+WHERE {
+  ?pub a schema:ScholarlyArticle ;
+       schema:isPartOf ?venue ;
+       dcterms:date ?year .
+  ?venue schema:name ?venueName .
+  FILTER(?year >= 2020 && ?year <= 2025)
+  FILTER(?venueName IN ("SIGIR", "CHIIR", "CHI"))
+}
+GROUP BY ?year
+ORDER BY ?year`,
     exploration: {
       targetFacet: 'year',
       filters: [],
@@ -169,6 +236,23 @@ export const mockResponses: Record<string, ExplorationResponse> = {
   comparison: {
     status: 'answerable',
     conversation: [],
+    sparql_query: `PREFIX schema: <http://schema.org/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?venueName
+       (COUNT(?pub) AS ?publications)
+       (COUNT(DISTINCT ?author) AS ?authors)
+       (CONCAT(MIN(STR(?year)), "\u2013", MAX(STR(?year))) AS ?years)
+WHERE {
+  ?pub a schema:ScholarlyArticle ;
+       dcterms:creator ?author ;
+       schema:isPartOf ?venue ;
+       dcterms:date ?year .
+  ?venue schema:name ?venueName .
+  FILTER(?venueName IN ("SIGIR", "CHIIR"))
+  FILTER(?year >= 2020 && ?year <= 2025)
+}
+GROUP BY ?venueName`,
     exploration: {
       targetFacet: 'venue',
       filters: [],
@@ -209,6 +293,23 @@ export const mockResponses: Record<string, ExplorationResponse> = {
   'why-sigir': {
     status: 'answerable',
     conversation: [],
+    sparql_query: `PREFIX schema: <http://schema.org/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?venueName
+       (COUNT(?pub) AS ?publications)
+       (COUNT(DISTINCT ?author) AS ?authors)
+       (CONCAT(MIN(STR(?year)), "\u2013", MAX(STR(?year))) AS ?years)
+WHERE {
+  ?pub a schema:ScholarlyArticle ;
+       dcterms:creator ?author ;
+       schema:isPartOf ?venue ;
+       dcterms:date ?year .
+  ?venue schema:name ?venueName .
+  FILTER(?venueName = "SIGIR")
+  FILTER(?year >= 2020 && ?year <= 2025)
+}
+GROUP BY ?venueName`,
     exploration: {
       targetFacet: 'venue',
       filters: [],
