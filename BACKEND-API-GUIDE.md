@@ -128,7 +128,8 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
       { "id": "sug-2", "text": "Which venues do these authors publish in?" },
       { "id": "sug-3", "text": "Show me how this changed over time" }
     ]
-  }
+  },
+  "sparql_query": "PREFIX schema: <http://schema.org/>\nPREFIX dcterms: <http://purl.org/dc/terms/>\n\nSELECT ?author\n       (COUNT(?pub) AS ?publications)\n       (COUNT(DISTINCT ?venue) AS ?venues)\nWHERE {\n  ?pub a schema:ScholarlyArticle ;\n       dcterms:creator ?author ;\n       schema:isPartOf ?venue .\n}\nGROUP BY ?author\nORDER BY DESC(?publications)\nLIMIT 5"
 }
 ```
 
@@ -191,6 +192,7 @@ Health check endpoint.
 | `exploration.sort` | SortState\|null | Recommended sort order |
 | `result` | ResultState | The structured result data |
 | `interpretation` | InterpretationState | LLM-generated insights |
+| `sparql_query` | string\|null | The SPARQL query used (only when `status === "answerable"`) |
 
 ### ResultState
 
@@ -564,6 +566,7 @@ class ExplorationResponse(BaseModel):
     exploration: ExplorationContext
     result: ResultState
     interpretation: InterpretationState
+    sparql_query: Optional[str] = None  # Only when status == "answerable"
 ```
 
 ---
@@ -633,6 +636,7 @@ interface ExplorationResponse {
   };
   result: ResultState;
   interpretation: InterpretationState;
+  sparql_query?: string;
 }
 ```
 
