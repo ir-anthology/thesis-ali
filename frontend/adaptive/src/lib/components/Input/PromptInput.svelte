@@ -82,8 +82,6 @@
     display: flex;
     align-items: flex-end;
     gap: 0.5rem;
-    max-width: 900px;
-    margin: 0 auto;
     padding: 0.5rem 0.625rem;
     background-color: var(--bg-primary);
     border: 1px solid var(--border);
