@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, Filter } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, Filter, ResponseStatus } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
@@ -11,6 +11,7 @@
     suggestions,
     filtersByTurn,
     sparqlByTurn,
+    statusByTurn,
     onRemoveFilter,
     onSelectSuggestion
   }: {
@@ -20,6 +21,7 @@
     suggestions: Map<string, FollowUpQuestion[]>;
     filtersByTurn: Map<string, Filter[]>;
     sparqlByTurn: Map<string, string>;
+    statusByTurn: Map<string, ResponseStatus>;
     onRemoveFilter: (filter: Filter) => void;
     onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
   } = $props();
@@ -73,6 +75,7 @@
           suggestions={suggestions.get(turn.id) || []}
           filters={filtersByTurn.get(turn.id) || []}
           sparqlQuery={sparqlByTurn.get(turn.id)}
+          status={statusByTurn.get(turn.id)}
           {onRemoveFilter}
           {onSelectSuggestion}
         />
