@@ -47,6 +47,7 @@ function createExplorationStore() {
   let observationsByTurn = $state<Map<string, Observation[]>>(new Map());
   let suggestionsByTurn = $state<Map<string, FollowUpQuestion[]>>(new Map());
   let filtersByTurn = $state<Map<string, Filter[]>>(new Map());
+  let sparqlByTurn = $state<Map<string, string>>(new Map());
 
   function generateId(): string {
     return crypto.randomUUID();
@@ -114,6 +115,9 @@ function createExplorationStore() {
       observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.interpretation.observations);
       suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.interpretation.suggestions);
       filtersByTurn = new Map(filtersByTurn).set(assistantTurn.id, response.exploration.filters);
+      if (response.sparql_query) {
+        sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, response.sparql_query);
+      }
 
       result = response.result;
       observations = response.interpretation.observations;
@@ -201,6 +205,7 @@ function createExplorationStore() {
     observationsByTurn = new Map();
     suggestionsByTurn = new Map();
     filtersByTurn = new Map();
+    sparqlByTurn = new Map();
     clearSessionStorage();
   }
 
@@ -216,7 +221,8 @@ function createExplorationStore() {
       resultsByTurn: Object.fromEntries(resultsByTurn),
       observationsByTurn: Object.fromEntries(observationsByTurn),
       suggestionsByTurn: Object.fromEntries(suggestionsByTurn),
-      filtersByTurn: Object.fromEntries(filtersByTurn)
+      filtersByTurn: Object.fromEntries(filtersByTurn),
+      sparqlByTurn: Object.fromEntries(sparqlByTurn)
     });
   }
 
@@ -235,6 +241,7 @@ function createExplorationStore() {
     observationsByTurn = new Map(Object.entries(saved.observationsByTurn || {}));
     suggestionsByTurn = new Map(Object.entries(saved.suggestionsByTurn || {}));
     filtersByTurn = new Map(Object.entries(saved.filtersByTurn || {}));
+    sparqlByTurn = new Map(Object.entries(saved.sparqlByTurn || {}));
     loading = false;
     error = null;
 
@@ -283,6 +290,9 @@ function createExplorationStore() {
     },
     get filtersByTurn(): Map<string, Filter[]> {
       return filtersByTurn;
+    },
+    get sparqlByTurn(): Map<string, string> {
+      return sparqlByTurn;
     },
     sendMessage,
     applyFilter,

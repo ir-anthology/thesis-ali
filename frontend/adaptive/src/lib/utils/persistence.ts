@@ -22,6 +22,7 @@ export interface PersistedState {
   observationsByTurn?: Record<string, Observation[]>;
   suggestionsByTurn?: Record<string, FollowUpQuestion[]>;
   filtersByTurn?: Record<string, Filter[]>;
+  sparqlByTurn?: Record<string, string>;
 }
 
 interface SerializedConversationTurn {
@@ -107,7 +108,8 @@ export function loadFromSessionStorage(): PersistedState | null {
       resultsByTurn: parsed.resultsByTurn || {},
       observationsByTurn: parsed.observationsByTurn || {},
       suggestionsByTurn: parsed.suggestionsByTurn || {},
-      filtersByTurn: parsed.filtersByTurn || {}
+      filtersByTurn: parsed.filtersByTurn || {},
+      sparqlByTurn: parsed.sparqlByTurn || {}
     };
   } catch {
     console.warn('Failed to load state from sessionStorage');
