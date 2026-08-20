@@ -12,8 +12,7 @@
 
 {#if suggestions.length > 0}
   <div class="suggestions" role="group" aria-label="Suggested follow-up questions">
-    <p class="suggestions-label" id="suggestions-heading">You could explore:</p>
-    <div class="suggestions-list" aria-labelledby="suggestions-heading">
+    <div class="suggestions-list">
       {#each suggestions as suggestion (suggestion.id)}
         <button
           class="suggestion-chip"
@@ -30,13 +29,6 @@
 <style>
   .suggestions {
     margin-top: 0.75rem;
-  }
-
-  .suggestions-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
   }
 
   .suggestions-list {
