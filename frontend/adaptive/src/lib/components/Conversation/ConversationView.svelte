@@ -10,6 +10,7 @@
     observations,
     suggestions,
     filtersByTurn,
+    sparqlByTurn,
     onRemoveFilter,
     onSelectSuggestion
   }: {
@@ -18,6 +19,7 @@
     observations: Map<string, Observation[]>;
     suggestions: Map<string, FollowUpQuestion[]>;
     filtersByTurn: Map<string, Filter[]>;
+    sparqlByTurn: Map<string, string>;
     onRemoveFilter: (filter: Filter) => void;
     onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
   } = $props();
@@ -70,6 +72,7 @@
           observations={observations.get(turn.id) || []}
           suggestions={suggestions.get(turn.id) || []}
           filters={filtersByTurn.get(turn.id) || []}
+          sparqlQuery={sparqlByTurn.get(turn.id)}
           {onRemoveFilter}
           {onSelectSuggestion}
         />
