@@ -357,18 +357,12 @@ GROUP BY ?venueName`,
     },
     result: {
       type: 'summary',
-      title: 'Unsupported Query',
+      title: '',
       columns: [],
       rows: []
     },
     interpretation: {
-      observations: [
-        {
-          id: 'obs-7',
-          text: 'I cannot answer that question using the current scholarly data and query capabilities. However, I can help you explore:',
-          source: 'llm'
-        }
-      ],
+      observations: [],
       suggestions: [
         { id: 'sug-19', text: 'Which authors published in this venue?' },
         { id: 'sug-20', text: 'How did publication activity change over time?' },
