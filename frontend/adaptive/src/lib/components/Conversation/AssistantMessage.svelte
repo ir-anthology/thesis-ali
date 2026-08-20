@@ -141,7 +141,7 @@
   }
 
   .message-body p + p {
-    margin-top: 1rem;
+    margin-top: 1.25rem;
   }
 
   .loading {
