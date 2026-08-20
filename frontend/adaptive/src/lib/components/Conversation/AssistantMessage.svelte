@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, Filter } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, Filter, ResponseStatus } from '$lib/types/exploration';
   import Spinner from '$lib/components/Shared/Spinner.svelte';
   import ResultBox from '$lib/components/Results/ResultBox.svelte';
   import FilterBar from '$lib/components/Controls/FilterBar.svelte';
@@ -13,6 +13,7 @@
     suggestions,
     filters,
     sparqlQuery,
+    status,
     onRemoveFilter,
     onSelectSuggestion
   }: {
@@ -22,6 +23,7 @@
     suggestions: FollowUpQuestion[];
     filters: Filter[];
     sparqlQuery?: string;
+    status?: ResponseStatus;
     onRemoveFilter: (filter: Filter) => void;
     onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
   } = $props();
@@ -54,15 +56,15 @@
         <p>{message.content}</p>
       {/if}
 
-      {#if filters.length > 0}
+      {#if filters.length > 0 && status === 'answerable'}
         <FilterBar {filters} onRemove={onRemoveFilter} />
       {/if}
 
-      {#if result && !message.loading && !message.error}
+      {#if result && !message.loading && !message.error && status === 'answerable'}
         <ResultBox {result} {sparqlQuery} />
       {/if}
 
-      {#if observations.length > 0 && !message.loading}
+      {#if observations.length > 0 && !message.loading && status === 'answerable'}
         {#each observations as observation (observation.id)}
           <ObservationCard {observation} />
         {/each}
