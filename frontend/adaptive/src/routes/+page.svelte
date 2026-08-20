@@ -48,9 +48,10 @@
       results={resultsMap}
       observations={observationsMap}
       suggestions={suggestionsMap}
-      filtersByTurn={exploration.filtersByTurn}
-      sparqlByTurn={exploration.sparqlByTurn}
-      onRemoveFilter={(f) => exploration.removeFilter(f)}
+    filtersByTurn={exploration.filtersByTurn}
+    sparqlByTurn={exploration.sparqlByTurn}
+    statusByTurn={exploration.statusByTurn}
+    onRemoveFilter={(f) => exploration.removeFilter(f)}
       onSelectSuggestion={(s) => exploration.selectSuggestion(s)}
     />
 
