@@ -19,16 +19,6 @@
     <div class="result-tabs" role="tablist" aria-label="Result view">
       <button
         class="tab-btn"
-        class:active={activeTab === 'result'}
-        onclick={() => activeTab = 'result'}
-        role="tab"
-        aria-selected={activeTab === 'result'}
-        aria-controls="result-panel"
-      >
-        Result View
-      </button>
-      <button
-        class="tab-btn"
         class:active={activeTab === 'sparql'}
         onclick={() => activeTab = 'sparql'}
         role="tab"
@@ -37,16 +27,26 @@
       >
         SPARQL Query
       </button>
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'result'}
+        onclick={() => activeTab = 'result'}
+        role="tab"
+        aria-selected={activeTab === 'result'}
+        aria-controls="result-panel"
+      >
+        Result View
+      </button>
     </div>
   {/if}
 
-  {#if activeTab === 'result' || !sparqlQuery}
-    <div id="result-panel" role="tabpanel">
-      <ExplorationRenderer {result} />
-    </div>
-  {:else}
+  {#if activeTab === 'sparql' && sparqlQuery}
     <div id="sparql-panel" role="tabpanel">
       <SparqlBlock query={sparqlQuery} />
+    </div>
+  {:else}
+    <div id="result-panel" role="tabpanel">
+      <ExplorationRenderer {result} />
     </div>
   {/if}
 </div>
