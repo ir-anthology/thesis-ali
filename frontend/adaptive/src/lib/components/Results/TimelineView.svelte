@@ -60,10 +60,9 @@
 
 <style>
   .timeline-container {
-    margin-top: 0.625rem;
-    border-radius: 6px;
+    border-radius: 0;
     overflow: hidden;
-    border: 1px solid var(--code-border);
+    border: none;
     background-color: var(--bg-primary);
   }
 
