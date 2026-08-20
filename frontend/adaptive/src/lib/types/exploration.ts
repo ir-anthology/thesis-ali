@@ -116,4 +116,5 @@ export interface ExplorationResponse {
   };
   result: ResultState;
   interpretation: InterpretationState;
+  sparql_query?: string;
 }
