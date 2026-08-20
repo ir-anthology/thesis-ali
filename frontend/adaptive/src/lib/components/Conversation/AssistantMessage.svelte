@@ -1,11 +1,10 @@
 <script lang="ts">
   import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, Filter } from '$lib/types/exploration';
   import Spinner from '$lib/components/Shared/Spinner.svelte';
-  import ExplorationRenderer from '$lib/components/Results/ExplorationRenderer.svelte';
+  import ResultBox from '$lib/components/Results/ResultBox.svelte';
   import FilterBar from '$lib/components/Controls/FilterBar.svelte';
   import ObservationCard from '$lib/components/Insights/ObservationCard.svelte';
   import SuggestionChips from '$lib/components/Insights/SuggestionChips.svelte';
-  import QueryToggle from '$lib/components/Insights/QueryToggle.svelte';
 
   let {
     message,
@@ -51,7 +50,7 @@
           <Spinner size={14} />
           <span>Thinking about the question...</span>
         </div>
-      {:else if message.content && !sparqlQuery}
+      {:else if message.content}
         <p>{message.content}</p>
       {/if}
 
@@ -60,11 +59,7 @@
       {/if}
 
       {#if result && !message.loading && !message.error}
-        <ExplorationRenderer {result} />
-      {/if}
-
-      {#if sparqlQuery && !message.loading && !message.error}
-        <QueryToggle naturalLanguage={message.content} {sparqlQuery} />
+        <ResultBox {result} {sparqlQuery} />
       {/if}
 
       {#if observations.length > 0 && !message.loading}
