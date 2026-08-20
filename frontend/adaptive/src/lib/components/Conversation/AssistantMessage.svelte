@@ -51,7 +51,7 @@
           <Spinner size={14} />
           <span>Thinking about the question...</span>
         </div>
-      {:else if message.content}
+      {:else if message.content && !sparqlQuery}
         <p>{message.content}</p>
       {/if}
 
