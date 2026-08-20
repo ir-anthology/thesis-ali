@@ -5,7 +5,8 @@ import type {
   SortState,
   ResultState,
   Observation,
-  FollowUpQuestion
+  FollowUpQuestion,
+  ResponseStatus
 } from '$lib/types/exploration';
 
 const STORAGE_KEY = 'scholarly-explorer-state';
@@ -23,6 +24,7 @@ export interface PersistedState {
   suggestionsByTurn?: Record<string, FollowUpQuestion[]>;
   filtersByTurn?: Record<string, Filter[]>;
   sparqlByTurn?: Record<string, string>;
+  statusByTurn?: Record<string, ResponseStatus>;
 }
 
 interface SerializedConversationTurn {
@@ -71,6 +73,7 @@ export function saveToSessionStorage(state: {
   suggestionsByTurn?: Record<string, FollowUpQuestion[]>;
   filtersByTurn?: Record<string, Filter[]>;
   sparqlByTurn?: Record<string, string>;
+  statusByTurn?: Record<string, ResponseStatus>;
 }): void {
   try {
     const serialized = {
@@ -85,7 +88,8 @@ export function saveToSessionStorage(state: {
       observationsByTurn: state.observationsByTurn,
       suggestionsByTurn: state.suggestionsByTurn,
       filtersByTurn: state.filtersByTurn,
-      sparqlByTurn: state.sparqlByTurn
+      sparqlByTurn: state.sparqlByTurn,
+      statusByTurn: state.statusByTurn
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
   } catch {
@@ -111,7 +115,8 @@ export function loadFromSessionStorage(): PersistedState | null {
       observationsByTurn: parsed.observationsByTurn || {},
       suggestionsByTurn: parsed.suggestionsByTurn || {},
       filtersByTurn: parsed.filtersByTurn || {},
-      sparqlByTurn: parsed.sparqlByTurn || {}
+      sparqlByTurn: parsed.sparqlByTurn || {},
+      statusByTurn: parsed.statusByTurn || {}
     };
   } catch {
     console.warn('Failed to load state from sessionStorage');

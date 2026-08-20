@@ -22,7 +22,8 @@ import type {
   Observation,
   FollowUpQuestion,
   Entity,
-  ExplorationResponse
+  ExplorationResponse,
+  ResponseStatus
 } from '$lib/types/exploration';
 import { mockResponses } from '$lib/data/mock-responses';
 import {
@@ -48,6 +49,7 @@ function createExplorationStore() {
   let suggestionsByTurn = $state<Map<string, FollowUpQuestion[]>>(new Map());
   let filtersByTurn = $state<Map<string, Filter[]>>(new Map());
   let sparqlByTurn = $state<Map<string, string>>(new Map());
+  let statusByTurn = $state<Map<string, ResponseStatus>>(new Map());
 
   function generateId(): string {
     return crypto.randomUUID();
@@ -118,6 +120,7 @@ function createExplorationStore() {
       if (response.sparql_query) {
         sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, response.sparql_query);
       }
+      statusByTurn = new Map(statusByTurn).set(assistantTurn.id, response.status);
 
       result = response.result;
       observations = response.interpretation.observations;
@@ -206,6 +209,7 @@ function createExplorationStore() {
     suggestionsByTurn = new Map();
     filtersByTurn = new Map();
     sparqlByTurn = new Map();
+    statusByTurn = new Map();
     clearSessionStorage();
   }
 
@@ -222,7 +226,8 @@ function createExplorationStore() {
       observationsByTurn: Object.fromEntries(observationsByTurn),
       suggestionsByTurn: Object.fromEntries(suggestionsByTurn),
       filtersByTurn: Object.fromEntries(filtersByTurn),
-      sparqlByTurn: Object.fromEntries(sparqlByTurn)
+      sparqlByTurn: Object.fromEntries(sparqlByTurn),
+      statusByTurn: Object.fromEntries(statusByTurn)
     });
   }
 
@@ -242,6 +247,7 @@ function createExplorationStore() {
     suggestionsByTurn = new Map(Object.entries(saved.suggestionsByTurn || {}));
     filtersByTurn = new Map(Object.entries(saved.filtersByTurn || {}));
     sparqlByTurn = new Map(Object.entries(saved.sparqlByTurn || {}));
+    statusByTurn = new Map(Object.entries(saved.statusByTurn || {}));
     loading = false;
     error = null;
 
@@ -293,6 +299,9 @@ function createExplorationStore() {
     },
     get sparqlByTurn(): Map<string, string> {
       return sparqlByTurn;
+    },
+    get statusByTurn(): Map<string, ResponseStatus> {
+      return statusByTurn;
     },
     sendMessage,
     applyFilter,
