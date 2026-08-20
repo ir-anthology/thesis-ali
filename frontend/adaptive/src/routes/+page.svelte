@@ -33,16 +33,16 @@
 </svelte:head>
 
 <div class="app">
-  <header class="app-header">
-    <h1 class="app-title">Scholarly Explorer</h1>
-    {#if exploration.conversation.length > 0}
-      <button class="clear-btn" onclick={() => exploration.clearExploration()}>
-        New Exploration
-      </button>
-    {/if}
-  </header>
-
   <div class="chat-container">
+    <header class="app-header">
+      <h1 class="app-title">Scholarly Explorer</h1>
+      {#if exploration.conversation.length > 0}
+        <button class="clear-btn" onclick={() => exploration.clearExploration()}>
+          New Exploration
+        </button>
+      {/if}
+    </header>
+
     <ConversationView
       conversation={exploration.conversation}
       results={resultsMap}
