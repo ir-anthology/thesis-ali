@@ -17,7 +17,7 @@
 export type Facet = 'author' | 'venue' | 'year' | 'publication';
 
 /** The type of visualization to render for result data */
-export type ResultType = 'facet_table' | 'entity_list' | 'comparison' | 'timeline' | 'summary';
+export type ResultType = 'facet_table';
 
 /** Sort direction for table columns */
 export type SortDirection = 'asc' | 'desc';
