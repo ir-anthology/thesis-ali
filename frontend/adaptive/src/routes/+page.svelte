@@ -42,21 +42,23 @@
     {/if}
   </header>
 
-  <ConversationView
-    conversation={exploration.conversation}
-    results={resultsMap}
-    observations={observationsMap}
-    suggestions={suggestionsMap}
-    filtersByTurn={exploration.filtersByTurn}
-    sparqlByTurn={exploration.sparqlByTurn}
-    onRemoveFilter={(f) => exploration.removeFilter(f)}
-    onSelectSuggestion={(s) => exploration.selectSuggestion(s)}
-  />
+  <div class="chat-container">
+    <ConversationView
+      conversation={exploration.conversation}
+      results={resultsMap}
+      observations={observationsMap}
+      suggestions={suggestionsMap}
+      filtersByTurn={exploration.filtersByTurn}
+      sparqlByTurn={exploration.sparqlByTurn}
+      onRemoveFilter={(f) => exploration.removeFilter(f)}
+      onSelectSuggestion={(s) => exploration.selectSuggestion(s)}
+    />
 
-  <PromptInput
-    onSend={(msg) => exploration.sendMessage(msg)}
-    disabled={exploration.loading}
-  />
+    <PromptInput
+      onSend={(msg) => exploration.sendMessage(msg)}
+      disabled={exploration.loading}
+    />
+  </div>
 </div>
 
 <style>
@@ -66,6 +68,18 @@
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
+    background-color: var(--bg-secondary);
+  }
+
+  .chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+    background-color: var(--bg-primary);
   }
 
   .app-header {
