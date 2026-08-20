@@ -11,6 +11,6 @@
     font-size: 0.875rem;
     color: var(--text-primary);
     line-height: 1.5;
-    margin: 0.625rem 0 0 0;
+    margin: 0;
   }
 </style>

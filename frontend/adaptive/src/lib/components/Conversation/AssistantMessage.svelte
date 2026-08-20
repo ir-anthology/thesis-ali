@@ -140,6 +140,10 @@
     margin: 0;
   }
 
+  .message-body p + p {
+    margin-top: 0.625rem;
+  }
+
   .loading {
     display: flex;
     align-items: center;
