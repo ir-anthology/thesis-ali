@@ -11,7 +11,7 @@
     sparqlQuery?: string;
   } = $props();
 
-  let showSparql = $state(false);
+  let showSparql = $state(true);
 
   function toggle(): void {
     showSparql = !showSparql;
