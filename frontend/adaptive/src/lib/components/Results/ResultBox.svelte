@@ -11,41 +11,45 @@
     sparqlQuery?: string;
   } = $props();
 
-  let activeTab = $state<'result' | 'sparql'>('result');
+  let showSparql = $state(false);
+
+  function toggle(): void {
+    showSparql = !showSparql;
+  }
 </script>
 
 <div class="result-box">
   {#if sparqlQuery}
-    <div class="result-tabs" role="tablist" aria-label="Result view">
+    <div class="result-header">
       <button
-        class="tab-btn"
-        class:active={activeTab === 'sparql'}
-        onclick={() => activeTab = 'sparql'}
-        role="tab"
-        aria-selected={activeTab === 'sparql'}
-        aria-controls="sparql-panel"
+        class="toggle-btn"
+        onclick={toggle}
+        title={showSparql ? 'Show Result View' : 'Show SPARQL Query'}
+        aria-label={showSparql ? 'Show Result View' : 'Show SPARQL Query'}
       >
-        SPARQL Query
-      </button>
-      <button
-        class="tab-btn"
-        class:active={activeTab === 'result'}
-        onclick={() => activeTab = 'result'}
-        role="tab"
-        aria-selected={activeTab === 'result'}
-        aria-controls="result-panel"
-      >
-        Result View
+        {#if showSparql}
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+            <line x1="3" x2="21" y1="9" y2="9"></line>
+            <line x1="3" x2="21" y1="15" y2="15"></line>
+            <line x1="9" x2="9" y1="3" y2="21"></line>
+          </svg>
+        {:else}
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        {/if}
       </button>
     </div>
   {/if}
 
-  {#if activeTab === 'sparql' && sparqlQuery}
-    <div id="sparql-panel" role="tabpanel">
+  {#if showSparql && sparqlQuery}
+    <div role="tabpanel">
       <SparqlBlock query={sparqlQuery} />
     </div>
   {:else}
-    <div id="result-panel" role="tabpanel">
+    <div role="tabpanel">
       <ExplorationRenderer {result} />
     </div>
   {/if}
@@ -59,38 +63,37 @@
     overflow: hidden;
   }
 
-  .result-tabs {
+  .result-header {
     display: flex;
+    justify-content: flex-end;
+    padding: 0.25rem 0.5rem;
     border-bottom: 1px solid var(--border);
     background-color: var(--bg-secondary);
   }
 
-  .tab-btn {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    font-family: inherit;
+  .toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
     background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    padding: 0;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
 
-  .tab-btn:hover {
-    color: var(--text-primary);
-    background-color: var(--bg-tertiary);
-  }
-
-  .tab-btn.active {
+  .toggle-btn:hover {
+    background-color: var(--accent-light);
     color: var(--accent);
-    border-bottom-color: var(--accent);
-    background-color: var(--bg-primary);
+    border-color: var(--accent);
   }
 
-  .tab-btn:focus-visible {
+  .toggle-btn:focus-visible {
     outline: 2px solid var(--accent);
-    outline-offset: -2px;
+    outline-offset: 2px;
   }
 </style>
