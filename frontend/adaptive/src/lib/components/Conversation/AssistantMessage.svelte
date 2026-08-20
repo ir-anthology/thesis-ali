@@ -5,6 +5,7 @@
   import FilterBar from '$lib/components/Controls/FilterBar.svelte';
   import ObservationCard from '$lib/components/Insights/ObservationCard.svelte';
   import SuggestionChips from '$lib/components/Insights/SuggestionChips.svelte';
+  import QueryToggle from '$lib/components/Insights/QueryToggle.svelte';
 
   let {
     message,
@@ -12,6 +13,7 @@
     observations,
     suggestions,
     filters,
+    sparqlQuery,
     onRemoveFilter,
     onSelectSuggestion
   }: {
@@ -20,6 +22,7 @@
     observations: Observation[];
     suggestions: FollowUpQuestion[];
     filters: Filter[];
+    sparqlQuery?: string;
     onRemoveFilter: (filter: Filter) => void;
     onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
   } = $props();
@@ -58,6 +61,10 @@
 
       {#if result && !message.loading && !message.error}
         <ExplorationRenderer {result} />
+      {/if}
+
+      {#if sparqlQuery && !message.loading && !message.error}
+        <QueryToggle naturalLanguage={message.content} {sparqlQuery} />
       {/if}
 
       {#if observations.length > 0 && !message.loading}
