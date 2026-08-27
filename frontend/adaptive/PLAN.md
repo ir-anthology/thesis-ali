@@ -117,9 +117,7 @@ Build a SvelteKit frontend in `frontend/adaptive/` that implements an LLM-assist
 ### 1. `src/lib/types/exploration.ts` — Core type definitions
 
 ```typescript
-export type Facet = 'author' | 'venue' | 'year' | 'publication';
 export type ResultType = 'facet_table' | 'entity_list' | 'comparison' | 'timeline' | 'summary';
-export type SortDirection = 'asc' | 'desc';
 export type MessageRole = 'user' | 'assistant';
 export type ResponseStatus = 'answerable' | 'unsupported' | 'error';
 
@@ -130,11 +128,6 @@ export interface ConversationTurn {
   timestamp: Date;
   loading?: boolean;
   error?: boolean;
-}
-
-export interface SortState {
-  field: string;
-  direction: SortDirection;
 }
 
 export interface ResultColumn {
@@ -166,41 +159,14 @@ export interface FollowUpQuestion {
   text: string;
 }
 
-export interface Entity {
-  id: string;
-  name: string;
-  type: Facet;
-  facets: Record<string, string | number>;
-}
-
-export interface ExplorationContext {
-  targetFacet: Facet | null;
-  sorting: SortState | null;
-  selectedEntities: Entity[];
-}
-
 export interface InterpretationState {
   observations: Observation[];
   suggestions: FollowUpQuestion[];
 }
 
-export interface ExplorationState {
-  conversation: ConversationTurn[];
-  context: ExplorationContext;
-  result: ResultState | null;
-  interpretation: InterpretationState;
-  loading: boolean;
-  error: string | null;
-  activeView: ResultType | null;
-}
-
 export interface ExplorationResponse {
   status: ResponseStatus;
   conversation: ConversationTurn[];
-  exploration: {
-    targetFacet: Facet | null;
-    sort: SortState | null;
-  };
   result: ResultState;
   interpretation: InterpretationState;
 }
@@ -430,32 +396,6 @@ Create mock responses for each of these conversation scenarios:
 }
 ```
 
-### 3. `src/lib/data/mock-entities.ts` — Sample entity data
-
-```typescript
-export const mockAuthors = [
-  { id: 'a1', name: 'Marti A. Hearst', type: 'author' as const, facets: { publications: 42, venues: 12, years: '1995–2024' } },
-  { id: 'a2', name: 'Ryen W. White', type: 'author' as const, facets: { publications: 38, venues: 10, years: '2003–2024' } },
-  { id: 'a3', name: 'Gary Marchionini', type: 'author' as const, facets: { publications: 31, venues: 9, years: '1997–2023' } },
-  { id: 'a4', name: 'Daniel M. Russell', type: 'author' as const, facets: { publications: 27, venues: 8, years: '2000–2022' } },
-  { id: 'a5', name: 'Andrei Z. Broder', type: 'author' as const, facets: { publications: 24, venues: 7, years: '1998–2021' } }
-];
-
-export const mockVenues = [
-  { id: 'v1', name: 'SIGIR', type: 'venue' as const, facets: { publications: 88, years: '1971–2025' } },
-  { id: 'v2', name: 'CHIIR', type: 'venue' as const, facets: { publications: 32, years: '2016–2025' } },
-  { id: 'v3', name: 'CHI', type: 'venue' as const, facets: { publications: 25, years: '1982–2025' } },
-  { id: 'v4', name: 'UIST', type: 'venue' as const, facets: { publications: 18, years: '1988–2025' } },
-  { id: 'v5', name: 'JASIST', type: 'venue' as const, facets: { publications: 15, years: '1950–2025' } }
-];
-
-export const mockPublications = [
-  { id: 'p1', title: 'User Interfaces and Support for Exploratory Search', type: 'publication' as const, facets: { author: 'Marti A. Hearst', venue: 'SIGIR', year: 2023 } },
-  { id: 'p2', title: 'Search Interaction Patterns in Exploratory Tasks', type: 'publication' as const, facets: { author: 'Ryen W. White', venue: 'CHIIR', year: 2022 } },
-  { id: 'p3', title: 'Faceted Search for Digital Libraries', type: 'publication' as const, facets: { author: 'Gary Marchionini', venue: 'JASIST', year: 2021 } }
-];
-```
-
 ---
 
 ## Phase 2: State Management Store
@@ -469,25 +409,18 @@ The store manages the entire exploration state using `$state`:
 ```typescript
 import type {
   ConversationTurn,
-  Facet,
-  SortState,
   ResultState,
   Observation,
-  FollowUpQuestion,
-  Entity,
-  ExplorationState
+  FollowUpQuestion
 } from '$lib/types/exploration';
 import { mockResponses } from '$lib/data/mock-responses';
 
 function createExplorationStore() {
   // State
   let conversation = $state<ConversationTurn[]>([]);
-  let targetFacet = $state<Facet | null>(null);
-  let sorting = $state<SortState | null>(null);
   let result = $state<ResultState | null>(null);
   let observations = $state<Observation[]>([]);
   let suggestions = $state<FollowUpQuestion[]>([]);
-  let selectedEntities = $state<Entity[]>([]);
   let loading = $state(false);
   let error = $state<string | null>(null);
 
@@ -555,8 +488,6 @@ function createExplorationStore() {
       result = response.result;
       observations = response.interpretation.observations;
       suggestions = response.interpretation.suggestions;
-      if (response.exploration.targetFacet) targetFacet = response.exploration.targetFacet;
-      if (response.exploration.sort) sorting = response.exploration.sort;
     } else {
       conversation = conversation.map(t =>
         t.id === assistantTurn.id
@@ -567,27 +498,6 @@ function createExplorationStore() {
     }
 
     loading = false;
-  }
-
-  // Sorting
-  function setSorting(sort: SortState): void {
-    sorting = sort;
-  }
-
-  // Target facet
-  function setTargetFacet(facet: Facet): void {
-    targetFacet = facet;
-  }
-
-  // Entity selection
-  function selectEntity(entity: Entity): void {
-    if (!selectedEntities.find(e => e.id === entity.id)) {
-      selectedEntities = [...selectedEntities, entity];
-    }
-  }
-
-  function clearSelection(): void {
-    selectedEntities = [];
   }
 
   // Suggestions
@@ -608,12 +518,9 @@ function createExplorationStore() {
   // Clear
   function clearExploration(): void {
     conversation = [];
-    targetFacet = null;
-    sorting = null;
     result = null;
     observations = [];
     suggestions = [];
-    selectedEntities = [];
     loading = false;
     error = null;
     resultsByTurn = new Map();
@@ -625,8 +532,6 @@ function createExplorationStore() {
   function saveState(): void {
     saveToSessionStorage({
       conversation,
-      targetFacet,
-      sorting,
       result,
       observations,
       suggestions,
@@ -641,8 +546,6 @@ function createExplorationStore() {
     if (!saved) return false;
 
     conversation = saved.conversation;
-    targetFacet = saved.targetFacet;
-    sorting = saved.sorting;
     result = saved.result;
     observations = saved.observations;
     suggestions = saved.suggestions;
@@ -657,22 +560,15 @@ function createExplorationStore() {
 
   return {
     get conversation() { return conversation; },
-    get targetFacet() { return targetFacet; },
-    get sorting() { return sorting; },
     get result() { return result; },
     get observations() { return observations; },
     get suggestions() { return suggestions; },
-    get selectedEntities() { return selectedEntities; },
     get loading() { return loading; },
     get error() { return error; },
     get resultsByTurn() { return resultsByTurn; },
     get observationsByTurn() { return observationsByTurn; },
     get suggestionsByTurn() { return suggestionsByTurn; },
     sendMessage,
-    setSorting,
-    setTargetFacet,
-    selectEntity,
-    clearSelection,
     selectSuggestion,
     retry,
     clearExploration,
@@ -748,70 +644,6 @@ Small metadata badge with semantic styling.
   .error {
     background-color: #f8d7da;
     color: var(--error);
-  }
-</style>
-```
-
-### `src/lib/components/Shared/Pill.svelte`
-
-Removable filter pill.
-
-```svelte
-<script lang="ts">
-  let {
-    label,
-    onRemove
-  }: {
-    label: string;
-    onRemove: () => void;
-  } = $props();
-</script>
-
-<span class="pill">
-  <span class="pill-label">{label}</span>
-  <button class="pill-remove" onclick={onRemove} aria-label="Remove filter {label}">
-    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"></line>
-      <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>
-  </button>
-</span>
-
-<style>
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.1875rem 0.375rem 0.1875rem 0.625rem;
-    background-color: var(--accent-light);
-    color: var(--accent);
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
-  .pill-label {
-    line-height: 1.4;
-  }
-
-  .pill-remove {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border: none;
-    background: transparent;
-    color: var(--accent);
-    cursor: pointer;
-    border-radius: 50%;
-    transition: background-color 0.15s ease;
-    padding: 0;
-  }
-
-  .pill-remove:hover {
-    background-color: var(--accent);
-    color: white;
   }
 </style>
 ```
@@ -1686,18 +1518,16 @@ Routes to the correct view based on result type.
 
 ```svelte
 <script lang="ts">
-  import type { ResultColumn, ResultRow, SortState } from '$lib/types/exploration';
+  import type { ResultColumn, ResultRow } from '$lib/types/exploration';
 
   let {
     columns,
     rows,
-    title,
-    onSort
+    title
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
     title?: string;
-    onSort?: (sort: SortState) => void;
   } = $props();
 
   let sortField = $state<string | null>(null);
@@ -1711,7 +1541,6 @@ Routes to the correct view based on result type.
       sortField = column.key;
       sortDirection = 'asc';
     }
-    onSort?.({ field: sortField, direction: sortDirection });
   }
 
   let sortedRows = $derived.by(() => {
@@ -2313,7 +2142,6 @@ Simple bar chart representation using CSS.
 
 - [ ] Tab order: header → conversation → suggestions → input
 - [ ] Enter/Space activates suggestion chips and table rows
-- [ ] Escape clears entity selection
 - [ ] `:focus-visible` accent ring on all interactive elements
 - [ ] `aria-label` on icon-only buttons (send, close, sort)
 - [ ] `aria-live="polite"` on conversation container
@@ -2328,7 +2156,6 @@ Simple bar chart representation using CSS.
 
 1. Serialize key state to URL search params using SvelteKit's `page` store:
    - `?q=` — last user query
-   - `&facet=` — target facet
 
 2. On page load (`+page.ts` load function), read URL params and restore initial state
 
@@ -2347,8 +2174,6 @@ Simple bar chart representation using CSS.
 ```typescript
 import type {
   ConversationTurn,
-  Facet,
-  SortState,
   ResultState,
   Observation,
   FollowUpQuestion
@@ -2358,8 +2183,6 @@ const STORAGE_KEY = 'scholarly-explorer-state';
 
 export interface PersistedState {
   conversation: ConversationTurn[];
-  targetFacet: Facet | null;
-  sorting: SortState | null;
   result: ResultState | null;
   observations: Observation[];
   suggestions: FollowUpQuestion[];
@@ -2403,8 +2226,6 @@ export function deserializeConversation(
 
 export function saveToSessionStorage(state: {
   conversation: ConversationTurn[];
-  targetFacet: Facet | null;
-  sorting: SortState | null;
   result: ResultState | null;
   observations: Observation[];
   suggestions: FollowUpQuestion[];
@@ -2415,8 +2236,6 @@ export function saveToSessionStorage(state: {
   try {
     const serialized = {
       conversation: serializeConversation(state.conversation),
-      targetFacet: state.targetFacet,
-      sorting: state.sorting,
       result: state.result,
       observations: state.observations,
       suggestions: state.suggestions,
@@ -2438,8 +2257,6 @@ export function loadFromSessionStorage(): PersistedState | null {
     const parsed = JSON.parse(raw);
     return {
       conversation: deserializeConversation(parsed.conversation || []),
-      targetFacet: parsed.targetFacet || null,
-      sorting: parsed.sorting || null,
       result: parsed.result || null,
       observations: parsed.observations || [],
       suggestions: parsed.suggestions || [],
@@ -2461,29 +2278,11 @@ export function clearSessionStorage(): void {
   }
 }
 
-export function encodeStateToUrl(params: {
-  q?: string;
-  facet?: Facet;
-}): URLSearchParams {
-  const searchParams = new URLSearchParams();
-
-  if (params.q) {
-    searchParams.set('q', params.q);
-  }
-  if (params.facet) {
-    searchParams.set('facet', params.facet);
-  }
-
-  return searchParams;
-}
-
 export function decodeStateFromUrl(searchParams: URLSearchParams): {
   q?: string;
-  facet?: Facet;
 } {
   const result: {
     q?: string;
-    facet?: Facet;
   } = {};
 
   const q = searchParams.get('q');
@@ -2491,16 +2290,7 @@ export function decodeStateFromUrl(searchParams: URLSearchParams): {
     result.q = q;
   }
 
-  const facet = searchParams.get('facet');
-  if (facet && isValidFacet(facet)) {
-    result.facet = facet;
-  }
-
   return result;
-}
-
-function isValidFacet(value: string): value is Facet {
-  return ['author', 'venue', 'year', 'publication'].includes(value);
 }
 ```
 
@@ -2521,8 +2311,7 @@ frontend/adaptive/
 │       ├── types/
 │       │   └── exploration.ts
 │       ├── data/
-│       │   ├── mock-responses.ts
-│       │   └── mock-entities.ts
+│       │   └── mock-responses.ts
 │       ├── stores/
 │       │   └── exploration.svelte.ts
 │       ├── utils/
@@ -2569,7 +2358,7 @@ frontend/adaptive/
 | 3 | Create `exploration.ts` type definitions | Step 1 | 45 min |
 | 4 | Create mock data files | Step 3 | 1 hr |
 | 5 | Create `exploration.svelte.ts` store | Steps 3, 4 | 1.5 hr |
-| 6 | Create Shared components (Badge, Pill, Spinner, EmptyState, ErrorState) | Step 2 | 1 hr |
+| 6 | Create Shared components (Badge, Spinner, EmptyState, ErrorState) | Step 2 | 1 hr |
 | 7 | Create PromptInput component | Step 6 | 30 min |
 | 8 | Create UserMessage component | Step 6 | 30 min |
 | 9 | Create FacetTable component | Step 6 | 1 hr |

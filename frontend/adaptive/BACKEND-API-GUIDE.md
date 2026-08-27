@@ -78,11 +78,7 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
 ```json
 {
   "message": "Who are the most prolific authors?",
-  "conversation_id": "conv-abc-123",
-  "context": {
-    "target_facet": null,
-    "sorting": null
-  }
+  "conversation_id": "conv-abc-123"
 }
 ```
 
@@ -92,13 +88,6 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
 {
   "status": "answerable",
   "conversation_id": "conv-abc-123",
-  "exploration": {
-    "target_facet": "author",
-    "sort": {
-      "field": "publications",
-      "direction": "desc"
-    }
-  },
   "result": {
     "type": "facet_table",
     "title": "Most Prolific Authors in Exploratory Search",
@@ -154,16 +143,6 @@ Health check endpoint.
 |-------|------|----------|-------------|
 | `message` | string | Yes | User's natural language query |
 | `conversation_id` | string | Yes | Unique ID for this conversation session |
-| `context` | object | No | Current exploration context from previous turns |
-| `context.target_facet` | string | No | Current exploration dimension (author/venue/year/publication) |
-| `context.sorting` | SortState | No | Current sort state |
-
-### SortState
-
-| Field | Type | Values |
-|-------|------|--------|
-| `field` | string | Column key to sort by |
-| `direction` | string | `"asc"` or `"desc"` |
 
 ---
 
@@ -175,9 +154,6 @@ Health check endpoint.
 |-------|------|-------------|
 | `status` | string | `"answerable"`, `"unsupported"`, or `"error"` |
 | `conversation_id` | string | Same ID from request |
-| `exploration` | object | Updated exploration context |
-| `exploration.target_facet` | string\|null | Primary dimension for results |
-| `exploration.sort` | SortState\|null | Recommended sort order |
 | `result` | ResultState | The structured result data |
 | `interpretation` | InterpretationState | LLM-generated insights |
 | `sparql_query` | string\|null | The SPARQL query used (only when `status === "answerable"`) |
@@ -352,41 +328,35 @@ These are the 7 recognized query types. The backend should handle similar natura
 ### 7.1 Prolific Authors
 
 **Input:** `"Who are the most prolific authors?"`
-**Target Facet:** `author`
 **Result Type:** `facet_table`
 **Columns:** author, publications, venues, years
 
 ### 7.2 Filtered Results
 
 **Input:** `"Only consider the last five years"`
-**Target Facet:** `author`
 **Result Type:** `facet_table`
 
 ### 7.3 Venue Pivot
 
 **Input:** `"Which venues do they publish in?"`
-**Target Facet:** `venue`
 **Result Type:** `facet_table`
 **Columns:** venue, publications, authors, years
 
 ### 7.4 Timeline
 
 **Input:** `"Show me how this changed over time"`
-**Target Facet:** `year`
 **Result Type:** `timeline`
 **Columns:** year, [venue1], [venue2], ...
 
 ### 7.5 Comparison
 
 **Input:** `"Compare SIGIR and CHIIR"`
-**Target Facet:** `venue`
 **Result Type:** `comparison`
 **Columns:** metric, [entity1], [entity2]
 
 ### 7.6 Explanation
 
 **Input:** `"Why is SIGIR prominent?"`
-**Target Facet:** `venue`
 **Result Type:** `summary`
 **Observations:** Multiple LLM-generated insights
 
@@ -406,23 +376,18 @@ The backend must maintain conversation state across requests. The frontend sends
 
 ```
 Request 1: "Who are the most prolific authors?"
-  → Context: { target_facet: null, sorting: null }
-  → Response: { target_facet: "author", sort: { field: "publications", direction: "desc" } }
+  → Response: { result: facet_table with authors }
 
 Request 2: "Only consider the last five years"
-  → Context: { target_facet: "author", sorting: { field: "publications", direction: "desc" } }
-  → Response: { ... }
+  → Response: { result: facet_table with filtered authors }
 
 Request 3: "Which venues do they publish in?"
-  → Context: { target_facet: "author" }
-  → Response: { target_facet: "venue" }
+  → Response: { result: facet_table with venues }
 ```
 
 ### Key Rules
 
-1. **Target facet changes** — The backend determines the new target facet based on the query
-2. **Sorting updates** — The backend recommends a sort order based on the result type
-3. **Context is advisory** — The backend may ignore or modify context if the query requires it
+1. **Context is advisory** — The backend may ignore or modify context if the query requires it
 
 ---
 
@@ -433,8 +398,6 @@ The backend must use an LLM for two purposes:
 ### 9.1 Intent Parsing
 
 Parse the user's natural language query into:
-- Target facet (author, venue, year, publication)
-- Sort order
 - Result type (facet_table, comparison, timeline, summary)
 
 ### 9.2 Observation Generation
@@ -489,21 +452,6 @@ def chat(request: ChatRequest) -> ChatResponse:
 ```python
 from pydantic import BaseModel, Field
 from typing import Optional
-from enum import Enum
-
-class Facet(str, Enum):
-    author = "author"
-    venue = "venue"
-    year = "year"
-    publication = "publication"
-
-class SortDirection(str, Enum):
-    asc = "asc"
-    desc = "desc"
-
-class SortState(BaseModel):
-    field: str
-    direction: SortDirection
 
 class ResultColumn(BaseModel):
     key: str
@@ -530,19 +478,13 @@ class InterpretationState(BaseModel):
     observations: list[Observation]
     suggestions: list[FollowUpQuestion]
 
-class ExplorationContext(BaseModel):
-    target_facet: Optional[Facet] = None
-    sort: Optional[SortState] = None
-
 class ChatRequest(BaseModel):
     message: str
     conversation_id: str
-    context: Optional[ExplorationContext] = None
 
 class ExplorationResponse(BaseModel):
     status: str  # "answerable", "unsupported", "error"
     conversation_id: str
-    exploration: ExplorationContext
     result: ResultState
     interpretation: InterpretationState
     sparql_query: Optional[str] = None  # Only when status == "answerable"
@@ -555,15 +497,8 @@ class ExplorationResponse(BaseModel):
 The frontend defines these types in `src/lib/types/exploration.ts`. The backend should return JSON that matches these shapes.
 
 ```typescript
-type Facet = 'author' | 'venue' | 'year' | 'publication';
 type ResultType = 'facet_table' | 'entity_list' | 'comparison' | 'timeline' | 'summary';
-type SortDirection = 'asc' | 'desc';
 type ResponseStatus = 'answerable' | 'unsupported' | 'error';
-
-interface SortState {
-  field: string;
-  direction: SortDirection;
-}
 
 interface ResultColumn {
   key: string;
@@ -602,10 +537,6 @@ interface InterpretationState {
 interface ExplorationResponse {
   status: ResponseStatus;
   conversation_id: string;
-  exploration: {
-    targetFacet: Facet | null;
-    sort: SortState | null;
-  };
   result: ResultState;
   interpretation: InterpretationState;
   sparql_query?: string;
@@ -629,11 +560,7 @@ curl -X POST http://localhost:8000/api/exploration \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Who are the most prolific authors?",
-    "conversation_id": "test-123",
-    "context": {
-      "target_facet": null,
-      "sorting": null
-    }
+    "conversation_id": "test-123"
   }'
 ```
 
@@ -643,18 +570,13 @@ curl -X POST http://localhost:8000/api/exploration \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Only consider the last five years",
-    "conversation_id": "test-123",
-    "context": {
-      "target_facet": "author",
-      "sorting": { "field": "publications", "direction": "desc" }
-    }
+    "conversation_id": "test-123"
   }'
 ```
 
 ### Validation Checklist
 
 - [ ] Response has `status` field
-- [ ] Response has `exploration` context
 - [ ] Response has `result` with `type`, `title`, `columns`, `rows`
 - [ ] Response has `interpretation` with `observations` and `suggestions`
 - [ ] Column `key` values match row object keys
