@@ -18,7 +18,7 @@ Build and iterate on an adaptive conversational knowledge graph explorer fronten
 
 ## Discoveries
 
-1. **Per-turn data storage is essential** — Single `result`/`observations`/`suggestions` variables got overwritten on each new message, losing previous response data. Fixed by adding per-turn Maps (`resultsByTurn`, `observationsByTurn`, `suggestionsByTurn`, `filtersByTurn`, `sparqlByTurn`, `statusByTurn`).
+1. **Per-turn data storage is essential** — Single `result`/`observations`/`suggestions` variables got overwritten on each new message, losing previous response data. Fixed by adding per-turn Maps (`resultsByTurn`, `observationsByTurn`, `suggestionsByTurn`, `sparqlByTurn`, `statusByTurn`).
 
 2. **WCAG AA contrast** — `--text-muted: #adb5bd` had ~3:1 ratio (fails AA). Changed to `#6c757d` (~5:1).
 
@@ -72,8 +72,7 @@ frontend/adaptive/
 │       ├── types/
 │       │   └── exploration.ts           — All types (ResultType = 'facet_table' only)
 │       ├── data/
-│       │   ├── mock-responses.ts        — 7 mock scenarios with SPARQL queries
-│       │   └── mock-entities.ts         — Sample entities
+│       │   └── mock-responses.ts        — 7 mock scenarios with SPARQL queries
 │       ├── stores/
 │       │   └── exploration.svelte.ts    — Main store with per-turn Maps
 │       ├── utils/
