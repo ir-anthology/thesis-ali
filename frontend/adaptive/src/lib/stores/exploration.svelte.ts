@@ -33,6 +33,7 @@ function createExplorationStore() {
   let suggestionsByTurn = $state<Map<string, string[]>>(new Map());
   let sparqlByTurn = $state<Map<string, string>>(new Map());
   let statusByTurn = $state<Map<string, ResponseStatus>>(new Map());
+  let responseTextByTurn = $state<Map<string, string>>(new Map());
 
   function generateId(): string {
     return crypto.randomUUID();
@@ -46,6 +47,7 @@ function createExplorationStore() {
       return {
         role: 'assistant',
         content: turn.content,
+        response_text: responseTextByTurn.get(turn.id),
         result: resultsByTurn.get(turn.id),
         observations: observationsByTurn.get(turn.id),
         suggestions: suggestionsByTurn.get(turn.id),
@@ -111,13 +113,14 @@ function createExplorationStore() {
     if (response) {
       conversation = conversation.map((t) =>
         t.id === assistantTurn.id
-          ? { ...t, content: response.result.title || 'Here are the results:', loading: false }
+          ? { ...t, content: response.response_text, loading: false }
           : t
       );
 
       resultsByTurn = new Map(resultsByTurn).set(assistantTurn.id, response.result);
       observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.interpretation.observations);
       suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.interpretation.suggestions);
+      responseTextByTurn = new Map(responseTextByTurn).set(assistantTurn.id, response.response_text);
       if (response.sparql_query) {
         sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, response.sparql_query);
       }
@@ -167,6 +170,7 @@ function createExplorationStore() {
     suggestionsByTurn = new Map();
     sparqlByTurn = new Map();
     statusByTurn = new Map();
+    responseTextByTurn = new Map();
   }
 
   return {
@@ -202,6 +206,9 @@ function createExplorationStore() {
     },
     get statusByTurn(): Map<string, ResponseStatus> {
       return statusByTurn;
+    },
+    get responseTextByTurn(): Map<string, string> {
+      return responseTextByTurn;
     },
     sendMessage,
     selectSuggestion,

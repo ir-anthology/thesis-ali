@@ -3,6 +3,7 @@ import type { ExplorationResponse } from '$lib/types/exploration';
 export const mockResponses: Record<string, ExplorationResponse> = {
   'prolific-authors': {
     status: 'answerable',
+    response_text: 'Here are the most prolific authors in the IR Anthology.',
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -21,7 +22,6 @@ ORDER BY DESC(?publications)
 LIMIT 5`,
     result: {
       type: 'facet_table',
-      title: 'Most Prolific Authors in Exploratory Search',
       columns: [
         { key: 'author', label: 'Author', type: 'text', sortable: true },
         { key: 'publications', label: 'Publications', type: 'number', sortable: true },
@@ -44,6 +44,7 @@ LIMIT 5`,
 
   'filtered-years': {
     status: 'answerable',
+    response_text: 'Here are the most prolific authors from the last five years.',
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -63,7 +64,6 @@ ORDER BY DESC(?publications)
 LIMIT 5`,
     result: {
       type: 'facet_table',
-      title: 'Most Prolific Authors (2020–2025)',
       columns: [
         { key: 'author', label: 'Author', type: 'text', sortable: true },
         { key: 'publications', label: 'Publications', type: 'number', sortable: true },
@@ -86,6 +86,7 @@ LIMIT 5`,
 
   venues: {
     status: 'answerable',
+    response_text: 'Here are the venues where the top authors publish.',
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -105,7 +106,6 @@ ORDER BY DESC(?publications)
 LIMIT 5`,
     result: {
       type: 'facet_table',
-      title: 'Venues for Top Authors in Exploratory Search',
       columns: [
         { key: 'venue', label: 'Venue', type: 'text', sortable: true },
         { key: 'publications', label: 'Publications', type: 'number', sortable: true },
@@ -128,6 +128,7 @@ LIMIT 5`,
 
   timeline: {
     status: 'answerable',
+    response_text: 'Here is the publication activity over time for the top venues.',
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -147,7 +148,6 @@ GROUP BY ?year
 ORDER BY ?year`,
     result: {
       type: 'facet_table',
-      title: 'Publication Activity Over Time',
       columns: [
         { key: 'year', label: 'Year', type: 'text' },
         { key: 'SIGIR', label: 'SIGIR', type: 'number' },
@@ -171,6 +171,7 @@ ORDER BY ?year`,
 
   comparison: {
     status: 'answerable',
+    response_text: 'Here is a comparison of SIGIR and CHIIR venues.',
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -190,7 +191,6 @@ WHERE {
 GROUP BY ?venueName`,
     result: {
       type: 'facet_table',
-      title: 'SIGIR vs CHIIR',
       columns: [
         { key: 'metric', label: 'Metric', type: 'text' },
         { key: 'SIGIR', label: 'SIGIR', type: 'text' },
@@ -212,6 +212,7 @@ GROUP BY ?venueName`,
 
   'why-sigir': {
     status: 'answerable',
+    response_text: 'Here is why SIGIR is a prominent venue in information retrieval research.',
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -231,7 +232,6 @@ WHERE {
 GROUP BY ?venueName`,
     result: {
       type: 'facet_table',
-      title: 'Why SIGIR Is Prominent',
       columns: [],
       rows: []
     },
@@ -247,9 +247,9 @@ GROUP BY ?venueName`,
 
   unsupported: {
     status: 'unsupported',
+    response_text: 'I\'m sorry, I couldn\'t find relevant information for your query.',
     result: {
       type: 'facet_table',
-      title: '',
       columns: [],
       rows: []
     },

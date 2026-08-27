@@ -1,6 +1,6 @@
 import type { ResultState } from '$lib/types/exploration';
 
-export const overviewData: ResultState = {
+export const overviewData: ResultState & { title: string } = {
   type: 'facet_table',
   title: 'Knowledge Graph Overview',
   columns: [

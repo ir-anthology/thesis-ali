@@ -45,7 +45,6 @@ export interface ResultState {
   type: ResultType;
   columns: ResultColumn[];
   rows: ResultRow[];
-  title?: string;
 }
 
 export interface InterpretationState {
@@ -56,6 +55,7 @@ export interface InterpretationState {
 export interface HistoryTurn {
   role: MessageRole;
   content: string;
+  response_text?: string;
   result?: ResultState;
   observations?: string[];
   suggestions?: string[];
@@ -65,6 +65,7 @@ export interface HistoryTurn {
 
 export interface ExplorationResponse {
   status: ResponseStatus;
+  response_text: string;
   result: ResultState;
   interpretation: InterpretationState;
   sparql_query?: string;

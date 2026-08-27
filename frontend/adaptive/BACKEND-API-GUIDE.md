@@ -115,9 +115,9 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
 ```json
 {
   "status": "answerable",
+  "response_text": "Here are the most prolific authors in the IR Anthology.",
   "result": {
     "type": "facet_table",
-    "title": "Most Prolific Authors in Exploratory Search",
     "columns": [
       { "key": "author", "label": "Author", "type": "text", "sortable": true },
       { "key": "publications", "label": "Publications", "type": "number", "sortable": true },
@@ -182,6 +182,7 @@ Health check endpoint.
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | string | `"answerable"`, `"unsupported"`, or `"error"` |
+| `response_text` | string | Natural language response from the backend |
 | `result` | ResultState | The structured result data |
 | `interpretation` | InterpretationState | LLM-generated insights |
 | `sparql_query` | string\|null | The SPARQL query used (only when `status === "answerable"`) |
@@ -191,7 +192,6 @@ Health check endpoint.
 | Field | Type | Description |
 |-------|------|-------------|
 | `type` | string | Visualization type (see Section 6) |
-| `title` | string | Human-readable title for the result |
 | `columns` | ResultColumn[] | Column definitions for tabular data |
 | `rows` | ResultRow[] | Data rows |
 
@@ -483,7 +483,6 @@ class ResultColumn(BaseModel):
 
 class ResultState(BaseModel):
     type: str  # "facet_table", "entity_list", "comparison", "timeline", "summary"
-    title: str
     columns: list[ResultColumn]
     rows: list[dict]
 
@@ -494,6 +493,7 @@ class InterpretationState(BaseModel):
 class HistoryTurn(BaseModel):
     role: str  # "user" or "assistant"
     content: str
+    response_text: Optional[str] = None
     result: Optional[ResultState] = None
     observations: Optional[list[str]] = None
     suggestions: Optional[list[str]] = None
@@ -506,6 +506,7 @@ class ChatRequest(BaseModel):
 
 class ExplorationResponse(BaseModel):
     status: str  # "answerable", "unsupported", "error"
+    response_text: str
     result: ResultState
     interpretation: InterpretationState
     sparql_query: Optional[str] = None  # Only when status == "answerable"
@@ -536,7 +537,6 @@ interface ResultState {
   type: ResultType;
   columns: ResultColumn[];
   rows: ResultRow[];
-  title?: string;
 }
 
 interface InterpretationState {
@@ -546,6 +546,7 @@ interface InterpretationState {
 
 interface ExplorationResponse {
   status: ResponseStatus;
+  response_text: string;
   result: ResultState;
   interpretation: InterpretationState;
   sparql_query?: string;
@@ -608,7 +609,8 @@ curl -X POST http://localhost:8000/api/exploration \
 
 - [ ] Request has `message` and `history` fields
 - [ ] Response has `status` field
-- [ ] Response has `result` with `type`, `title`, `columns`, `rows`
+- [ ] Response has `response_text` field
+- [ ] Response has `result` with `type`, `columns`, `rows`
 - [ ] Response has `interpretation` with `observations` and `suggestions` (string arrays)
 - [ ] Column `key` values match row object keys
 - [ ] Sortable columns have `sortable: true`
