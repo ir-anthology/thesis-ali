@@ -22,6 +22,9 @@
 
     <ConversationView
       conversation={exploration.conversation}
+      intentByTurn={exploration.intentByTurn}
+      clarificationByTurn={exploration.clarificationByTurn}
+      limitationByTurn={exploration.limitationByTurn}
       columnsByTurn={exploration.columnsByTurn}
       rowsByTurn={exploration.rowsByTurn}
       observationsByTurn={exploration.observationsByTurn}

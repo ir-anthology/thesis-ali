@@ -7,6 +7,9 @@
 
   let {
     message,
+    intent,
+    clarification,
+    limitation,
     columns,
     rows,
     observations,
@@ -15,6 +18,9 @@
     onSelectSuggestion
   }: {
     message: ConversationTurn;
+    intent?: string;
+    clarification?: string;
+    limitation?: string;
     columns?: ResultColumn[];
     rows?: ResultRow[];
     observations?: string[];
@@ -47,8 +53,18 @@
           <Spinner size={14} />
           <span>Thinking about the question...</span>
         </div>
-      {:else if message.content}
-        <p class="query-text">{message.content}</p>
+      {:else}
+        {#if intent}
+          <p class="intent-text">{intent}</p>
+        {/if}
+
+        {#if limitation}
+          <p class="limitation-text">{limitation}</p>
+        {/if}
+
+        {#if clarification}
+          <p class="clarification-text">{clarification}</p>
+        {/if}
       {/if}
 
       {#if columns && rows && !message.loading && !message.error}
@@ -131,8 +147,18 @@
     margin: 0;
   }
 
-  .message-body .query-text {
+  .intent-text {
     margin-bottom: 0.75rem;
+  }
+
+  .limitation-text {
+    margin-bottom: 0.75rem;
+    color: var(--warning);
+  }
+
+  .clarification-text {
+    margin-bottom: 0.75rem;
+    color: var(--accent);
   }
 
   .loading {

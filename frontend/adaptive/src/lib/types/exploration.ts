@@ -9,6 +9,7 @@
  * - Conversation: A series of user/assistant turns that form the exploration context
  * - Response: A flat structure with optional fields for table data, observations, and suggestions
  * - The UI renders only what's present (columns/rows for tables, observations, suggestions)
+ * - intent, clarification, limitation are rendered in order if present
  */
 
 /** The role of a message in the conversation */
@@ -37,7 +38,9 @@ export interface ResultRow {
 export interface HistoryTurn {
   role: MessageRole;
   content: string;
-  response_text?: string;
+  intent?: string;
+  clarification?: string;
+  limitation?: string;
   columns?: ResultColumn[];
   rows?: ResultRow[];
   observations?: string[];
@@ -46,7 +49,9 @@ export interface HistoryTurn {
 }
 
 export interface ExplorationResponse {
-  response_text: string;
+  intent?: string;
+  clarification?: string;
+  limitation?: string;
   columns?: ResultColumn[];
   rows?: ResultRow[];
   observations?: string[];

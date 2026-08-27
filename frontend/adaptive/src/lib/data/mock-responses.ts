@@ -2,7 +2,7 @@ import type { ExplorationResponse } from '$lib/types/exploration';
 
 export const mockResponses: Record<string, ExplorationResponse> = {
   'prolific-authors': {
-    response_text: 'Here are the most prolific authors in the IR Anthology.',
+    intent: 'User is asking for the most prolific authors based on publication count.',
     columns: [
       { key: 'author', label: 'Author', type: 'text', sortable: true },
       { key: 'publications', label: 'Publications', type: 'number', sortable: true },
@@ -37,7 +37,7 @@ LIMIT 5`
   },
 
   'filtered-years': {
-    response_text: 'Here are the most prolific authors from the last five years.',
+    intent: 'User is asking for the most prolific authors from the last five years.',
     columns: [
       { key: 'author', label: 'Author', type: 'text', sortable: true },
       { key: 'publications', label: 'Publications', type: 'number', sortable: true },
@@ -73,7 +73,7 @@ LIMIT 5`
   },
 
   venues: {
-    response_text: 'Here are the venues where the top authors publish.',
+    intent: 'User is asking for the venues where the top authors publish.',
     columns: [
       { key: 'venue', label: 'Venue', type: 'text', sortable: true },
       { key: 'publications', label: 'Publications', type: 'number', sortable: true },
@@ -109,7 +109,7 @@ LIMIT 5`
   },
 
   timeline: {
-    response_text: 'Here is the publication activity over time for the top venues.',
+    intent: 'User is asking how publication activity changed over time.',
     columns: [
       { key: 'year', label: 'Year', type: 'text' },
       { key: 'SIGIR', label: 'SIGIR', type: 'number' },
@@ -146,7 +146,7 @@ ORDER BY ?year`
   },
 
   comparison: {
-    response_text: 'Here is a comparison of SIGIR and CHIIR venues.',
+    intent: 'User is asking to compare SIGIR and CHIIR venues.',
     columns: [
       { key: 'metric', label: 'Metric', type: 'text' },
       { key: 'SIGIR', label: 'SIGIR', type: 'text' },
@@ -181,7 +181,7 @@ GROUP BY ?venueName`
   },
 
   'why-sigir': {
-    response_text: 'Here is why SIGIR is a prominent venue in information retrieval research.',
+    intent: 'User is asking why SIGIR is a prominent venue.',
     observations: [
       'SIGIR (ACM Special Interest Group on Information Retrieval) is the premier venue for information retrieval research. It accounts for the highest publication count in the current result set.',
       'The venue has been active since the 1970s and consistently attracts top researchers in search, retrieval, and exploratory search specifically.',
@@ -208,7 +208,8 @@ GROUP BY ?venueName`
   },
 
   unsupported: {
-    response_text: 'I\'m sorry, I couldn\'t find relevant information for your query.',
+    intent: 'User is asking about a topic that cannot be answered with available data.',
+    limitation: 'I don\'t have data on this topic. The knowledge graph only contains information about authors, venues, and publications.',
     suggestions: ['Which authors published in this venue?', 'How did publication activity change over time?', 'Show me the most cited papers']
   }
 };

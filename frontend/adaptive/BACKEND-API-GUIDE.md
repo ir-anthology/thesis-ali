@@ -114,7 +114,7 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
 
 ```json
 {
-  "response_text": "Here are the most prolific authors in the IR Anthology.",
+  "intent": "User is asking for the most prolific authors based on publication count.",
   "columns": [
     { "key": "author", "label": "Author", "type": "text", "sortable": true },
     { "key": "publications", "label": "Publications", "type": "number", "sortable": true },
@@ -161,7 +161,9 @@ Health check endpoint.
 |-------|------|----------|-------------|
 | `role` | string | Yes | `"user"` or `"assistant"` |
 | `content` | string | Yes | The message text |
-| `response_text` | string | No | Natural language response (assistant turns only) |
+| `intent` | string | No | Backend's understanding of user intent (assistant turns only) |
+| `clarification` | string | No | Backend asks user for more info (assistant turns only) |
+| `limitation` | string | No | Query cannot be answered with available data (assistant turns only) |
 | `columns` | ResultColumn[] | No | Column definitions (assistant turns only) |
 | `rows` | ResultRow[] | No | Data rows (assistant turns only) |
 | `observations` | string[] | No | LLM-generated insights (assistant turns only) |
@@ -176,7 +178,9 @@ Health check endpoint.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `response_text` | string | Natural language response from the backend |
+| `intent` | string | Backend's understanding of user intent (optional) |
+| `clarification` | string | Backend asks user for more info (optional) |
+| `limitation` | string | Query cannot be answered with available data (optional) |
 | `columns` | ResultColumn[] | Column definitions for tabular data (optional) |
 | `rows` | ResultRow[] | Data rows (optional) |
 | `observations` | string[] | LLM-generated insights (optional) |
@@ -215,7 +219,7 @@ The response is a flat object with optional fields. The UI renders only what's p
 
 ```json
 {
-  "response_text": "Here are the most prolific authors.",
+  "intent": "User is asking for the most prolific authors based on publication count.",
   "columns": [...],
   "rows": [...],
   "observations": ["..."],
@@ -228,18 +232,31 @@ The response is a flat object with optional fields. The UI renders only what's p
 
 ```json
 {
-  "response_text": "I couldn't find relevant information.",
+  "intent": "User is asking about a topic that cannot be answered with available data.",
+  "limitation": "I don't have data on this topic.",
   "suggestions": ["Try asking about authors", "Ask about venues"]
+}
+```
+
+### Clarification Needed
+
+```json
+{
+  "intent": "User is asking about authors or venues.",
+  "clarification": "Did you mean authors or venues?",
+  "suggestions": ["Show me authors", "Show me venues"]
 }
 ```
 
 ### Key Rules
 
-1. **`response_text`** — Always present. Natural language response from the backend.
-2. **`columns` + `rows`** — Present together for tabular data. Absent for unsupported queries.
-3. **`observations`** — Optional. LLM-generated insights about the data.
-4. **`suggestions`** — Optional. Follow-up questions the user might ask.
-5. **`sparql_query`** — Optional. The SPARQL query used to retrieve data.
+1. **`intent`** — Backend's understanding of user intent. Rendered first if present.
+2. **`limitation`** — Query cannot be answered. Rendered second if present.
+3. **`clarification`** — Backend asks for more info. Rendered third if present.
+4. **`columns` + `rows`** — Present together for tabular data. Absent for unsupported queries.
+5. **`observations`** — Optional. LLM-generated insights about the data.
+6. **`suggestions`** — Optional. Follow-up questions the user might ask.
+7. **`sparql_query`** — Optional. The SPARQL query used to retrieve data.
   ],
   "rows": [
     { "author": "Marti A. Hearst", "publications": 42 },
@@ -483,7 +500,9 @@ class ResultColumn(BaseModel):
 class HistoryTurn(BaseModel):
     role: str  # "user" or "assistant"
     content: str
-    response_text: Optional[str] = None
+    intent: Optional[str] = None
+    clarification: Optional[str] = None
+    limitation: Optional[str] = None
     columns: Optional[list[ResultColumn]] = None
     rows: Optional[list[dict]] = None
     observations: Optional[list[str]] = None
@@ -495,7 +514,9 @@ class ChatRequest(BaseModel):
     history: list[HistoryTurn] = []
 
 class ExplorationResponse(BaseModel):
-    response_text: str
+    intent: Optional[str] = None
+    clarification: Optional[str] = None
+    limitation: Optional[str] = None
     columns: Optional[list[ResultColumn]] = None
     rows: Optional[list[dict]] = None
     observations: Optional[list[str]] = None
@@ -524,7 +545,9 @@ interface ResultRow {
 interface HistoryTurn {
   role: 'user' | 'assistant';
   content: string;
-  response_text?: string;
+  intent?: string;
+  clarification?: string;
+  limitation?: string;
   columns?: ResultColumn[];
   rows?: ResultRow[];
   observations?: string[];
@@ -533,7 +556,9 @@ interface HistoryTurn {
 }
 
 interface ExplorationResponse {
-  response_text: string;
+  intent?: string;
+  clarification?: string;
+  limitation?: string;
   columns?: ResultColumn[];
   rows?: ResultRow[];
   observations?: string[];
@@ -597,8 +622,8 @@ curl -X POST http://localhost:8000/api/exploration \
 ### Validation Checklist
 
 - [ ] Request has `message` and `history` fields
-- [ ] Response has `response_text` field
+- [ ] Response has at least one of: `intent`, `clarification`, `limitation`
 - [ ] If `columns` present, `rows` must also be present
 - [ ] Column `key` values match row object keys
 - [ ] Sortable columns have `sortable: true`
-- [ ] Unsupported queries have `response_text` and `suggestions` (no `columns`/`rows`)
+- [ ] Unsupported queries have `limitation` and `suggestions` (no `columns`/`rows`)

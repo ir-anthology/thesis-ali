@@ -5,6 +5,7 @@
  * It provides a reactive store that handles:
  * - Conversation history (user and assistant turns)
  * - Per-turn response data (columns, rows, observations, suggestions)
+ * - Per-turn intent, clarification, limitation
  *
  * The store uses mock data for demonstration purposes.
  * In production, it would integrate with a backend API.
@@ -24,12 +25,14 @@ function createExplorationStore() {
   let loading = $state(false);
   let error = $state<string | null>(null);
 
+  let intentByTurn = $state<Map<string, string>>(new Map());
+  let clarificationByTurn = $state<Map<string, string>>(new Map());
+  let limitationByTurn = $state<Map<string, string>>(new Map());
   let columnsByTurn = $state<Map<string, ResultColumn[]>>(new Map());
   let rowsByTurn = $state<Map<string, ResultRow[]>>(new Map());
   let observationsByTurn = $state<Map<string, string[]>>(new Map());
   let suggestionsByTurn = $state<Map<string, string[]>>(new Map());
   let sparqlByTurn = $state<Map<string, string>>(new Map());
-  let responseTextByTurn = $state<Map<string, string>>(new Map());
 
   function generateId(): string {
     return crypto.randomUUID();
@@ -43,7 +46,9 @@ function createExplorationStore() {
       return {
         role: 'assistant',
         content: turn.content,
-        response_text: responseTextByTurn.get(turn.id),
+        intent: intentByTurn.get(turn.id),
+        clarification: clarificationByTurn.get(turn.id),
+        limitation: limitationByTurn.get(turn.id),
         columns: columnsByTurn.get(turn.id),
         rows: rowsByTurn.get(turn.id),
         observations: observationsByTurn.get(turn.id),
@@ -107,14 +112,23 @@ function createExplorationStore() {
     const response = findMockResponse(content);
 
     if (response) {
+      const displayText = response.clarification || response.limitation || response.intent || '';
+
       conversation = conversation.map((t) =>
         t.id === assistantTurn.id
-          ? { ...t, content: response.response_text, loading: false }
+          ? { ...t, content: displayText, loading: false }
           : t
       );
 
-      responseTextByTurn = new Map(responseTextByTurn).set(assistantTurn.id, response.response_text);
-
+      if (response.intent) {
+        intentByTurn = new Map(intentByTurn).set(assistantTurn.id, response.intent);
+      }
+      if (response.clarification) {
+        clarificationByTurn = new Map(clarificationByTurn).set(assistantTurn.id, response.clarification);
+      }
+      if (response.limitation) {
+        limitationByTurn = new Map(limitationByTurn).set(assistantTurn.id, response.limitation);
+      }
       if (response.columns) {
         columnsByTurn = new Map(columnsByTurn).set(assistantTurn.id, response.columns);
       }
@@ -163,12 +177,14 @@ function createExplorationStore() {
     conversation = [];
     loading = false;
     error = null;
+    intentByTurn = new Map();
+    clarificationByTurn = new Map();
+    limitationByTurn = new Map();
     columnsByTurn = new Map();
     rowsByTurn = new Map();
     observationsByTurn = new Map();
     suggestionsByTurn = new Map();
     sparqlByTurn = new Map();
-    responseTextByTurn = new Map();
   }
 
   return {
@@ -180,6 +196,15 @@ function createExplorationStore() {
     },
     get error(): string | null {
       return error;
+    },
+    get intentByTurn(): Map<string, string> {
+      return intentByTurn;
+    },
+    get clarificationByTurn(): Map<string, string> {
+      return clarificationByTurn;
+    },
+    get limitationByTurn(): Map<string, string> {
+      return limitationByTurn;
     },
     get columnsByTurn(): Map<string, ResultColumn[]> {
       return columnsByTurn;
@@ -195,9 +220,6 @@ function createExplorationStore() {
     },
     get sparqlByTurn(): Map<string, string> {
       return sparqlByTurn;
-    },
-    get responseTextByTurn(): Map<string, string> {
-      return responseTextByTurn;
     },
     sendMessage,
     selectSuggestion,

@@ -8,6 +8,9 @@
 
   let {
     conversation,
+    intentByTurn,
+    clarificationByTurn,
+    limitationByTurn,
     columnsByTurn,
     rowsByTurn,
     observationsByTurn,
@@ -16,6 +19,9 @@
     onSelectSuggestion
   }: {
     conversation: ConversationTurn[];
+    intentByTurn: Map<string, string>;
+    clarificationByTurn: Map<string, string>;
+    limitationByTurn: Map<string, string>;
     columnsByTurn: Map<string, ResultColumn[]>;
     rowsByTurn: Map<string, ResultRow[]>;
     observationsByTurn: Map<string, string[]>;
@@ -77,6 +83,9 @@
       {:else}
         <AssistantMessage
           message={turn}
+          intent={intentByTurn.get(turn.id)}
+          clarification={clarificationByTurn.get(turn.id)}
+          limitation={limitationByTurn.get(turn.id)}
           columns={columnsByTurn.get(turn.id)}
           rows={rowsByTurn.get(turn.id)}
           observations={observationsByTurn.get(turn.id)}
