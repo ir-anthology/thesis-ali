@@ -2,8 +2,22 @@ import type { ExplorationResponse } from '$lib/types/exploration';
 
 export const mockResponses: Record<string, ExplorationResponse> = {
   'prolific-authors': {
-    status: 'answerable',
     response_text: 'Here are the most prolific authors in the IR Anthology.',
+    columns: [
+      { key: 'author', label: 'Author', type: 'text', sortable: true },
+      { key: 'publications', label: 'Publications', type: 'number', sortable: true },
+      { key: 'venues', label: 'Venues', type: 'number', sortable: true },
+      { key: 'years', label: 'Years', type: 'text' }
+    ],
+    rows: [
+      { author: 'Marti A. Hearst', publications: 42, venues: 12, years: '1995–2024' },
+      { author: 'Ryen W. White', publications: 38, venues: 10, years: '2003–2024' },
+      { author: 'Gary Marchionini', publications: 31, venues: 9, years: '1997–2023' },
+      { author: 'Daniel M. Russell', publications: 27, venues: 8, years: '2000–2022' },
+      { author: 'Andrei Z. Broder', publications: 24, venues: 7, years: '1998–2021' }
+    ],
+    observations: ['Marti A. Hearst leads with 42 publications spanning nearly three decades, indicating sustained research activity in exploratory search.'],
+    suggestions: ['Only consider the last five years', 'Which venues do these authors publish in?', 'Show me how this changed over time'],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -19,32 +33,26 @@ WHERE {
 }
 GROUP BY ?author
 ORDER BY DESC(?publications)
-LIMIT 5`,
-    result: {
-      type: 'facet_table',
-      columns: [
-        { key: 'author', label: 'Author', type: 'text', sortable: true },
-        { key: 'publications', label: 'Publications', type: 'number', sortable: true },
-        { key: 'venues', label: 'Venues', type: 'number', sortable: true },
-        { key: 'years', label: 'Years', type: 'text' }
-      ],
-      rows: [
-        { author: 'Marti A. Hearst', publications: 42, venues: 12, years: '1995–2024' },
-        { author: 'Ryen W. White', publications: 38, venues: 10, years: '2003–2024' },
-        { author: 'Gary Marchionini', publications: 31, venues: 9, years: '1997–2023' },
-        { author: 'Daniel M. Russell', publications: 27, venues: 8, years: '2000–2022' },
-        { author: 'Andrei Z. Broder', publications: 24, venues: 7, years: '1998–2021' }
-      ]
-    },
-    interpretation: {
-      observations: ['Marti A. Hearst leads with 42 publications spanning nearly three decades, indicating sustained research activity in exploratory search.'],
-      suggestions: ['Only consider the last five years', 'Which venues do these authors publish in?', 'Show me how this changed over time']
-    }
+LIMIT 5`
   },
 
   'filtered-years': {
-    status: 'answerable',
     response_text: 'Here are the most prolific authors from the last five years.',
+    columns: [
+      { key: 'author', label: 'Author', type: 'text', sortable: true },
+      { key: 'publications', label: 'Publications', type: 'number', sortable: true },
+      { key: 'venues', label: 'Venues', type: 'number', sortable: true },
+      { key: 'years', label: 'Years', type: 'text' }
+    ],
+    rows: [
+      { author: 'Marti A. Hearst', publications: 18, venues: 6, years: '2020–2024' },
+      { author: 'Ryen W. White', publications: 16, venues: 5, years: '2020–2024' },
+      { author: 'Gary Marchionini', publications: 12, venues: 4, years: '2020–2023' },
+      { author: 'Daniel M. Russell', publications: 9, venues: 3, years: '2020–2022' },
+      { author: 'Andrei Z. Broder', publications: 7, venues: 3, years: '2020–2021' }
+    ],
+    observations: ['Filtering to the last five years reduces the result set. Marti A. Hearst still leads with 18 publications.'],
+    suggestions: ['Which venues do these authors publish in?', 'Show me how this changed over time', 'Compare the top two authors'],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -61,32 +69,26 @@ WHERE {
 }
 GROUP BY ?author
 ORDER BY DESC(?publications)
-LIMIT 5`,
-    result: {
-      type: 'facet_table',
-      columns: [
-        { key: 'author', label: 'Author', type: 'text', sortable: true },
-        { key: 'publications', label: 'Publications', type: 'number', sortable: true },
-        { key: 'venues', label: 'Venues', type: 'number', sortable: true },
-        { key: 'years', label: 'Years', type: 'text' }
-      ],
-      rows: [
-        { author: 'Marti A. Hearst', publications: 18, venues: 6, years: '2020–2024' },
-        { author: 'Ryen W. White', publications: 16, venues: 5, years: '2020–2024' },
-        { author: 'Gary Marchionini', publications: 12, venues: 4, years: '2020–2023' },
-        { author: 'Daniel M. Russell', publications: 9, venues: 3, years: '2020–2022' },
-        { author: 'Andrei Z. Broder', publications: 7, venues: 3, years: '2020–2021' }
-      ]
-    },
-    interpretation: {
-      observations: ['Filtering to the last five years reduces the result set. Marti A. Hearst still leads with 18 publications.'],
-      suggestions: ['Which venues do these authors publish in?', 'Show me how this changed over time', 'Compare the top two authors']
-    }
+LIMIT 5`
   },
 
   venues: {
-    status: 'answerable',
     response_text: 'Here are the venues where the top authors publish.',
+    columns: [
+      { key: 'venue', label: 'Venue', type: 'text', sortable: true },
+      { key: 'publications', label: 'Publications', type: 'number', sortable: true },
+      { key: 'authors', label: 'Authors', type: 'number', sortable: true },
+      { key: 'years', label: 'Years', type: 'text' }
+    ],
+    rows: [
+      { venue: 'SIGIR', publications: 18, authors: 5, years: '2020–2025' },
+      { venue: 'CHIIR', publications: 9, authors: 4, years: '2021–2025' },
+      { venue: 'CHI', publications: 7, authors: 3, years: '2020–2024' },
+      { venue: 'UIST', publications: 5, authors: 2, years: '2020–2023' },
+      { venue: 'JASIST', publications: 4, authors: 3, years: '2020–2024' }
+    ],
+    observations: ['SIGIR dominates as the primary venue, accounting for 18 publications across all five authors.'],
+    suggestions: ['Show me how this changed over time', 'Compare SIGIR and CHIIR', 'Why is SIGIR prominent?'],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -103,32 +105,27 @@ WHERE {
 }
 GROUP BY ?venue
 ORDER BY DESC(?publications)
-LIMIT 5`,
-    result: {
-      type: 'facet_table',
-      columns: [
-        { key: 'venue', label: 'Venue', type: 'text', sortable: true },
-        { key: 'publications', label: 'Publications', type: 'number', sortable: true },
-        { key: 'authors', label: 'Authors', type: 'number', sortable: true },
-        { key: 'years', label: 'Years', type: 'text' }
-      ],
-      rows: [
-        { venue: 'SIGIR', publications: 18, authors: 5, years: '2020–2025' },
-        { venue: 'CHIIR', publications: 9, authors: 4, years: '2021–2025' },
-        { venue: 'CHI', publications: 7, authors: 3, years: '2020–2024' },
-        { venue: 'UIST', publications: 5, authors: 2, years: '2020–2023' },
-        { venue: 'JASIST', publications: 4, authors: 3, years: '2020–2024' }
-      ]
-    },
-    interpretation: {
-      observations: ['SIGIR dominates as the primary venue, accounting for 18 publications across all five authors.'],
-      suggestions: ['Show me how this changed over time', 'Compare SIGIR and CHIIR', 'Why is SIGIR prominent?']
-    }
+LIMIT 5`
   },
 
   timeline: {
-    status: 'answerable',
     response_text: 'Here is the publication activity over time for the top venues.',
+    columns: [
+      { key: 'year', label: 'Year', type: 'text' },
+      { key: 'SIGIR', label: 'SIGIR', type: 'number' },
+      { key: 'CHIIR', label: 'CHIIR', type: 'number' },
+      { key: 'CHI', label: 'CHI', type: 'number' }
+    ],
+    rows: [
+      { year: '2020', SIGIR: 12, CHIIR: 3, CHI: 2 },
+      { year: '2021', SIGIR: 14, CHIIR: 4, CHI: 2 },
+      { year: '2022', SIGIR: 15, CHIIR: 5, CHI: 1 },
+      { year: '2023', SIGIR: 16, CHIIR: 6, CHI: 3 },
+      { year: '2024', SIGIR: 18, CHIIR: 7, CHI: 2 },
+      { year: '2025', SIGIR: 19, CHIIR: 8, CHI: 2 }
+    ],
+    observations: ['Publication activity at SIGIR shows a steady upward trend, growing from 12 to 19 publications over the period. CHIIR also shows consistent growth.'],
+    suggestions: ['Compare SIGIR and CHIIR', 'Which authors contributed most to this growth?', 'Go back to all authors'],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -145,33 +142,25 @@ WHERE {
   FILTER(?venueName IN ("SIGIR", "CHIIR", "CHI"))
 }
 GROUP BY ?year
-ORDER BY ?year`,
-    result: {
-      type: 'facet_table',
-      columns: [
-        { key: 'year', label: 'Year', type: 'text' },
-        { key: 'SIGIR', label: 'SIGIR', type: 'number' },
-        { key: 'CHIIR', label: 'CHIIR', type: 'number' },
-        { key: 'CHI', label: 'CHI', type: 'number' }
-      ],
-      rows: [
-        { year: '2020', SIGIR: 12, CHIIR: 3, CHI: 2 },
-        { year: '2021', SIGIR: 14, CHIIR: 4, CHI: 2 },
-        { year: '2022', SIGIR: 15, CHIIR: 5, CHI: 1 },
-        { year: '2023', SIGIR: 16, CHIIR: 6, CHI: 3 },
-        { year: '2024', SIGIR: 18, CHIIR: 7, CHI: 2 },
-        { year: '2025', SIGIR: 19, CHIIR: 8, CHI: 2 }
-      ]
-    },
-    interpretation: {
-      observations: ['Publication activity at SIGIR shows a steady upward trend, growing from 12 to 19 publications over the period. CHIIR also shows consistent growth.'],
-      suggestions: ['Compare SIGIR and CHIIR', 'Which authors contributed most to this growth?', 'Go back to all authors']
-    }
+ORDER BY ?year`
   },
 
   comparison: {
-    status: 'answerable',
     response_text: 'Here is a comparison of SIGIR and CHIIR venues.',
+    columns: [
+      { key: 'metric', label: 'Metric', type: 'text' },
+      { key: 'SIGIR', label: 'SIGIR', type: 'text' },
+      { key: 'CHIIR', label: 'CHIIR', type: 'text' }
+    ],
+    rows: [
+      { metric: 'Total Publications', SIGIR: '18', CHIIR: '9' },
+      { metric: 'Authors', SIGIR: '5', CHIIR: '4' },
+      { metric: 'Years Active', SIGIR: '2020–2025', CHIIR: '2021–2025' },
+      { metric: 'Avg Publications/Year', SIGIR: '3.0', CHIIR: '1.8' },
+      { metric: 'Growth Trend', SIGIR: 'Increasing', CHIIR: 'Stable' }
+    ],
+    observations: ['SIGIR has twice the publication volume of CHIIR and shows stronger growth. However, CHIIR has been steadily gaining relevance since its inception.'],
+    suggestions: ['Why is SIGIR prominent?', 'Which authors publish in both venues?', 'Show publication trends for all venues'],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -188,31 +177,17 @@ WHERE {
   FILTER(?venueName IN ("SIGIR", "CHIIR"))
   FILTER(?year >= 2020 && ?year <= 2025)
 }
-GROUP BY ?venueName`,
-    result: {
-      type: 'facet_table',
-      columns: [
-        { key: 'metric', label: 'Metric', type: 'text' },
-        { key: 'SIGIR', label: 'SIGIR', type: 'text' },
-        { key: 'CHIIR', label: 'CHIIR', type: 'text' }
-      ],
-      rows: [
-        { metric: 'Total Publications', SIGIR: '18', CHIIR: '9' },
-        { metric: 'Authors', SIGIR: '5', CHIIR: '4' },
-        { metric: 'Years Active', SIGIR: '2020–2025', CHIIR: '2021–2025' },
-        { metric: 'Avg Publications/Year', SIGIR: '3.0', CHIIR: '1.8' },
-        { metric: 'Growth Trend', SIGIR: 'Increasing', CHIIR: 'Stable' }
-      ]
-    },
-    interpretation: {
-      observations: ['SIGIR has twice the publication volume of CHIIR and shows stronger growth. However, CHIIR has been steadily gaining relevance since its inception.'],
-      suggestions: ['Why is SIGIR prominent?', 'Which authors publish in both venues?', 'Show publication trends for all venues']
-    }
+GROUP BY ?venueName`
   },
 
   'why-sigir': {
-    status: 'answerable',
     response_text: 'Here is why SIGIR is a prominent venue in information retrieval research.',
+    observations: [
+      'SIGIR (ACM Special Interest Group on Information Retrieval) is the premier venue for information retrieval research. It accounts for the highest publication count in the current result set.',
+      'The venue has been active since the 1970s and consistently attracts top researchers in search, retrieval, and exploratory search specifically.',
+      'In the current filtered context (top authors, last 5 years), SIGIR represents 38% of all publications.'
+    ],
+    suggestions: ['Compare SIGIR and CHIIR', 'Which authors publish most at SIGIR?', 'Show all venues'],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -229,33 +204,11 @@ WHERE {
   FILTER(?venueName = "SIGIR")
   FILTER(?year >= 2020 && ?year <= 2025)
 }
-GROUP BY ?venueName`,
-    result: {
-      type: 'facet_table',
-      columns: [],
-      rows: []
-    },
-    interpretation: {
-      observations: [
-        'SIGIR (ACM Special Interest Group on Information Retrieval) is the premier venue for information retrieval research. It accounts for the highest publication count in the current result set.',
-        'The venue has been active since the 1970s and consistently attracts top researchers in search, retrieval, and exploratory search specifically.',
-        'In the current filtered context (top authors, last 5 years), SIGIR represents 38% of all publications.'
-      ],
-      suggestions: ['Compare SIGIR and CHIIR', 'Which authors publish most at SIGIR?', 'Show all venues']
-    }
+GROUP BY ?venueName`
   },
 
   unsupported: {
-    status: 'unsupported',
     response_text: 'I\'m sorry, I couldn\'t find relevant information for your query.',
-    result: {
-      type: 'facet_table',
-      columns: [],
-      rows: []
-    },
-    interpretation: {
-      observations: [],
-      suggestions: ['Which authors published in this venue?', 'How did publication activity change over time?', 'Show me the most cited papers']
-    }
+    suggestions: ['Which authors published in this venue?', 'How did publication activity change over time?', 'Show me the most cited papers']
   }
 };

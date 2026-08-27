@@ -4,8 +4,7 @@
  * This module manages the entire exploration state using Svelte 5 runes.
  * It provides a reactive store that handles:
  * - Conversation history (user and assistant turns)
- * - Current result data and visualizations
- * - LLM-generated observations and follow-up suggestions
+ * - Per-turn response data (columns, rows, observations, suggestions)
  *
  * The store uses mock data for demonstration purposes.
  * In production, it would integrate with a backend API.
@@ -13,26 +12,23 @@
 
 import type {
   ConversationTurn,
-  ResultState,
+  ResultColumn,
+  ResultRow,
   ExplorationResponse,
-  ResponseStatus,
   HistoryTurn
 } from '$lib/types/exploration';
 import { mockResponses } from '$lib/data/mock-responses';
 
 function createExplorationStore() {
   let conversation = $state<ConversationTurn[]>([]);
-  let result = $state<ResultState | null>(null);
-  let observations = $state<string[]>([]);
-  let suggestions = $state<string[]>([]);
   let loading = $state(false);
   let error = $state<string | null>(null);
 
-  let resultsByTurn = $state<Map<string, ResultState>>(new Map());
+  let columnsByTurn = $state<Map<string, ResultColumn[]>>(new Map());
+  let rowsByTurn = $state<Map<string, ResultRow[]>>(new Map());
   let observationsByTurn = $state<Map<string, string[]>>(new Map());
   let suggestionsByTurn = $state<Map<string, string[]>>(new Map());
   let sparqlByTurn = $state<Map<string, string>>(new Map());
-  let statusByTurn = $state<Map<string, ResponseStatus>>(new Map());
   let responseTextByTurn = $state<Map<string, string>>(new Map());
 
   function generateId(): string {
@@ -48,11 +44,11 @@ function createExplorationStore() {
         role: 'assistant',
         content: turn.content,
         response_text: responseTextByTurn.get(turn.id),
-        result: resultsByTurn.get(turn.id),
+        columns: columnsByTurn.get(turn.id),
+        rows: rowsByTurn.get(turn.id),
         observations: observationsByTurn.get(turn.id),
         suggestions: suggestionsByTurn.get(turn.id),
-        sparql_query: sparqlByTurn.get(turn.id),
-        status: statusByTurn.get(turn.id)
+        sparql_query: sparqlByTurn.get(turn.id)
       };
     });
   }
@@ -117,18 +113,23 @@ function createExplorationStore() {
           : t
       );
 
-      resultsByTurn = new Map(resultsByTurn).set(assistantTurn.id, response.result);
-      observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.interpretation.observations);
-      suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.interpretation.suggestions);
       responseTextByTurn = new Map(responseTextByTurn).set(assistantTurn.id, response.response_text);
+
+      if (response.columns) {
+        columnsByTurn = new Map(columnsByTurn).set(assistantTurn.id, response.columns);
+      }
+      if (response.rows) {
+        rowsByTurn = new Map(rowsByTurn).set(assistantTurn.id, response.rows);
+      }
+      if (response.observations) {
+        observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.observations);
+      }
+      if (response.suggestions) {
+        suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.suggestions);
+      }
       if (response.sparql_query) {
         sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, response.sparql_query);
       }
-      statusByTurn = new Map(statusByTurn).set(assistantTurn.id, response.status);
-
-      result = response.result;
-      observations = response.interpretation.observations;
-      suggestions = response.interpretation.suggestions;
     } else {
       conversation = conversation.map((t) =>
         t.id === assistantTurn.id
@@ -160,16 +161,13 @@ function createExplorationStore() {
 
   function clearExploration(): void {
     conversation = [];
-    result = null;
-    observations = [];
-    suggestions = [];
     loading = false;
     error = null;
-    resultsByTurn = new Map();
+    columnsByTurn = new Map();
+    rowsByTurn = new Map();
     observationsByTurn = new Map();
     suggestionsByTurn = new Map();
     sparqlByTurn = new Map();
-    statusByTurn = new Map();
     responseTextByTurn = new Map();
   }
 
@@ -177,23 +175,17 @@ function createExplorationStore() {
     get conversation(): ConversationTurn[] {
       return conversation;
     },
-    get result(): ResultState | null {
-      return result;
-    },
-    get observations(): string[] {
-      return observations;
-    },
-    get suggestions(): string[] {
-      return suggestions;
-    },
     get loading(): boolean {
       return loading;
     },
     get error(): string | null {
       return error;
     },
-    get resultsByTurn(): Map<string, ResultState> {
-      return resultsByTurn;
+    get columnsByTurn(): Map<string, ResultColumn[]> {
+      return columnsByTurn;
+    },
+    get rowsByTurn(): Map<string, ResultRow[]> {
+      return rowsByTurn;
     },
     get observationsByTurn(): Map<string, string[]> {
       return observationsByTurn;
@@ -203,9 +195,6 @@ function createExplorationStore() {
     },
     get sparqlByTurn(): Map<string, string> {
       return sparqlByTurn;
-    },
-    get statusByTurn(): Map<string, ResponseStatus> {
-      return statusByTurn;
     },
     get responseTextByTurn(): Map<string, string> {
       return responseTextByTurn;

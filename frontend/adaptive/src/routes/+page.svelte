@@ -2,10 +2,6 @@
   import ConversationView from '$lib/components/Conversation/ConversationView.svelte';
   import PromptInput from '$lib/components/Input/PromptInput.svelte';
   import { exploration } from '$lib/stores/exploration.svelte';
-
-  let resultsMap = $derived(exploration.resultsByTurn);
-  let observationsMap = $derived(exploration.observationsByTurn);
-  let suggestionsMap = $derived(exploration.suggestionsByTurn);
 </script>
 
 <svelte:head>
@@ -26,11 +22,11 @@
 
     <ConversationView
       conversation={exploration.conversation}
-      results={resultsMap}
-      observations={observationsMap}
-      suggestions={suggestionsMap}
+      columnsByTurn={exploration.columnsByTurn}
+      rowsByTurn={exploration.rowsByTurn}
+      observationsByTurn={exploration.observationsByTurn}
+      suggestionsByTurn={exploration.suggestionsByTurn}
       sparqlByTurn={exploration.sparqlByTurn}
-      statusByTurn={exploration.statusByTurn}
       onSelectSuggestion={(s) => exploration.selectSuggestion(s)}
     />
 

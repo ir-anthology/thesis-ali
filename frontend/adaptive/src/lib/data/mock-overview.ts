@@ -1,7 +1,6 @@
-import type { ResultState } from '$lib/types/exploration';
+import type { ResultColumn, ResultRow } from '$lib/types/exploration';
 
-export const overviewData: ResultState & { title: string } = {
-  type: 'facet_table',
+export const overviewData: { title: string; columns: ResultColumn[]; rows: ResultRow[] } = {
   title: 'Knowledge Graph Overview',
   columns: [
     { key: 'authors', label: 'Authors', type: 'number' },

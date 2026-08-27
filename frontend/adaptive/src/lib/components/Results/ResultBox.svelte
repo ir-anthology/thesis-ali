@@ -1,13 +1,15 @@
 <script lang="ts">
-  import type { ResultState } from '$lib/types/exploration';
-  import ExplorationRenderer from './ExplorationRenderer.svelte';
+  import type { ResultColumn, ResultRow } from '$lib/types/exploration';
+  import FacetTable from './FacetTable.svelte';
   import SparqlBlock from './SparqlBlock.svelte';
 
   let {
-    result,
+    columns,
+    rows,
     sparqlQuery
   }: {
-    result: ResultState;
+    columns: ResultColumn[];
+    rows: ResultRow[];
     sparqlQuery?: string;
   } = $props();
 
@@ -44,7 +46,7 @@
     </div>
   {:else}
     <div role="tabpanel">
-      <ExplorationRenderer {result} />
+      <FacetTable {columns} {rows} />
     </div>
   {/if}
 </div>

@@ -7,19 +7,12 @@
  *
  * Key Concepts:
  * - Conversation: A series of user/assistant turns that form the exploration context
- * - Result: The structured data returned from the knowledge graph
- * - Observations: LLM-generated insights about the current exploration state
- * - Suggestions: Suggested next questions based on the current context
+ * - Response: A flat structure with optional fields for table data, observations, and suggestions
+ * - The UI renders only what's present (columns/rows for tables, observations, suggestions)
  */
-
-/** The type of visualization to render for result data */
-export type ResultType = 'facet_table';
 
 /** The role of a message in the conversation */
 export type MessageRole = 'user' | 'assistant';
-
-/** The status of an exploration response from the backend */
-export type ResponseStatus = 'answerable' | 'unsupported' | 'error';
 
 export interface ConversationTurn {
   id: string;
@@ -41,32 +34,22 @@ export interface ResultRow {
   [key: string]: string | number;
 }
 
-export interface ResultState {
-  type: ResultType;
-  columns: ResultColumn[];
-  rows: ResultRow[];
-}
-
-export interface InterpretationState {
-  observations: string[];
-  suggestions: string[];
-}
-
 export interface HistoryTurn {
   role: MessageRole;
   content: string;
   response_text?: string;
-  result?: ResultState;
+  columns?: ResultColumn[];
+  rows?: ResultRow[];
   observations?: string[];
   suggestions?: string[];
   sparql_query?: string;
-  status?: ResponseStatus;
 }
 
 export interface ExplorationResponse {
-  status: ResponseStatus;
   response_text: string;
-  result: ResultState;
-  interpretation: InterpretationState;
+  columns?: ResultColumn[];
+  rows?: ResultRow[];
+  observations?: string[];
+  suggestions?: string[];
   sparql_query?: string;
 }

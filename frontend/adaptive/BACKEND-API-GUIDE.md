@@ -114,25 +114,19 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
 
 ```json
 {
-  "status": "answerable",
   "response_text": "Here are the most prolific authors in the IR Anthology.",
-  "result": {
-    "type": "facet_table",
-    "columns": [
-      { "key": "author", "label": "Author", "type": "text", "sortable": true },
-      { "key": "publications", "label": "Publications", "type": "number", "sortable": true },
-      { "key": "venues", "label": "Venues", "type": "number", "sortable": true },
-      { "key": "years", "label": "Years", "type": "text" }
-    ],
-    "rows": [
-      { "author": "Marti A. Hearst", "publications": 42, "venues": 12, "years": "1995–2024" },
-      { "author": "Ryen W. White", "publications": 38, "venues": 10, "years": "2003–2024" }
-    ]
-  },
-  "interpretation": {
-    "observations": ["Marti A. Hearst leads with 42 publications spanning nearly three decades."],
-    "suggestions": ["Only consider the last five years", "Which venues do these authors publish in?", "Show me how this changed over time"]
-  },
+  "columns": [
+    { "key": "author", "label": "Author", "type": "text", "sortable": true },
+    { "key": "publications", "label": "Publications", "type": "number", "sortable": true },
+    { "key": "venues", "label": "Venues", "type": "number", "sortable": true },
+    { "key": "years", "label": "Years", "type": "text" }
+  ],
+  "rows": [
+    { "author": "Marti A. Hearst", "publications": 42, "venues": 12, "years": "1995–2024" },
+    { "author": "Ryen W. White", "publications": 38, "venues": 10, "years": "2003–2024" }
+  ],
+  "observations": ["Marti A. Hearst leads with 42 publications spanning nearly three decades."],
+  "suggestions": ["Only consider the last five years", "Which venues do these authors publish in?", "Show me how this changed over time"],
   "sparql_query": "PREFIX schema: <http://schema.org/>\nPREFIX dcterms: <http://purl.org/dc/terms/>\n\nSELECT ?author\n       (COUNT(?pub) AS ?publications)\n       (COUNT(DISTINCT ?venue) AS ?venues)\nWHERE {\n  ?pub a schema:ScholarlyArticle ;\n       dcterms:creator ?author ;\n       schema:isPartOf ?venue .\n}\nGROUP BY ?author\nORDER BY DESC(?publications)\nLIMIT 5"
 }
 ```
@@ -167,11 +161,12 @@ Health check endpoint.
 |-------|------|----------|-------------|
 | `role` | string | Yes | `"user"` or `"assistant"` |
 | `content` | string | Yes | The message text |
-| `result` | ResultState | No | Structured result data (assistant turns only) |
+| `response_text` | string | No | Natural language response (assistant turns only) |
+| `columns` | ResultColumn[] | No | Column definitions (assistant turns only) |
+| `rows` | ResultRow[] | No | Data rows (assistant turns only) |
 | `observations` | string[] | No | LLM-generated insights (assistant turns only) |
 | `suggestions` | string[] | No | Follow-up suggestions (assistant turns only) |
 | `sparql_query` | string | No | The SPARQL query used (assistant turns only) |
-| `status` | string | No | Response status: `"answerable"`, `"unsupported"`, or `"error"` (assistant turns only) |
 
 ---
 
@@ -181,19 +176,12 @@ Health check endpoint.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | `"answerable"`, `"unsupported"`, or `"error"` |
 | `response_text` | string | Natural language response from the backend |
-| `result` | ResultState | The structured result data |
-| `interpretation` | InterpretationState | LLM-generated insights |
-| `sparql_query` | string\|null | The SPARQL query used (only when `status === "answerable"`) |
-
-### ResultState
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | string | Visualization type (see Section 6) |
-| `columns` | ResultColumn[] | Column definitions for tabular data |
-| `rows` | ResultRow[] | Data rows |
+| `columns` | ResultColumn[] | Column definitions for tabular data (optional) |
+| `rows` | ResultRow[] | Data rows (optional) |
+| `observations` | string[] | LLM-generated insights (optional) |
+| `suggestions` | string[] | Recommended follow-up queries (optional) |
+| `sparql_query` | string | The SPARQL query used (optional) |
 
 ### ResultColumn
 
@@ -217,30 +205,41 @@ A JSON object where keys match column `key` values. Values are strings or number
 }
 ```
 
-### InterpretationState
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `observations` | string[] | LLM-generated insights about the data |
-| `suggestions` | string[] | Recommended follow-up queries |
-
 ---
 
-## 6. Result Types
+## 6. Response Structure
 
-The frontend supports 5 visualization types. The backend determines which type is most appropriate for the query.
+The response is a flat object with optional fields. The UI renders only what's present.
 
-### 6.1 `facet_table`
-
-Tabular data with sortable columns. Used for most queries.
+### Answerable Query (with table data)
 
 ```json
 {
-  "type": "facet_table",
-  "title": "Most Prolific Authors in Exploratory Search",
-  "columns": [
-    { "key": "author", "label": "Author", "type": "text", "sortable": true },
-    { "key": "publications", "label": "Publications", "type": "number", "sortable": true }
+  "response_text": "Here are the most prolific authors.",
+  "columns": [...],
+  "rows": [...],
+  "observations": ["..."],
+  "suggestions": ["..."],
+  "sparql_query": "PREFIX ..."
+}
+```
+
+### Unsupported Query (no table data)
+
+```json
+{
+  "response_text": "I couldn't find relevant information.",
+  "suggestions": ["Try asking about authors", "Ask about venues"]
+}
+```
+
+### Key Rules
+
+1. **`response_text`** — Always present. Natural language response from the backend.
+2. **`columns` + `rows`** — Present together for tabular data. Absent for unsupported queries.
+3. **`observations`** — Optional. LLM-generated insights about the data.
+4. **`suggestions`** — Optional. Follow-up questions the user might ask.
+5. **`sparql_query`** — Optional. The SPARQL query used to retrieve data.
   ],
   "rows": [
     { "author": "Marti A. Hearst", "publications": 42 },
@@ -481,35 +480,27 @@ class ResultColumn(BaseModel):
     type: str  # "text", "number", "badge", "link"
     sortable: bool = False
 
-class ResultState(BaseModel):
-    type: str  # "facet_table", "entity_list", "comparison", "timeline", "summary"
-    columns: list[ResultColumn]
-    rows: list[dict]
-
-class InterpretationState(BaseModel):
-    observations: list[str]
-    suggestions: list[str]
-
 class HistoryTurn(BaseModel):
     role: str  # "user" or "assistant"
     content: str
     response_text: Optional[str] = None
-    result: Optional[ResultState] = None
+    columns: Optional[list[ResultColumn]] = None
+    rows: Optional[list[dict]] = None
     observations: Optional[list[str]] = None
     suggestions: Optional[list[str]] = None
     sparql_query: Optional[str] = None
-    status: Optional[str] = None
 
 class ChatRequest(BaseModel):
     message: str
     history: list[HistoryTurn] = []
 
 class ExplorationResponse(BaseModel):
-    status: str  # "answerable", "unsupported", "error"
     response_text: str
-    result: ResultState
-    interpretation: InterpretationState
-    sparql_query: Optional[str] = None  # Only when status == "answerable"
+    columns: Optional[list[ResultColumn]] = None
+    rows: Optional[list[dict]] = None
+    observations: Optional[list[str]] = None
+    suggestions: Optional[list[str]] = None
+    sparql_query: Optional[str] = None
 ```
 
 ---
@@ -519,9 +510,6 @@ class ExplorationResponse(BaseModel):
 The frontend defines these types in `src/lib/types/exploration.ts`. The backend should return JSON that matches these shapes.
 
 ```typescript
-type ResultType = 'facet_table' | 'entity_list' | 'comparison' | 'timeline' | 'summary';
-type ResponseStatus = 'answerable' | 'unsupported' | 'error';
-
 interface ResultColumn {
   key: string;
   label: string;
@@ -533,22 +521,23 @@ interface ResultRow {
   [key: string]: string | number;
 }
 
-interface ResultState {
-  type: ResultType;
-  columns: ResultColumn[];
-  rows: ResultRow[];
-}
-
-interface InterpretationState {
-  observations: string[];
-  suggestions: string[];
+interface HistoryTurn {
+  role: 'user' | 'assistant';
+  content: string;
+  response_text?: string;
+  columns?: ResultColumn[];
+  rows?: ResultRow[];
+  observations?: string[];
+  suggestions?: string[];
+  sparql_query?: string;
 }
 
 interface ExplorationResponse {
-  status: ResponseStatus;
   response_text: string;
-  result: ResultState;
-  interpretation: InterpretationState;
+  columns?: ResultColumn[];
+  rows?: ResultRow[];
+  observations?: string[];
+  suggestions?: string[];
   sparql_query?: string;
 }
 ```
@@ -608,10 +597,8 @@ curl -X POST http://localhost:8000/api/exploration \
 ### Validation Checklist
 
 - [ ] Request has `message` and `history` fields
-- [ ] Response has `status` field
 - [ ] Response has `response_text` field
-- [ ] Response has `result` with `type`, `columns`, `rows`
-- [ ] Response has `interpretation` with `observations` and `suggestions` (string arrays)
+- [ ] If `columns` present, `rows` must also be present
 - [ ] Column `key` values match row object keys
 - [ ] Sortable columns have `sortable: true`
-- [ ] Unsupported queries return `status: "unsupported"` with suggestions
+- [ ] Unsupported queries have `response_text` and `suggestions` (no `columns`/`rows`)

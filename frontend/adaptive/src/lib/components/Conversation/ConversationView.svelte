@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultState, ResultRow, ResponseStatus } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultColumn, ResultRow } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
@@ -8,19 +8,19 @@
 
   let {
     conversation,
-    results,
-    observations,
-    suggestions,
+    columnsByTurn,
+    rowsByTurn,
+    observationsByTurn,
+    suggestionsByTurn,
     sparqlByTurn,
-    statusByTurn,
     onSelectSuggestion
   }: {
     conversation: ConversationTurn[];
-    results: Map<string, ResultState>;
-    observations: Map<string, string[]>;
-    suggestions: Map<string, string[]>;
+    columnsByTurn: Map<string, ResultColumn[]>;
+    rowsByTurn: Map<string, ResultRow[]>;
+    observationsByTurn: Map<string, string[]>;
+    suggestionsByTurn: Map<string, string[]>;
     sparqlByTurn: Map<string, string>;
-    statusByTurn: Map<string, ResponseStatus>;
     onSelectSuggestion: (suggestion: string) => void;
   } = $props();
 
@@ -77,11 +77,11 @@
       {:else}
         <AssistantMessage
           message={turn}
-          result={results.get(turn.id) || null}
-          observations={observations.get(turn.id) || []}
-          suggestions={suggestions.get(turn.id) || []}
+          columns={columnsByTurn.get(turn.id)}
+          rows={rowsByTurn.get(turn.id)}
+          observations={observationsByTurn.get(turn.id)}
+          suggestions={suggestionsByTurn.get(turn.id)}
           sparqlQuery={sparqlByTurn.get(turn.id)}
-          status={statusByTurn.get(turn.id)}
           {onSelectSuggestion}
         />
       {/if}

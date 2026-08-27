@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultState, ResponseStatus } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultColumn, ResultRow } from '$lib/types/exploration';
   import Spinner from '$lib/components/Shared/Spinner.svelte';
   import ResultBox from '$lib/components/Results/ResultBox.svelte';
   import ObservationCard from '$lib/components/Insights/ObservationCard.svelte';
@@ -7,19 +7,19 @@
 
   let {
     message,
-    result,
+    columns,
+    rows,
     observations,
     suggestions,
     sparqlQuery,
-    status,
     onSelectSuggestion
   }: {
     message: ConversationTurn;
-    result: ResultState | null;
-    observations: string[];
-    suggestions: string[];
+    columns?: ResultColumn[];
+    rows?: ResultRow[];
+    observations?: string[];
+    suggestions?: string[];
     sparqlQuery?: string;
-    status?: ResponseStatus;
     onSelectSuggestion: (suggestion: string) => void;
   } = $props();
 
@@ -51,17 +51,17 @@
         <p class="query-text">{message.content}</p>
       {/if}
 
-      {#if result && !message.loading && !message.error && status === 'answerable'}
-        <ResultBox {result} {sparqlQuery} />
+      {#if columns && rows && !message.loading && !message.error}
+        <ResultBox {columns} {rows} {sparqlQuery} />
       {/if}
 
-      {#if observations.length > 0 && !message.loading && status === 'answerable'}
+      {#if observations && observations.length > 0 && !message.loading}
         {#each observations as text, i (i)}
           <ObservationCard {text} />
         {/each}
       {/if}
 
-      {#if suggestions.length > 0 && !message.loading}
+      {#if suggestions && suggestions.length > 0 && !message.loading}
         <SuggestionChips {suggestions} onSelect={onSelectSuggestion} />
       {/if}
 
