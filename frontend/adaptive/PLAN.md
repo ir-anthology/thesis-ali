@@ -132,12 +132,6 @@ export interface ConversationTurn {
   error?: boolean;
 }
 
-export interface Filter {
-  facet: Facet;
-  value: string;
-  label: string;
-}
-
 export interface SortState {
   field: string;
   direction: SortDirection;
@@ -180,7 +174,6 @@ export interface Entity {
 }
 
 export interface ExplorationContext {
-  filters: Filter[];
   targetFacet: Facet | null;
   sorting: SortState | null;
   selectedEntities: Entity[];
@@ -206,7 +199,6 @@ export interface ExplorationResponse {
   conversation: ConversationTurn[];
   exploration: {
     targetFacet: Facet | null;
-    filters: Filter[];
     sort: SortState | null;
   };
   result: ResultState;
@@ -477,7 +469,6 @@ The store manages the entire exploration state using `$state`:
 ```typescript
 import type {
   ConversationTurn,
-  Filter,
   Facet,
   SortState,
   ResultState,
@@ -491,7 +482,6 @@ import { mockResponses } from '$lib/data/mock-responses';
 function createExplorationStore() {
   // State
   let conversation = $state<ConversationTurn[]>([]);
-  let filters = $state<Filter[]>([]);
   let targetFacet = $state<Facet | null>(null);
   let sorting = $state<SortState | null>(null);
   let result = $state<ResultState | null>(null);
@@ -504,7 +494,6 @@ function createExplorationStore() {
   let resultsByTurn = $state<Map<string, ResultState>>(new Map());
   let observationsByTurn = $state<Map<string, Observation[]>>(new Map());
   let suggestionsByTurn = $state<Map<string, FollowUpQuestion[]>>(new Map());
-  let filtersByTurn = $state<Map<string, Filter[]>>(new Map());
 
   // Helper
   function generateId(): string {
@@ -562,13 +551,11 @@ function createExplorationStore() {
       resultsByTurn = new Map(resultsByTurn).set(assistantTurn.id, response.result);
       observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.interpretation.observations);
       suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.interpretation.suggestions);
-      filtersByTurn = new Map(filtersByTurn).set(assistantTurn.id, response.exploration.filters);
 
       result = response.result;
       observations = response.interpretation.observations;
       suggestions = response.interpretation.suggestions;
       if (response.exploration.targetFacet) targetFacet = response.exploration.targetFacet;
-      if (response.exploration.filters.length > 0) filters = response.exploration.filters;
       if (response.exploration.sort) sorting = response.exploration.sort;
     } else {
       conversation = conversation.map(t =>
@@ -580,17 +567,6 @@ function createExplorationStore() {
     }
 
     loading = false;
-  }
-
-  // Filters
-  function applyFilter(filter: Filter): void {
-    if (!filters.find(f => f.facet === filter.facet && f.value === filter.value)) {
-      filters = [...filters, filter];
-    }
-  }
-
-  function removeFilter(filter: Filter): void {
-    filters = filters.filter(f => !(f.facet === filter.facet && f.value === filter.value));
   }
 
   // Sorting
@@ -632,7 +608,6 @@ function createExplorationStore() {
   // Clear
   function clearExploration(): void {
     conversation = [];
-    filters = [];
     targetFacet = null;
     sorting = null;
     result = null;
@@ -644,14 +619,12 @@ function createExplorationStore() {
     resultsByTurn = new Map();
     observationsByTurn = new Map();
     suggestionsByTurn = new Map();
-    filtersByTurn = new Map();
     clearSessionStorage();
   }
 
   function saveState(): void {
     saveToSessionStorage({
       conversation,
-      filters,
       targetFacet,
       sorting,
       result,
@@ -659,8 +632,7 @@ function createExplorationStore() {
       suggestions,
       resultsByTurn: Object.fromEntries(resultsByTurn),
       observationsByTurn: Object.fromEntries(observationsByTurn),
-      suggestionsByTurn: Object.fromEntries(suggestionsByTurn),
-      filtersByTurn: Object.fromEntries(filtersByTurn)
+      suggestionsByTurn: Object.fromEntries(suggestionsByTurn)
     });
   }
 
@@ -669,7 +641,6 @@ function createExplorationStore() {
     if (!saved) return false;
 
     conversation = saved.conversation;
-    filters = saved.filters;
     targetFacet = saved.targetFacet;
     sorting = saved.sorting;
     result = saved.result;
@@ -678,7 +649,6 @@ function createExplorationStore() {
     resultsByTurn = new Map(Object.entries(saved.resultsByTurn || {}));
     observationsByTurn = new Map(Object.entries(saved.observationsByTurn || {}));
     suggestionsByTurn = new Map(Object.entries(saved.suggestionsByTurn || {}));
-    filtersByTurn = new Map(Object.entries(saved.filtersByTurn || {}));
     loading = false;
     error = null;
 
@@ -687,7 +657,6 @@ function createExplorationStore() {
 
   return {
     get conversation() { return conversation; },
-    get filters() { return filters; },
     get targetFacet() { return targetFacet; },
     get sorting() { return sorting; },
     get result() { return result; },
@@ -699,10 +668,7 @@ function createExplorationStore() {
     get resultsByTurn() { return resultsByTurn; },
     get observationsByTurn() { return observationsByTurn; },
     get suggestionsByTurn() { return suggestionsByTurn; },
-    get filtersByTurn() { return filtersByTurn; },
     sendMessage,
-    applyFilter,
-    removeFilter,
     setSorting,
     setTargetFacet,
     selectEntity,
@@ -1419,7 +1385,6 @@ Removable filter pill.
   import type { ConversationTurn, ResultState, Observation, FollowUpQuestion } from '$lib/types/exploration';
   import Spinner from '$lib/components/Shared/Spinner.svelte';
   import ExplorationRenderer from '$lib/components/Results/ExplorationRenderer.svelte';
-  import FilterBar from '$lib/components/Controls/FilterBar.svelte';
   import ObservationCard from '$lib/components/Insights/ObservationCard.svelte';
   import SuggestionChips from '$lib/components/Insights/SuggestionChips.svelte';
 
@@ -1428,16 +1393,12 @@ Removable filter pill.
     result,
     observations,
     suggestions,
-    filters,
-    onRemoveFilter,
     onSelectSuggestion
   }: {
     message: ConversationTurn;
     result: ResultState | null;
     observations: Observation[];
     suggestions: FollowUpQuestion[];
-    filters: { facet: string; value: string; label: string }[];
-    onRemoveFilter: (filter: { facet: string; value: string; label: string }) => void;
     onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
   } = $props();
 
@@ -1467,10 +1428,6 @@ Removable filter pill.
         </div>
       {:else if message.content}
         <p>{message.content}</p>
-      {/if}
-
-      {#if filters.length > 0}
-        <FilterBar {filters} onRemove={onRemoveFilter} />
       {/if}
 
       {#if result && !message.loading && !message.error}
@@ -1583,7 +1540,7 @@ Removable filter pill.
 
 ```svelte
 <script lang="ts">
-  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, Filter } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
@@ -1593,16 +1550,12 @@ Removable filter pill.
     results,
     observations,
     suggestions,
-    filtersByTurn,
-    onRemoveFilter,
     onSelectSuggestion
   }: {
     conversation: ConversationTurn[];
     results: Map<string, ResultState>;
     observations: Map<string, Observation[]>;
     suggestions: Map<string, FollowUpQuestion[]>;
-    filtersByTurn: Map<string, Filter[]>;
-    onRemoveFilter: (filter: Filter) => void;
     onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
   } = $props();
 
@@ -1646,8 +1599,6 @@ Removable filter pill.
           result={results.get(turn.id) || null}
           observations={observations.get(turn.id) || []}
           suggestions={suggestions.get(turn.id) || []}
-          filters={filtersByTurn.get(turn.id) || []}
-          {onRemoveFilter}
           {onSelectSuggestion}
         />
       {/if}
@@ -2227,44 +2178,6 @@ Simple bar chart representation using CSS.
 
 ---
 
-## Phase 7: Control Components
-
-### `src/lib/components/Controls/FilterBar.svelte`
-
-```svelte
-<script lang="ts">
-  import Pill from '$lib/components/Shared/Pill.svelte';
-
-  let {
-    filters,
-    onRemove
-  }: {
-    filters: { facet: string; value: string; label: string }[];
-    onRemove: (filter: { facet: string; value: string; label: string }) => void;
-  } = $props();
-</script>
-
-{#if filters.length > 0}
-  <div class="filter-bar">
-    {#each filters as filter (filter.facet + filter.value)}
-      <Pill label="{filter.facet}: {filter.label}" onRemove={() => onRemove(filter)} />
-    {/each}
-  </div>
-{/if}
-
-<style>
-  .filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-    margin-top: 0.625rem;
-    padding-bottom: 0.375rem;
-  }
-</style>
-```
-
----
-
 ## Phase 8: Main Page
 
 ### `src/routes/+page.svelte`
@@ -2317,8 +2230,6 @@ Simple bar chart representation using CSS.
     results={resultsMap}
     observations={observationsMap}
     suggestions={suggestionsMap}
-    filtersByTurn={exploration.filtersByTurn}
-    onRemoveFilter={(f) => exploration.removeFilter(f)}
     onSelectSuggestion={(s) => exploration.selectSuggestion(s)}
   />
 
@@ -2388,8 +2299,7 @@ Simple bar chart representation using CSS.
 - [ ] Spacing: tight for metadata, standard for controls, medium for content groups
 - [ ] Tables: muted header bg, small type, sticky headers, subtle row hover, monospace for data
 - [ ] Buttons: primary for send, secondary for suggestions/pivots, icon-only only when unambiguous
-- [ ] Badges for "AI interpretation", filter counts, entity types
-- [ ] Pills for active filters (removable)
+- [ ] Badges for "AI interpretation", entity types
 - [ ] Cards for observations (subtle border, moderate radius, comfortable padding)
 - [ ] Focus states: accent ring on all interactive elements
 - [ ] Responsive: mobile-first, single column on small screens, wider content on desktop
@@ -2401,7 +2311,7 @@ Simple bar chart representation using CSS.
 
 ## Phase 10: Keyboard & Accessibility
 
-- [ ] Tab order: header → conversation → filters → suggestions → input
+- [ ] Tab order: header → conversation → suggestions → input
 - [ ] Enter/Space activates suggestion chips and table rows
 - [ ] Escape clears entity selection
 - [ ] `:focus-visible` accent ring on all interactive elements
@@ -2419,7 +2329,6 @@ Simple bar chart representation using CSS.
 1. Serialize key state to URL search params using SvelteKit's `page` store:
    - `?q=` — last user query
    - `&facet=` — target facet
-   - `&filters=` — JSON-encoded filter array
 
 2. On page load (`+page.ts` load function), read URL params and restore initial state
 
@@ -2438,7 +2347,6 @@ Simple bar chart representation using CSS.
 ```typescript
 import type {
   ConversationTurn,
-  Filter,
   Facet,
   SortState,
   ResultState,
@@ -2450,7 +2358,6 @@ const STORAGE_KEY = 'scholarly-explorer-state';
 
 export interface PersistedState {
   conversation: ConversationTurn[];
-  filters: Filter[];
   targetFacet: Facet | null;
   sorting: SortState | null;
   result: ResultState | null;
@@ -2459,7 +2366,6 @@ export interface PersistedState {
   resultsByTurn?: Record<string, ResultState>;
   observationsByTurn?: Record<string, Observation[]>;
   suggestionsByTurn?: Record<string, FollowUpQuestion[]>;
-  filtersByTurn?: Record<string, Filter[]>;
 }
 
 interface SerializedConversationTurn {
@@ -2497,7 +2403,6 @@ export function deserializeConversation(
 
 export function saveToSessionStorage(state: {
   conversation: ConversationTurn[];
-  filters: Filter[];
   targetFacet: Facet | null;
   sorting: SortState | null;
   result: ResultState | null;
@@ -2506,12 +2411,10 @@ export function saveToSessionStorage(state: {
   resultsByTurn?: Record<string, ResultState>;
   observationsByTurn?: Record<string, Observation[]>;
   suggestionsByTurn?: Record<string, FollowUpQuestion[]>;
-  filtersByTurn?: Record<string, Filter[]>;
 }): void {
   try {
     const serialized = {
       conversation: serializeConversation(state.conversation),
-      filters: state.filters,
       targetFacet: state.targetFacet,
       sorting: state.sorting,
       result: state.result,
@@ -2519,8 +2422,7 @@ export function saveToSessionStorage(state: {
       suggestions: state.suggestions,
       resultsByTurn: state.resultsByTurn,
       observationsByTurn: state.observationsByTurn,
-      suggestionsByTurn: state.suggestionsByTurn,
-      filtersByTurn: state.filtersByTurn
+      suggestionsByTurn: state.suggestionsByTurn
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
   } catch {
@@ -2536,7 +2438,6 @@ export function loadFromSessionStorage(): PersistedState | null {
     const parsed = JSON.parse(raw);
     return {
       conversation: deserializeConversation(parsed.conversation || []),
-      filters: parsed.filters || [],
       targetFacet: parsed.targetFacet || null,
       sorting: parsed.sorting || null,
       result: parsed.result || null,
@@ -2544,8 +2445,7 @@ export function loadFromSessionStorage(): PersistedState | null {
       suggestions: parsed.suggestions || [],
       resultsByTurn: parsed.resultsByTurn || {},
       observationsByTurn: parsed.observationsByTurn || {},
-      suggestionsByTurn: parsed.suggestionsByTurn || {},
-      filtersByTurn: parsed.filtersByTurn || {}
+      suggestionsByTurn: parsed.suggestionsByTurn || {}
     };
   } catch {
     console.warn('Failed to load state from sessionStorage');
@@ -2564,7 +2464,6 @@ export function clearSessionStorage(): void {
 export function encodeStateToUrl(params: {
   q?: string;
   facet?: Facet;
-  filters?: Filter[];
 }): URLSearchParams {
   const searchParams = new URLSearchParams();
 
@@ -2574,9 +2473,6 @@ export function encodeStateToUrl(params: {
   if (params.facet) {
     searchParams.set('facet', params.facet);
   }
-  if (params.filters && params.filters.length > 0) {
-    searchParams.set('filters', JSON.stringify(params.filters));
-  }
 
   return searchParams;
 }
@@ -2584,12 +2480,10 @@ export function encodeStateToUrl(params: {
 export function decodeStateFromUrl(searchParams: URLSearchParams): {
   q?: string;
   facet?: Facet;
-  filters?: Filter[];
 } {
   const result: {
     q?: string;
     facet?: Facet;
-    filters?: Filter[];
   } = {};
 
   const q = searchParams.get('q');
@@ -2600,18 +2494,6 @@ export function decodeStateFromUrl(searchParams: URLSearchParams): {
   const facet = searchParams.get('facet');
   if (facet && isValidFacet(facet)) {
     result.facet = facet;
-  }
-
-  const filtersStr = searchParams.get('filters');
-  if (filtersStr) {
-    try {
-      const filters = JSON.parse(filtersStr);
-      if (Array.isArray(filters)) {
-        result.filters = filters;
-      }
-    } catch {
-      console.warn('Failed to parse filters from URL');
-    }
   }
 
   return result;
@@ -2656,8 +2538,6 @@ frontend/adaptive/
 │           │   ├── ComparisonView.svelte
 │           │   ├── TimelineView.svelte
 │           │   └── SummaryView.svelte
-│           ├── Controls/
-│           │   └── FilterBar.svelte
 │           ├── Insights/
 │           │   ├── ObservationCard.svelte
 │           │   └── SuggestionChips.svelte
@@ -2665,7 +2545,6 @@ frontend/adaptive/
 │           │   └── PromptInput.svelte
 │           └── Shared/
 │               ├── Badge.svelte
-│               ├── Pill.svelte
 │               ├── Spinner.svelte
 │               ├── EmptyState.svelte
 │               └── ErrorState.svelte
@@ -2698,9 +2577,8 @@ frontend/adaptive/
 | 11 | Create ObservationCard + SuggestionChips | Step 6 | 45 min |
 | 12 | Create AssistantMessage component | Steps 8, 10, 11 | 1 hr |
 | 13 | Create ConversationView | Steps 8, 12 | 45 min |
-| 14 | Create FilterBar | Step 6 | 30 min |
-| 15 | Create persistence utility | Step 3 | 45 min |
-| 16 | Wire up `+page.svelte` | Steps 5, 7, 13, 14, 15 | 45 min |
+| 14 | Create persistence utility | Step 3 | 45 min |
+| 15 | Wire up `+page.svelte` | Steps 5, 7, 13, 14 | 45 min |
 | 17 | Add direct manipulation interactions | Step 16 | 1.5 hr |
 | 18 | Visual polish & responsive design | Step 16 | 1 hr |
 | 19 | Keyboard accessibility | Step 17 | 1 hr |
@@ -2721,7 +2599,6 @@ frontend/adaptive/
 - `resultsByTurn: Map<string, ResultState>`
 - `observationsByTurn: Map<string, Observation[]>`
 - `suggestionsByTurn: Map<string, FollowUpQuestion[]>`
-- `filtersByTurn: Map<string, Filter[]>`
 
 **Lesson:** In conversational UIs, each turn's context must be preserved independently. Never overwrite previous turn data.
 
@@ -2746,14 +2623,6 @@ frontend/adaptive/
 **Solution:** Used `Object.fromEntries(map)` for serialization and `new Map(Object.entries(obj))` for deserialization.
 
 **Lesson:** Always test serialization with complex data structures. Maps, Sets, and Dates need special handling.
-
-### 5. Filter Context Should Be Per-Turn
-
-**Problem:** Global filters applied to all turns, but each turn should have its own filter context.
-
-**Solution:** Stored filters per turn in `filtersByTurn` map. Each AssistantMessage receives only its turn's filters.
-
-**Lesson:** In conversation-driven UIs, context should be scoped to individual turns, not global.
 
 ---
 
