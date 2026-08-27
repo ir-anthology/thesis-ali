@@ -1,17 +1,15 @@
 <script lang="ts">
-  import type { ResultColumn, ResultRow, SortState } from '$lib/types/exploration';
+  import type { ResultColumn, ResultRow } from '$lib/types/exploration';
 
   let {
     columns,
     rows,
     title,
-    onSort,
     onCellClick
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
     title?: string;
-    onSort?: (sort: SortState) => void;
     onCellClick?: (columnKey: string, row: ResultRow) => void;
   } = $props();
 
@@ -28,7 +26,6 @@
       sortField = column.key;
       sortDirection = 'asc';
     }
-    onSort?.({ field: sortField, direction: sortDirection });
   }
 
   function handleKeydown(event: KeyboardEvent, rowIndex: number): void {

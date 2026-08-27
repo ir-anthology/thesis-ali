@@ -20,10 +20,6 @@ WHERE {
 GROUP BY ?author
 ORDER BY DESC(?publications)
 LIMIT 5`,
-    exploration: {
-      targetFacet: 'author',
-      sort: { field: 'publications', direction: 'desc' }
-    },
     result: {
       type: 'facet_table',
       title: 'Most Prolific Authors in Exploratory Search',
@@ -77,10 +73,6 @@ WHERE {
 GROUP BY ?author
 ORDER BY DESC(?publications)
 LIMIT 5`,
-    exploration: {
-      targetFacet: 'author',
-      sort: { field: 'publications', direction: 'desc' }
-    },
     result: {
       type: 'facet_table',
       title: 'Most Prolific Authors (2020–2025)',
@@ -134,10 +126,6 @@ WHERE {
 GROUP BY ?venue
 ORDER BY DESC(?publications)
 LIMIT 5`,
-    exploration: {
-      targetFacet: 'venue',
-      sort: { field: 'publications', direction: 'desc' }
-    },
     result: {
       type: 'facet_table',
       title: 'Venues for Top Authors in Exploratory Search',
@@ -191,10 +179,6 @@ WHERE {
 }
 GROUP BY ?year
 ORDER BY ?year`,
-    exploration: {
-      targetFacet: 'year',
-      sort: { field: 'year', direction: 'asc' }
-    },
     result: {
       type: 'facet_table',
       title: 'Publication Activity Over Time',
@@ -249,10 +233,6 @@ WHERE {
   FILTER(?year >= 2020 && ?year <= 2025)
 }
 GROUP BY ?venueName`,
-    exploration: {
-      targetFacet: 'venue',
-      sort: null
-    },
     result: {
       type: 'facet_table',
       title: 'SIGIR vs CHIIR',
@@ -305,10 +285,6 @@ WHERE {
   FILTER(?year >= 2020 && ?year <= 2025)
 }
 GROUP BY ?venueName`,
-    exploration: {
-      targetFacet: 'venue',
-      sort: null
-    },
     result: {
       type: 'facet_table',
       title: 'Why SIGIR Is Prominent',
@@ -344,10 +320,6 @@ GROUP BY ?venueName`,
   unsupported: {
     status: 'unsupported',
     conversation: [],
-    exploration: {
-      targetFacet: null,
-      sort: null
-    },
     result: {
       type: 'facet_table',
       title: '',

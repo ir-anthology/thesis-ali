@@ -1,7 +1,5 @@
 import type {
   ConversationTurn,
-  Facet,
-  SortState,
   ResultState,
   Observation,
   FollowUpQuestion,
@@ -12,8 +10,6 @@ const STORAGE_KEY = 'ir-anthology-chat-state';
 
 export interface PersistedState {
   conversation: ConversationTurn[];
-  targetFacet: Facet | null;
-  sorting: SortState | null;
   result: ResultState | null;
   observations: Observation[];
   suggestions: FollowUpQuestion[];
@@ -59,8 +55,6 @@ export function deserializeConversation(
 
 export function saveToSessionStorage(state: {
   conversation: ConversationTurn[];
-  targetFacet: Facet | null;
-  sorting: SortState | null;
   result: ResultState | null;
   observations: Observation[];
   suggestions: FollowUpQuestion[];
@@ -73,8 +67,6 @@ export function saveToSessionStorage(state: {
   try {
     const serialized = {
       conversation: serializeConversation(state.conversation),
-      targetFacet: state.targetFacet,
-      sorting: state.sorting,
       result: state.result,
       observations: state.observations,
       suggestions: state.suggestions,
@@ -98,8 +90,6 @@ export function loadFromSessionStorage(): PersistedState | null {
     const parsed = JSON.parse(raw);
     return {
       conversation: deserializeConversation(parsed.conversation || []),
-      targetFacet: parsed.targetFacet || null,
-      sorting: parsed.sorting || null,
       result: parsed.result || null,
       observations: parsed.observations || [],
       suggestions: parsed.suggestions || [],
@@ -123,29 +113,11 @@ export function clearSessionStorage(): void {
   }
 }
 
-export function encodeStateToUrl(params: {
-  q?: string;
-  facet?: Facet;
-}): URLSearchParams {
-  const searchParams = new URLSearchParams();
-
-  if (params.q) {
-    searchParams.set('q', params.q);
-  }
-  if (params.facet) {
-    searchParams.set('facet', params.facet);
-  }
-
-  return searchParams;
-}
-
 export function decodeStateFromUrl(searchParams: URLSearchParams): {
   q?: string;
-  facet?: Facet;
 } {
   const result: {
     q?: string;
-    facet?: Facet;
   } = {};
 
   const q = searchParams.get('q');
@@ -153,14 +125,5 @@ export function decodeStateFromUrl(searchParams: URLSearchParams): {
     result.q = q;
   }
 
-  const facet = searchParams.get('facet');
-  if (facet && isValidFacet(facet)) {
-    result.facet = facet;
-  }
-
   return result;
-}
-
-function isValidFacet(value: string): value is Facet {
-  return ['author', 'venue', 'year', 'publication'].includes(value);
 }

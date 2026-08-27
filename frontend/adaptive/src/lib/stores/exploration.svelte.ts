@@ -4,7 +4,6 @@
  * This module manages the entire exploration state using Svelte 5 runes.
  * It provides a reactive store that handles:
  * - Conversation history (user and assistant turns)
- * - Active filters and sorting
  * - Current result data and visualizations
  * - LLM-generated observations and follow-up suggestions
  * - Session persistence for state recovery
@@ -15,12 +14,9 @@
 
 import type {
   ConversationTurn,
-  Facet,
-  SortState,
   ResultState,
   Observation,
   FollowUpQuestion,
-  Entity,
   ExplorationResponse,
   ResponseStatus
 } from '$lib/types/exploration';
@@ -33,12 +29,9 @@ import {
 
 function createExplorationStore() {
   let conversation = $state<ConversationTurn[]>([]);
-  let targetFacet = $state<Facet | null>(null);
-  let sorting = $state<SortState | null>(null);
   let result = $state<ResultState | null>(null);
   let observations = $state<Observation[]>([]);
   let suggestions = $state<FollowUpQuestion[]>([]);
-  let selectedEntities = $state<Entity[]>([]);
   let loading = $state(false);
   let error = $state<string | null>(null);
 
@@ -121,13 +114,6 @@ function createExplorationStore() {
       result = response.result;
       observations = response.interpretation.observations;
       suggestions = response.interpretation.suggestions;
-
-      if (response.exploration.targetFacet) {
-        targetFacet = response.exploration.targetFacet;
-      }
-      if (response.exploration.sort) {
-        sorting = response.exploration.sort;
-      }
     } else {
       conversation = conversation.map((t) =>
         t.id === assistantTurn.id
@@ -146,24 +132,6 @@ function createExplorationStore() {
     saveState();
   }
 
-  function setSorting(sort: SortState): void {
-    sorting = sort;
-  }
-
-  function setTargetFacet(facet: Facet): void {
-    targetFacet = facet;
-  }
-
-  function selectEntity(entity: Entity): void {
-    if (!selectedEntities.find((e) => e.id === entity.id)) {
-      selectedEntities = [...selectedEntities, entity];
-    }
-  }
-
-  function clearSelection(): void {
-    selectedEntities = [];
-  }
-
   function selectSuggestion(suggestion: FollowUpQuestion): void {
     sendMessage(suggestion.text);
   }
@@ -178,12 +146,9 @@ function createExplorationStore() {
 
   function clearExploration(): void {
     conversation = [];
-    targetFacet = null;
-    sorting = null;
     result = null;
     observations = [];
     suggestions = [];
-    selectedEntities = [];
     loading = false;
     error = null;
     resultsByTurn = new Map();
@@ -197,8 +162,6 @@ function createExplorationStore() {
   function saveState(): void {
     saveToSessionStorage({
       conversation,
-      targetFacet,
-      sorting,
       result,
       observations,
       suggestions,
@@ -215,8 +178,6 @@ function createExplorationStore() {
     if (!saved) return false;
 
     conversation = saved.conversation;
-    targetFacet = saved.targetFacet;
-    sorting = saved.sorting;
     result = saved.result;
     observations = saved.observations;
     suggestions = saved.suggestions;
@@ -235,12 +196,6 @@ function createExplorationStore() {
     get conversation(): ConversationTurn[] {
       return conversation;
     },
-    get targetFacet(): Facet | null {
-      return targetFacet;
-    },
-    get sorting(): SortState | null {
-      return sorting;
-    },
     get result(): ResultState | null {
       return result;
     },
@@ -249,9 +204,6 @@ function createExplorationStore() {
     },
     get suggestions(): FollowUpQuestion[] {
       return suggestions;
-    },
-    get selectedEntities(): Entity[] {
-      return selectedEntities;
     },
     get loading(): boolean {
       return loading;
@@ -275,10 +227,6 @@ function createExplorationStore() {
       return statusByTurn;
     },
     sendMessage,
-    setSorting,
-    setTargetFacet,
-    selectEntity,
-    clearSelection,
     selectSuggestion,
     retry,
     clearExploration,
