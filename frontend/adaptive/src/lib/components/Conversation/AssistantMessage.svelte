@@ -1,8 +1,7 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, Filter, ResponseStatus } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, ResponseStatus } from '$lib/types/exploration';
   import Spinner from '$lib/components/Shared/Spinner.svelte';
   import ResultBox from '$lib/components/Results/ResultBox.svelte';
-  import FilterBar from '$lib/components/Controls/FilterBar.svelte';
   import ObservationCard from '$lib/components/Insights/ObservationCard.svelte';
   import SuggestionChips from '$lib/components/Insights/SuggestionChips.svelte';
 
@@ -11,20 +10,16 @@
     result,
     observations,
     suggestions,
-    filters,
     sparqlQuery,
     status,
-    onRemoveFilter,
     onSelectSuggestion
   }: {
     message: ConversationTurn;
     result: ResultState | null;
     observations: Observation[];
     suggestions: FollowUpQuestion[];
-    filters: Filter[];
     sparqlQuery?: string;
     status?: ResponseStatus;
-    onRemoveFilter: (filter: Filter) => void;
     onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
   } = $props();
 
@@ -54,10 +49,6 @@
         </div>
       {:else if message.content}
         <p class="query-text">{message.content}</p>
-      {/if}
-
-      {#if filters.length > 0 && status === 'answerable'}
-        <FilterBar {filters} onRemove={onRemoveFilter} />
       {/if}
 
       {#if result && !message.loading && !message.error && status === 'answerable'}

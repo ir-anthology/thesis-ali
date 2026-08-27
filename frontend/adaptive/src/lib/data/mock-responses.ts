@@ -22,7 +22,6 @@ ORDER BY DESC(?publications)
 LIMIT 5`,
     exploration: {
       targetFacet: 'author',
-      filters: [],
       sort: { field: 'publications', direction: 'desc' }
     },
     result: {
@@ -80,7 +79,6 @@ ORDER BY DESC(?publications)
 LIMIT 5`,
     exploration: {
       targetFacet: 'author',
-      filters: [{ facet: 'year', value: '2020-2025', label: '2020–2025' }],
       sort: { field: 'publications', direction: 'desc' }
     },
     result: {
@@ -138,7 +136,6 @@ ORDER BY DESC(?publications)
 LIMIT 5`,
     exploration: {
       targetFacet: 'venue',
-      filters: [],
       sort: { field: 'publications', direction: 'desc' }
     },
     result: {
@@ -196,7 +193,6 @@ GROUP BY ?year
 ORDER BY ?year`,
     exploration: {
       targetFacet: 'year',
-      filters: [],
       sort: { field: 'year', direction: 'asc' }
     },
     result: {
@@ -255,7 +251,6 @@ WHERE {
 GROUP BY ?venueName`,
     exploration: {
       targetFacet: 'venue',
-      filters: [],
       sort: null
     },
     result: {
@@ -312,7 +307,6 @@ WHERE {
 GROUP BY ?venueName`,
     exploration: {
       targetFacet: 'venue',
-      filters: [],
       sort: null
     },
     result: {
@@ -352,7 +346,6 @@ GROUP BY ?venueName`,
     conversation: [],
     exploration: {
       targetFacet: null,
-      filters: [],
       sort: null
     },
     result: {

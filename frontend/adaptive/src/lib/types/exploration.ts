@@ -37,12 +37,6 @@ export interface ConversationTurn {
   error?: boolean;
 }
 
-export interface Filter {
-  facet: Facet;
-  value: string;
-  label: string;
-}
-
 export interface SortState {
   field: string;
   direction: SortDirection;
@@ -85,7 +79,6 @@ export interface Entity {
 }
 
 export interface ExplorationContext {
-  filters: Filter[];
   targetFacet: Facet | null;
   sorting: SortState | null;
   selectedEntities: Entity[];
@@ -111,7 +104,6 @@ export interface ExplorationResponse {
   conversation: ConversationTurn[];
   exploration: {
     targetFacet: Facet | null;
-    filters: Filter[];
     sort: SortState | null;
   };
   result: ResultState;

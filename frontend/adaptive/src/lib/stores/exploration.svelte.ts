@@ -15,7 +15,6 @@
 
 import type {
   ConversationTurn,
-  Filter,
   Facet,
   SortState,
   ResultState,
@@ -34,7 +33,6 @@ import {
 
 function createExplorationStore() {
   let conversation = $state<ConversationTurn[]>([]);
-  let filters = $state<Filter[]>([]);
   let targetFacet = $state<Facet | null>(null);
   let sorting = $state<SortState | null>(null);
   let result = $state<ResultState | null>(null);
@@ -47,7 +45,6 @@ function createExplorationStore() {
   let resultsByTurn = $state<Map<string, ResultState>>(new Map());
   let observationsByTurn = $state<Map<string, Observation[]>>(new Map());
   let suggestionsByTurn = $state<Map<string, FollowUpQuestion[]>>(new Map());
-  let filtersByTurn = $state<Map<string, Filter[]>>(new Map());
   let sparqlByTurn = $state<Map<string, string>>(new Map());
   let statusByTurn = $state<Map<string, ResponseStatus>>(new Map());
 
@@ -116,7 +113,6 @@ function createExplorationStore() {
       resultsByTurn = new Map(resultsByTurn).set(assistantTurn.id, response.result);
       observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.interpretation.observations);
       suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.interpretation.suggestions);
-      filtersByTurn = new Map(filtersByTurn).set(assistantTurn.id, response.exploration.filters);
       if (response.sparql_query) {
         sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, response.sparql_query);
       }
@@ -128,9 +124,6 @@ function createExplorationStore() {
 
       if (response.exploration.targetFacet) {
         targetFacet = response.exploration.targetFacet;
-      }
-      if (response.exploration.filters.length > 0) {
-        filters = response.exploration.filters;
       }
       if (response.exploration.sort) {
         sorting = response.exploration.sort;
@@ -151,16 +144,6 @@ function createExplorationStore() {
 
     loading = false;
     saveState();
-  }
-
-  function applyFilter(filter: Filter): void {
-    if (!filters.find((f) => f.facet === filter.facet && f.value === filter.value)) {
-      filters = [...filters, filter];
-    }
-  }
-
-  function removeFilter(filter: Filter): void {
-    filters = filters.filter((f) => !(f.facet === filter.facet && f.value === filter.value));
   }
 
   function setSorting(sort: SortState): void {
@@ -195,7 +178,6 @@ function createExplorationStore() {
 
   function clearExploration(): void {
     conversation = [];
-    filters = [];
     targetFacet = null;
     sorting = null;
     result = null;
@@ -207,7 +189,6 @@ function createExplorationStore() {
     resultsByTurn = new Map();
     observationsByTurn = new Map();
     suggestionsByTurn = new Map();
-    filtersByTurn = new Map();
     sparqlByTurn = new Map();
     statusByTurn = new Map();
     clearSessionStorage();
@@ -216,7 +197,6 @@ function createExplorationStore() {
   function saveState(): void {
     saveToSessionStorage({
       conversation,
-      filters,
       targetFacet,
       sorting,
       result,
@@ -225,7 +205,6 @@ function createExplorationStore() {
       resultsByTurn: Object.fromEntries(resultsByTurn),
       observationsByTurn: Object.fromEntries(observationsByTurn),
       suggestionsByTurn: Object.fromEntries(suggestionsByTurn),
-      filtersByTurn: Object.fromEntries(filtersByTurn),
       sparqlByTurn: Object.fromEntries(sparqlByTurn),
       statusByTurn: Object.fromEntries(statusByTurn)
     });
@@ -236,7 +215,6 @@ function createExplorationStore() {
     if (!saved) return false;
 
     conversation = saved.conversation;
-    filters = saved.filters;
     targetFacet = saved.targetFacet;
     sorting = saved.sorting;
     result = saved.result;
@@ -245,7 +223,6 @@ function createExplorationStore() {
     resultsByTurn = new Map(Object.entries(saved.resultsByTurn || {}));
     observationsByTurn = new Map(Object.entries(saved.observationsByTurn || {}));
     suggestionsByTurn = new Map(Object.entries(saved.suggestionsByTurn || {}));
-    filtersByTurn = new Map(Object.entries(saved.filtersByTurn || {}));
     sparqlByTurn = new Map(Object.entries(saved.sparqlByTurn || {}));
     statusByTurn = new Map(Object.entries(saved.statusByTurn || {}));
     loading = false;
@@ -257,9 +234,6 @@ function createExplorationStore() {
   return {
     get conversation(): ConversationTurn[] {
       return conversation;
-    },
-    get filters(): Filter[] {
-      return filters;
     },
     get targetFacet(): Facet | null {
       return targetFacet;
@@ -294,9 +268,6 @@ function createExplorationStore() {
     get suggestionsByTurn(): Map<string, FollowUpQuestion[]> {
       return suggestionsByTurn;
     },
-    get filtersByTurn(): Map<string, Filter[]> {
-      return filtersByTurn;
-    },
     get sparqlByTurn(): Map<string, string> {
       return sparqlByTurn;
     },
@@ -304,8 +275,6 @@ function createExplorationStore() {
       return statusByTurn;
     },
     sendMessage,
-    applyFilter,
-    removeFilter,
     setSorting,
     setTargetFacet,
     selectEntity,
