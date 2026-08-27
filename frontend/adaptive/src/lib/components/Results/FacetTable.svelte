@@ -5,12 +5,14 @@
     columns,
     rows,
     title,
-    onSort
+    onSort,
+    onCellClick
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
     title?: string;
     onSort?: (sort: SortState) => void;
+    onCellClick?: (columnKey: string, row: ResultRow) => void;
   } = $props();
 
   let sortField = $state<string | null>(null);
@@ -112,7 +114,11 @@
             class:focused={focusedRowIndex === i}
           >
             {#each columns as column}
-              <td role="gridcell">
+              <td
+                role="gridcell"
+                class:clickable={!!onCellClick}
+                onclick={() => onCellClick?.(column.key, row)}
+              >
                 {#if column.type === 'badge'}
                   <span class="cell-badge">{row[column.key]}</span>
                 {:else}
@@ -149,7 +155,7 @@
   th,
   td {
     padding: 0.5rem 0.75rem;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid var(--border-light);
     white-space: nowrap;
   }
@@ -188,6 +194,16 @@
 
   td {
     color: var(--text-primary);
+  }
+
+  td.clickable {
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+  }
+
+  td.clickable:hover {
+    background-color: var(--accent-light);
+    color: var(--accent);
   }
 
   tr:last-child td {

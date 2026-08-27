@@ -1,7 +1,7 @@
 /**
  * Exploration State Types
  *
- * This module defines the core data types for the Scholarly Explorer application.
+ * This module defines the core data types for the IR Anthology Chat application.
  * The types model a conversation-driven exploration of scholarly knowledge graphs,
  * where the UI adapts dynamically based on user queries and interactions.
  *

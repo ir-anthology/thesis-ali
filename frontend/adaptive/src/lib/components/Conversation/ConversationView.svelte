@@ -1,8 +1,10 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, ResponseStatus } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultState, ResultRow, Observation, FollowUpQuestion, ResponseStatus } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
+  import FacetTable from '$lib/components/Results/FacetTable.svelte';
+  import { overviewData, overviewQueryMap } from '$lib/data/mock-overview';
 
   let {
     conversation,
@@ -24,6 +26,13 @@
 
   let container: HTMLDivElement | undefined = $state();
 
+  function handleOverviewClick(columnKey: string, _row: ResultRow): void {
+    const query = overviewQueryMap[columnKey];
+    if (query) {
+      onSelectSuggestion({ id: 'overview-' + columnKey, text: query });
+    }
+  }
+
   $effect(() => {
     conversation.length;
     if (container) {
@@ -41,24 +50,26 @@
   aria-relevant="additions"
 >
   {#if conversation.length === 0}
-    <EmptyState
-      title="Welcome to Scholarly Explorer"
-      description="Ask me about authors, venues, and publications in the knowledge graph."
-    >
-      {#snippet icon()}
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-      {/snippet}
-      <div class="examples">
-        <p class="examples-title">Try asking:</p>
-        <ul>
-          <li>"Who are the most prolific authors?"</li>
-          <li>"Which venues do they publish in?"</li>
-          <li>"Show me publication trends over time"</li>
-        </ul>
+    <div class="empty-container">
+      <EmptyState
+        title="Welcome to IR Anthology Chat"
+        description="Ask me about authors, venues, and publications in the knowledge graph."
+      >
+        {#snippet icon()}
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        {/snippet}
+      </EmptyState>
+      <div class="overview-wrapper">
+        <FacetTable
+          columns={overviewData.columns}
+          rows={overviewData.rows}
+          title={overviewData.title}
+          onCellClick={handleOverviewClick}
+        />
       </div>
-    </EmptyState>
+    </div>
   {:else}
     {#each conversation as turn (turn.id)}
       {#if turn.role === 'user'}
@@ -86,35 +97,26 @@
     background-color: var(--bg-secondary);
   }
 
-  .examples {
-    margin-top: 1.5rem;
-    padding: 0.875rem;
+  .empty-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 1.25rem;
+  }
+
+  .empty-container :global(.empty-state) {
+    height: auto;
+  }
+
+  .overview-wrapper {
+    max-width: 480px;
+    width: 100%;
     background-color: var(--bg-primary);
     border-radius: 6px;
     border: 1px solid var(--border);
-    text-align: left;
-    max-width: 320px;
-  }
-
-  .examples-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-
-  .examples ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .examples li {
-    padding: 0.3125rem 0;
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
+    overflow: hidden;
   }
 
   @media (max-width: 640px) {
@@ -122,7 +124,7 @@
       padding: 0.75rem;
     }
 
-    .examples {
+    .overview-wrapper {
       max-width: 100%;
     }
   }

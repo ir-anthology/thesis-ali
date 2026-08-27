@@ -49,7 +49,7 @@
       bind:this={textarea}
       bind:value={inputValue}
       onkeydown={handleKeydown}
-      placeholder="Ask about scholarly publications..."
+      placeholder="Ask about IR publications..."
       rows="1"
       {disabled}
     ></textarea>

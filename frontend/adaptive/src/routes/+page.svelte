@@ -28,14 +28,14 @@
 </script>
 
 <svelte:head>
-  <title>Scholarly Explorer</title>
-  <meta name="description" content="Explore scholarly knowledge graphs through conversation" />
+  <title>IR Anthology Chat</title>
+  <meta name="description" content="Explore the IR Anthology knowledge graph through conversation" />
 </svelte:head>
 
 <div class="app">
   <div class="chat-container">
     <header class="app-header">
-      <h1 class="app-title">Scholarly Explorer</h1>
+      <h1 class="app-title">IR Anthology Chat</h1>
       {#if exploration.conversation.length > 0}
         <button class="clear-btn" onclick={() => exploration.clearExploration()}>
           New Exploration

@@ -8,7 +8,7 @@ import type {
   ResponseStatus
 } from '$lib/types/exploration';
 
-const STORAGE_KEY = 'scholarly-explorer-state';
+const STORAGE_KEY = 'ir-anthology-chat-state';
 
 export interface PersistedState {
   conversation: ConversationTurn[];
