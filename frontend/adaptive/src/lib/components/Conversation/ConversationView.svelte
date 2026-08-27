@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultState, ResultRow, Observation, FollowUpQuestion, ResponseStatus } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultState, ResultRow, ResponseStatus } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
@@ -17,11 +17,11 @@
   }: {
     conversation: ConversationTurn[];
     results: Map<string, ResultState>;
-    observations: Map<string, Observation[]>;
-    suggestions: Map<string, FollowUpQuestion[]>;
+    observations: Map<string, string[]>;
+    suggestions: Map<string, string[]>;
     sparqlByTurn: Map<string, string>;
     statusByTurn: Map<string, ResponseStatus>;
-    onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
+    onSelectSuggestion: (suggestion: string) => void;
   } = $props();
 
   let container: HTMLDivElement | undefined = $state();
@@ -29,7 +29,7 @@
   function handleOverviewClick(columnKey: string, _row: ResultRow): void {
     const query = overviewQueryMap[columnKey];
     if (query) {
-      onSelectSuggestion({ id: 'overview-' + columnKey, text: query });
+      onSelectSuggestion(query);
     }
   }
 

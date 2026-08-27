@@ -6,7 +6,6 @@
  * - Conversation history (user and assistant turns)
  * - Current result data and visualizations
  * - LLM-generated observations and follow-up suggestions
- * - Session persistence for state recovery
  *
  * The store uses mock data for demonstration purposes.
  * In production, it would integrate with a backend API.
@@ -15,34 +14,45 @@
 import type {
   ConversationTurn,
   ResultState,
-  Observation,
-  FollowUpQuestion,
   ExplorationResponse,
-  ResponseStatus
+  ResponseStatus,
+  HistoryTurn
 } from '$lib/types/exploration';
 import { mockResponses } from '$lib/data/mock-responses';
-import {
-  saveToSessionStorage,
-  loadFromSessionStorage,
-  clearSessionStorage
-} from '$lib/utils/persistence';
 
 function createExplorationStore() {
   let conversation = $state<ConversationTurn[]>([]);
   let result = $state<ResultState | null>(null);
-  let observations = $state<Observation[]>([]);
-  let suggestions = $state<FollowUpQuestion[]>([]);
+  let observations = $state<string[]>([]);
+  let suggestions = $state<string[]>([]);
   let loading = $state(false);
   let error = $state<string | null>(null);
 
   let resultsByTurn = $state<Map<string, ResultState>>(new Map());
-  let observationsByTurn = $state<Map<string, Observation[]>>(new Map());
-  let suggestionsByTurn = $state<Map<string, FollowUpQuestion[]>>(new Map());
+  let observationsByTurn = $state<Map<string, string[]>>(new Map());
+  let suggestionsByTurn = $state<Map<string, string[]>>(new Map());
   let sparqlByTurn = $state<Map<string, string>>(new Map());
   let statusByTurn = $state<Map<string, ResponseStatus>>(new Map());
 
   function generateId(): string {
     return crypto.randomUUID();
+  }
+
+  function buildHistory(): HistoryTurn[] {
+    return conversation.map((turn) => {
+      if (turn.role === 'user') {
+        return { role: 'user', content: turn.content };
+      }
+      return {
+        role: 'assistant',
+        content: turn.content,
+        result: resultsByTurn.get(turn.id),
+        observations: observationsByTurn.get(turn.id),
+        suggestions: suggestionsByTurn.get(turn.id),
+        sparql_query: sparqlByTurn.get(turn.id),
+        status: statusByTurn.get(turn.id)
+      };
+    });
   }
 
   function findMockResponse(message: string): ExplorationResponse | null {
@@ -92,6 +102,8 @@ function createExplorationStore() {
     loading = true;
     error = null;
 
+    const history = buildHistory();
+
     await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 700));
 
     const response = findMockResponse(content);
@@ -129,11 +141,10 @@ function createExplorationStore() {
     }
 
     loading = false;
-    saveState();
   }
 
-  function selectSuggestion(suggestion: FollowUpQuestion): void {
-    sendMessage(suggestion.text);
+  function selectSuggestion(suggestion: string): void {
+    sendMessage(suggestion);
   }
 
   function retry(): void {
@@ -156,40 +167,6 @@ function createExplorationStore() {
     suggestionsByTurn = new Map();
     sparqlByTurn = new Map();
     statusByTurn = new Map();
-    clearSessionStorage();
-  }
-
-  function saveState(): void {
-    saveToSessionStorage({
-      conversation,
-      result,
-      observations,
-      suggestions,
-      resultsByTurn: Object.fromEntries(resultsByTurn),
-      observationsByTurn: Object.fromEntries(observationsByTurn),
-      suggestionsByTurn: Object.fromEntries(suggestionsByTurn),
-      sparqlByTurn: Object.fromEntries(sparqlByTurn),
-      statusByTurn: Object.fromEntries(statusByTurn)
-    });
-  }
-
-  function loadState(): boolean {
-    const saved = loadFromSessionStorage();
-    if (!saved) return false;
-
-    conversation = saved.conversation;
-    result = saved.result;
-    observations = saved.observations;
-    suggestions = saved.suggestions;
-    resultsByTurn = new Map(Object.entries(saved.resultsByTurn || {}));
-    observationsByTurn = new Map(Object.entries(saved.observationsByTurn || {}));
-    suggestionsByTurn = new Map(Object.entries(saved.suggestionsByTurn || {}));
-    sparqlByTurn = new Map(Object.entries(saved.sparqlByTurn || {}));
-    statusByTurn = new Map(Object.entries(saved.statusByTurn || {}));
-    loading = false;
-    error = null;
-
-    return true;
   }
 
   return {
@@ -199,10 +176,10 @@ function createExplorationStore() {
     get result(): ResultState | null {
       return result;
     },
-    get observations(): Observation[] {
+    get observations(): string[] {
       return observations;
     },
-    get suggestions(): FollowUpQuestion[] {
+    get suggestions(): string[] {
       return suggestions;
     },
     get loading(): boolean {
@@ -214,10 +191,10 @@ function createExplorationStore() {
     get resultsByTurn(): Map<string, ResultState> {
       return resultsByTurn;
     },
-    get observationsByTurn(): Map<string, Observation[]> {
+    get observationsByTurn(): Map<string, string[]> {
       return observationsByTurn;
     },
-    get suggestionsByTurn(): Map<string, FollowUpQuestion[]> {
+    get suggestionsByTurn(): Map<string, string[]> {
       return suggestionsByTurn;
     },
     get sparqlByTurn(): Map<string, string> {
@@ -229,9 +206,7 @@ function createExplorationStore() {
     sendMessage,
     selectSuggestion,
     retry,
-    clearExploration,
-    saveState,
-    loadState
+    clearExploration
   };
 }
 

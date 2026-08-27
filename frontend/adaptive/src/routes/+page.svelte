@@ -1,29 +1,10 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { page } from '$app/state';
   import ConversationView from '$lib/components/Conversation/ConversationView.svelte';
   import PromptInput from '$lib/components/Input/PromptInput.svelte';
   import { exploration } from '$lib/stores/exploration.svelte';
-  import { decodeStateFromUrl } from '$lib/utils/persistence';
-
-  let initialized = $state(false);
-
-  onMount(() => {
-    const urlState = decodeStateFromUrl(page.url.searchParams);
-
-    if (urlState.q) {
-      exploration.sendMessage(urlState.q);
-    } else {
-      exploration.loadState();
-    }
-
-    initialized = true;
-  });
 
   let resultsMap = $derived(exploration.resultsByTurn);
-
   let observationsMap = $derived(exploration.observationsByTurn);
-
   let suggestionsMap = $derived(exploration.suggestionsByTurn);
 </script>
 

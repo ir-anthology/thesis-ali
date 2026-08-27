@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultState, Observation, FollowUpQuestion, ResponseStatus } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultState, ResponseStatus } from '$lib/types/exploration';
   import Spinner from '$lib/components/Shared/Spinner.svelte';
   import ResultBox from '$lib/components/Results/ResultBox.svelte';
   import ObservationCard from '$lib/components/Insights/ObservationCard.svelte';
@@ -16,11 +16,11 @@
   }: {
     message: ConversationTurn;
     result: ResultState | null;
-    observations: Observation[];
-    suggestions: FollowUpQuestion[];
+    observations: string[];
+    suggestions: string[];
     sparqlQuery?: string;
     status?: ResponseStatus;
-    onSelectSuggestion: (suggestion: FollowUpQuestion) => void;
+    onSelectSuggestion: (suggestion: string) => void;
   } = $props();
 
   function formatTime(date: Date): string {
@@ -56,8 +56,8 @@
       {/if}
 
       {#if observations.length > 0 && !message.loading && status === 'answerable'}
-        {#each observations as observation (observation.id)}
-          <ObservationCard {observation} />
+        {#each observations as text, i (i)}
+          <ObservationCard {text} />
         {/each}
       {/if}
 

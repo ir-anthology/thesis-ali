@@ -1,10 +1,8 @@
 <script lang="ts">
-  import type { Observation } from '$lib/types/exploration';
-
-  let { observation }: { observation: Observation } = $props();
+  let { text }: { text: string } = $props();
 </script>
 
-<p class="observation-text">{observation.text}</p>
+<p class="observation-text">{text}</p>
 
 <style>
   .observation-text {

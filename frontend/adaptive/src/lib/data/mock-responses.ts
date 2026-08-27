@@ -3,7 +3,6 @@ import type { ExplorationResponse } from '$lib/types/exploration';
 export const mockResponses: Record<string, ExplorationResponse> = {
   'prolific-authors': {
     status: 'answerable',
-    conversation: [],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -38,24 +37,13 @@ LIMIT 5`,
       ]
     },
     interpretation: {
-      observations: [
-        {
-          id: 'obs-1',
-          text: 'Marti A. Hearst leads with 42 publications spanning nearly three decades, indicating sustained research activity in exploratory search.',
-          source: 'llm'
-        }
-      ],
-      suggestions: [
-        { id: 'sug-1', text: 'Only consider the last five years' },
-        { id: 'sug-2', text: 'Which venues do these authors publish in?' },
-        { id: 'sug-3', text: 'Show me how this changed over time' }
-      ]
+      observations: ['Marti A. Hearst leads with 42 publications spanning nearly three decades, indicating sustained research activity in exploratory search.'],
+      suggestions: ['Only consider the last five years', 'Which venues do these authors publish in?', 'Show me how this changed over time']
     }
   },
 
   'filtered-years': {
     status: 'answerable',
-    conversation: [],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -91,24 +79,13 @@ LIMIT 5`,
       ]
     },
     interpretation: {
-      observations: [
-        {
-          id: 'obs-2',
-          text: 'Filtering to the last five years reduces the result set. Marti A. Hearst still leads with 18 publications.',
-          source: 'llm'
-        }
-      ],
-      suggestions: [
-        { id: 'sug-4', text: 'Which venues do these authors publish in?' },
-        { id: 'sug-5', text: 'Show me how this changed over time' },
-        { id: 'sug-6', text: 'Compare the top two authors' }
-      ]
+      observations: ['Filtering to the last five years reduces the result set. Marti A. Hearst still leads with 18 publications.'],
+      suggestions: ['Which venues do these authors publish in?', 'Show me how this changed over time', 'Compare the top two authors']
     }
   },
 
   venues: {
     status: 'answerable',
-    conversation: [],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -144,24 +121,13 @@ LIMIT 5`,
       ]
     },
     interpretation: {
-      observations: [
-        {
-          id: 'obs-3',
-          text: 'SIGIR dominates as the primary venue, accounting for 18 publications across all five authors.',
-          source: 'llm'
-        }
-      ],
-      suggestions: [
-        { id: 'sug-7', text: 'Show me how this changed over time' },
-        { id: 'sug-8', text: 'Compare SIGIR and CHIIR' },
-        { id: 'sug-9', text: 'Why is SIGIR prominent?' }
-      ]
+      observations: ['SIGIR dominates as the primary venue, accounting for 18 publications across all five authors.'],
+      suggestions: ['Show me how this changed over time', 'Compare SIGIR and CHIIR', 'Why is SIGIR prominent?']
     }
   },
 
   timeline: {
     status: 'answerable',
-    conversation: [],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -198,24 +164,13 @@ ORDER BY ?year`,
       ]
     },
     interpretation: {
-      observations: [
-        {
-          id: 'obs-4',
-          text: 'Publication activity at SIGIR shows a steady upward trend, growing from 12 to 19 publications over the period. CHIIR also shows consistent growth.',
-          source: 'llm'
-        }
-      ],
-      suggestions: [
-        { id: 'sug-10', text: 'Compare SIGIR and CHIIR' },
-        { id: 'sug-11', text: 'Which authors contributed most to this growth?' },
-        { id: 'sug-12', text: 'Go back to all authors' }
-      ]
+      observations: ['Publication activity at SIGIR shows a steady upward trend, growing from 12 to 19 publications over the period. CHIIR also shows consistent growth.'],
+      suggestions: ['Compare SIGIR and CHIIR', 'Which authors contributed most to this growth?', 'Go back to all authors']
     }
   },
 
   comparison: {
     status: 'answerable',
-    conversation: [],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -250,24 +205,13 @@ GROUP BY ?venueName`,
       ]
     },
     interpretation: {
-      observations: [
-        {
-          id: 'obs-5',
-          text: 'SIGIR has twice the publication volume of CHIIR and shows stronger growth. However, CHIIR has been steadily gaining relevance since its inception.',
-          source: 'llm'
-        }
-      ],
-      suggestions: [
-        { id: 'sug-13', text: 'Why is SIGIR prominent?' },
-        { id: 'sug-14', text: 'Which authors publish in both venues?' },
-        { id: 'sug-15', text: 'Show publication trends for all venues' }
-      ]
+      observations: ['SIGIR has twice the publication volume of CHIIR and shows stronger growth. However, CHIIR has been steadily gaining relevance since its inception.'],
+      suggestions: ['Why is SIGIR prominent?', 'Which authors publish in both venues?', 'Show publication trends for all venues']
     }
   },
 
   'why-sigir': {
     status: 'answerable',
-    conversation: [],
     sparql_query: `PREFIX schema: <http://schema.org/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -293,33 +237,16 @@ GROUP BY ?venueName`,
     },
     interpretation: {
       observations: [
-        {
-          id: 'obs-6a',
-          text: 'SIGIR (ACM Special Interest Group on Information Retrieval) is the premier venue for information retrieval research. It accounts for the highest publication count in the current result set.',
-          source: 'llm'
-        },
-        {
-          id: 'obs-6b',
-          text: 'The venue has been active since the 1970s and consistently attracts top researchers in search, retrieval, and exploratory search specifically.',
-          source: 'llm'
-        },
-        {
-          id: 'obs-6c',
-          text: 'In the current filtered context (top authors, last 5 years), SIGIR represents 38% of all publications.',
-          source: 'llm'
-        }
+        'SIGIR (ACM Special Interest Group on Information Retrieval) is the premier venue for information retrieval research. It accounts for the highest publication count in the current result set.',
+        'The venue has been active since the 1970s and consistently attracts top researchers in search, retrieval, and exploratory search specifically.',
+        'In the current filtered context (top authors, last 5 years), SIGIR represents 38% of all publications.'
       ],
-      suggestions: [
-        { id: 'sug-16', text: 'Compare SIGIR and CHIIR' },
-        { id: 'sug-17', text: 'Which authors publish most at SIGIR?' },
-        { id: 'sug-18', text: 'Show all venues' }
-      ]
+      suggestions: ['Compare SIGIR and CHIIR', 'Which authors publish most at SIGIR?', 'Show all venues']
     }
   },
 
   unsupported: {
     status: 'unsupported',
-    conversation: [],
     result: {
       type: 'facet_table',
       title: '',
@@ -328,11 +255,7 @@ GROUP BY ?venueName`,
     },
     interpretation: {
       observations: [],
-      suggestions: [
-        { id: 'sug-19', text: 'Which authors published in this venue?' },
-        { id: 'sug-20', text: 'How did publication activity change over time?' },
-        { id: 'sug-21', text: 'Show me the most cited papers' }
-      ]
+      suggestions: ['Which authors published in this venue?', 'How did publication activity change over time?', 'Show me the most cited papers']
     }
   }
 };

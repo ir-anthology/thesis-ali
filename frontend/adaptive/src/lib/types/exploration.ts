@@ -8,8 +8,8 @@
  * Key Concepts:
  * - Conversation: A series of user/assistant turns that form the exploration context
  * - Result: The structured data returned from the knowledge graph
- * - Observation: LLM-generated insights about the current exploration state
- * - Follow-up: Suggested next questions based on the current context
+ * - Observations: LLM-generated insights about the current exploration state
+ * - Suggestions: Suggested next questions based on the current context
  */
 
 /** The type of visualization to render for result data */
@@ -48,25 +48,23 @@ export interface ResultState {
   title?: string;
 }
 
-export interface Observation {
-  id: string;
-  text: string;
-  source: 'llm';
-}
-
-export interface FollowUpQuestion {
-  id: string;
-  text: string;
-}
-
 export interface InterpretationState {
-  observations: Observation[];
-  suggestions: FollowUpQuestion[];
+  observations: string[];
+  suggestions: string[];
+}
+
+export interface HistoryTurn {
+  role: MessageRole;
+  content: string;
+  result?: ResultState;
+  observations?: string[];
+  suggestions?: string[];
+  sparql_query?: string;
+  status?: ResponseStatus;
 }
 
 export interface ExplorationResponse {
   status: ResponseStatus;
-  conversation: ConversationTurn[];
   result: ResultState;
   interpretation: InterpretationState;
   sparql_query?: string;

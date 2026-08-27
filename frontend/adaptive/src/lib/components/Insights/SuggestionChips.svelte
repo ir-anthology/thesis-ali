@@ -1,25 +1,23 @@
 <script lang="ts">
-  import type { FollowUpQuestion } from '$lib/types/exploration';
-
   let {
     suggestions,
     onSelect
   }: {
-    suggestions: FollowUpQuestion[];
-    onSelect: (suggestion: FollowUpQuestion) => void;
+    suggestions: string[];
+    onSelect: (suggestion: string) => void;
   } = $props();
 </script>
 
 {#if suggestions.length > 0}
   <div class="suggestions" role="group" aria-label="Suggested follow-up questions">
     <div class="suggestions-list">
-      {#each suggestions as suggestion (suggestion.id)}
+      {#each suggestions as suggestion, i (i)}
         <button
           class="suggestion-chip"
           onclick={() => onSelect(suggestion)}
-          aria-label="Ask: {suggestion.text}"
+          aria-label="Ask: {suggestion}"
         >
-          {suggestion.text}
+          {suggestion}
         </button>
       {/each}
     </div>

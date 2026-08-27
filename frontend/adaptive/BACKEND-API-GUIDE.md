@@ -78,7 +78,35 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
 ```json
 {
   "message": "Who are the most prolific authors?",
-  "conversation_id": "conv-abc-123"
+  "history": []
+}
+```
+
+**Follow-up Request (with conversation history):**
+
+```json
+{
+  "message": "Only consider the last five years",
+  "history": [
+    {
+      "role": "user",
+      "content": "Who are the most prolific authors?"
+    },
+    {
+      "role": "assistant",
+      "content": "Here are the results:",
+      "result": {
+        "type": "facet_table",
+        "title": "Most Prolific Authors in Exploratory Search",
+        "columns": [...],
+        "rows": [...]
+      },
+      "observations": [...],
+      "suggestions": [...],
+      "sparql_query": "PREFIX ...",
+      "status": "answerable"
+    }
+  ]
 }
 ```
 
@@ -87,7 +115,6 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
 ```json
 {
   "status": "answerable",
-  "conversation_id": "conv-abc-123",
   "result": {
     "type": "facet_table",
     "title": "Most Prolific Authors in Exploratory Search",
@@ -103,18 +130,8 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
     ]
   },
   "interpretation": {
-    "observations": [
-      {
-        "id": "obs-1",
-        "text": "Marti A. Hearst leads with 42 publications spanning nearly three decades.",
-        "source": "llm"
-      }
-    ],
-    "suggestions": [
-      { "id": "sug-1", "text": "Only consider the last five years" },
-      { "id": "sug-2", "text": "Which venues do these authors publish in?" },
-      { "id": "sug-3", "text": "Show me how this changed over time" }
-    ]
+    "observations": ["Marti A. Hearst leads with 42 publications spanning nearly three decades."],
+    "suggestions": ["Only consider the last five years", "Which venues do these authors publish in?", "Show me how this changed over time"]
   },
   "sparql_query": "PREFIX schema: <http://schema.org/>\nPREFIX dcterms: <http://purl.org/dc/terms/>\n\nSELECT ?author\n       (COUNT(?pub) AS ?publications)\n       (COUNT(DISTINCT ?venue) AS ?venues)\nWHERE {\n  ?pub a schema:ScholarlyArticle ;\n       dcterms:creator ?author ;\n       schema:isPartOf ?venue .\n}\nGROUP BY ?author\nORDER BY DESC(?publications)\nLIMIT 5"
 }
@@ -142,7 +159,19 @@ Health check endpoint.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `message` | string | Yes | User's natural language query |
-| `conversation_id` | string | Yes | Unique ID for this conversation session |
+| `history` | HistoryTurn[] | Yes | Previous conversation turns (empty array for first message) |
+
+### HistoryTurn
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `role` | string | Yes | `"user"` or `"assistant"` |
+| `content` | string | Yes | The message text |
+| `result` | ResultState | No | Structured result data (assistant turns only) |
+| `observations` | string[] | No | LLM-generated insights (assistant turns only) |
+| `suggestions` | string[] | No | Follow-up suggestions (assistant turns only) |
+| `sparql_query` | string | No | The SPARQL query used (assistant turns only) |
+| `status` | string | No | Response status: `"answerable"`, `"unsupported"`, or `"error"` (assistant turns only) |
 
 ---
 
@@ -153,7 +182,6 @@ Health check endpoint.
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | string | `"answerable"`, `"unsupported"`, or `"error"` |
-| `conversation_id` | string | Same ID from request |
 | `result` | ResultState | The structured result data |
 | `interpretation` | InterpretationState | LLM-generated insights |
 | `sparql_query` | string\|null | The SPARQL query used (only when `status === "answerable"`) |
@@ -193,23 +221,8 @@ A JSON object where keys match column `key` values. Values are strings or number
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `observations` | Observation[] | LLM-generated insights about the data |
-| `suggestions` | FollowUpQuestion[] | Recommended follow-up queries |
-
-### Observation
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique identifier |
-| `text` | string | The observation text |
-| `source` | string | Always `"llm"` |
-
-### FollowUpQuestion
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique identifier |
-| `text` | string | The suggested question |
+| `observations` | string[] | LLM-generated insights about the data |
+| `suggestions` | string[] | Recommended follow-up queries |
 
 ---
 
@@ -370,24 +383,34 @@ These are the 7 recognized query types. The backend should handle similar natura
 
 ## 8. Conversation Context
 
-The backend must maintain conversation state across requests. The frontend sends the current context with each request.
+The backend is **stateless**. The frontend sends the full conversation history with each request.
 
 ### Context Flow
 
 ```
-Request 1: "Who are the most prolific authors?"
+Request 1: { message: "Who are the most prolific authors?", history: [] }
   → Response: { result: facet_table with authors }
 
-Request 2: "Only consider the last five years"
+Request 2: { message: "Only consider the last five years", history: [
+    { role: "user", content: "Who are the most prolific authors?" },
+    { role: "assistant", content: "...", result: {...}, status: "answerable" }
+  ]}
   → Response: { result: facet_table with filtered authors }
 
-Request 3: "Which venues do they publish in?"
+Request 3: { message: "Which venues do they publish in?", history: [
+    { role: "user", content: "Who are the most prolific authors?" },
+    { role: "assistant", content: "...", result: {...}, status: "answerable" },
+    { role: "user", content: "Only consider the last five years" },
+    { role: "assistant", content: "...", result: {...}, status: "answerable" }
+  ]}
   → Response: { result: facet_table with venues }
 ```
 
 ### Key Rules
 
-1. **Context is advisory** — The backend may ignore or modify context if the query requires it
+1. **Backend is stateless** — No session storage needed. Each request contains all required context.
+2. **History is advisory** — The backend may ignore or modify context if the query requires it.
+3. **First message has empty history** — `history: []` for the initial request.
 
 ---
 
@@ -441,11 +464,10 @@ def chat(request: ChatRequest) -> ChatResponse:
 ### Migration Steps
 
 1. **Update `schemas.py`** — Replace `ChatResponse` with `ExplorationResponse` (see Section 5)
-2. **Add conversation management** — Store conversation state per `conversation_id`
-3. **Integrate LLM for intent parsing** — Replace hardcoded SPARQL generation with LLM-based intent extraction
-4. **Add observation generation** — Use LLM to generate insights from query results
-5. **Add suggestion generation** — Use LLM to generate follow-up questions
-6. **Update route** — Change `POST /chat` to `POST /api/exploration`
+2. **Integrate LLM for intent parsing** — Replace hardcoded SPARQL generation with LLM-based intent extraction
+3. **Add observation generation** — Use LLM to generate insights from query results
+4. **Add suggestion generation** — Use LLM to generate follow-up questions
+5. **Update route** — Change `POST /chat` to `POST /api/exploration`
 
 ### New schemas.py
 
@@ -465,26 +487,25 @@ class ResultState(BaseModel):
     columns: list[ResultColumn]
     rows: list[dict]
 
-class Observation(BaseModel):
-    id: str
-    text: str
-    source: str = "llm"
-
-class FollowUpQuestion(BaseModel):
-    id: str
-    text: str
-
 class InterpretationState(BaseModel):
-    observations: list[Observation]
-    suggestions: list[FollowUpQuestion]
+    observations: list[str]
+    suggestions: list[str]
+
+class HistoryTurn(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+    result: Optional[ResultState] = None
+    observations: Optional[list[str]] = None
+    suggestions: Optional[list[str]] = None
+    sparql_query: Optional[str] = None
+    status: Optional[str] = None
 
 class ChatRequest(BaseModel):
     message: str
-    conversation_id: str
+    history: list[HistoryTurn] = []
 
 class ExplorationResponse(BaseModel):
     status: str  # "answerable", "unsupported", "error"
-    conversation_id: str
     result: ResultState
     interpretation: InterpretationState
     sparql_query: Optional[str] = None  # Only when status == "answerable"
@@ -518,25 +539,13 @@ interface ResultState {
   title?: string;
 }
 
-interface Observation {
-  id: string;
-  text: string;
-  source: 'llm';
-}
-
-interface FollowUpQuestion {
-  id: string;
-  text: string;
-}
-
 interface InterpretationState {
-  observations: Observation[];
-  suggestions: FollowUpQuestion[];
+  observations: string[];
+  suggestions: string[];
 }
 
 interface ExplorationResponse {
   status: ResponseStatus;
-  conversation_id: string;
   result: ResultState;
   interpretation: InterpretationState;
   sparql_query?: string;
@@ -560,7 +569,7 @@ curl -X POST http://localhost:8000/api/exploration \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Who are the most prolific authors?",
-    "conversation_id": "test-123"
+    "history": []
   }'
 ```
 
@@ -570,16 +579,37 @@ curl -X POST http://localhost:8000/api/exploration \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Only consider the last five years",
-    "conversation_id": "test-123"
+    "history": [
+      {
+        "role": "user",
+        "content": "Who are the most prolific authors?"
+      },
+      {
+        "role": "assistant",
+        "content": "Here are the results:",
+        "result": {
+          "type": "facet_table",
+          "title": "Most Prolific Authors",
+          "columns": [
+            {"key": "author", "label": "Author", "type": "text", "sortable": true},
+            {"key": "publications", "label": "Publications", "type": "number", "sortable": true}
+          ],
+          "rows": [
+            {"author": "Marti A. Hearst", "publications": 42}
+          ]
+        },
+        "status": "answerable"
+      }
+    ]
   }'
 ```
 
 ### Validation Checklist
 
+- [ ] Request has `message` and `history` fields
 - [ ] Response has `status` field
 - [ ] Response has `result` with `type`, `title`, `columns`, `rows`
-- [ ] Response has `interpretation` with `observations` and `suggestions`
+- [ ] Response has `interpretation` with `observations` and `suggestions` (string arrays)
 - [ ] Column `key` values match row object keys
 - [ ] Sortable columns have `sortable: true`
-- [ ] Observations have `source: "llm"`
 - [ ] Unsupported queries return `status: "unsupported"` with suggestions
