@@ -1,7 +1,7 @@
 import type { ExplorationResponse } from '$lib/types/exploration';
 
 export const mockResponses: Record<string, ExplorationResponse> = {
-  'prolific-authors': {
+  'full-response': {
     intent: 'User is asking for the most prolific authors based on publication count.',
     columns: [
       { key: 'author', label: 'Author', type: 'text', sortable: true },
@@ -36,180 +36,15 @@ ORDER BY DESC(?publications)
 LIMIT 5`
   },
 
-  'filtered-years': {
-    intent: 'User is asking for the most prolific authors from the last five years.',
-    columns: [
-      { key: 'author', label: 'Author', type: 'text', sortable: true },
-      { key: 'publications', label: 'Publications', type: 'number', sortable: true },
-      { key: 'venues', label: 'Venues', type: 'number', sortable: true },
-      { key: 'years', label: 'Years', type: 'text' }
-    ],
-    rows: [
-      { author: 'Marti A. Hearst', publications: 18, venues: 6, years: '2020–2024' },
-      { author: 'Ryen W. White', publications: 16, venues: 5, years: '2020–2024' },
-      { author: 'Gary Marchionini', publications: 12, venues: 4, years: '2020–2023' },
-      { author: 'Daniel M. Russell', publications: 9, venues: 3, years: '2020–2022' },
-      { author: 'Andrei Z. Broder', publications: 7, venues: 3, years: '2020–2021' }
-    ],
-    observations: ['Filtering to the last five years reduces the result set. Marti A. Hearst still leads with 18 publications.'],
-    suggestions: ['Which venues do these authors publish in?', 'Show me how this changed over time', 'Compare the top two authors'],
-    sparql_query: `PREFIX schema: <http://schema.org/>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-
-SELECT ?author
-       (COUNT(?pub) AS ?publications)
-       (COUNT(DISTINCT ?venue) AS ?venues)
-       (CONCAT(MIN(STR(?year)), "\u2013", MAX(STR(?year))) AS ?years)
-WHERE {
-  ?pub a schema:ScholarlyArticle ;
-       dcterms:creator ?author ;
-       schema:isPartOf ?venue ;
-       dcterms:date ?year .
-  FILTER(?year >= 2020 && ?year <= 2025)
-}
-GROUP BY ?author
-ORDER BY DESC(?publications)
-LIMIT 5`
+  'limitation-response': {
+    intent: 'User is asking about citation counts for publications.',
+    limitation: 'I don\'t have data on citation counts. The knowledge graph only contains information about authors, venues, and publications.',
+    suggestions: ['Who are the most prolific authors?', 'Which venues do they publish in?']
   },
 
-  venues: {
-    intent: 'User is asking for the venues where the top authors publish.',
-    columns: [
-      { key: 'venue', label: 'Venue', type: 'text', sortable: true },
-      { key: 'publications', label: 'Publications', type: 'number', sortable: true },
-      { key: 'authors', label: 'Authors', type: 'number', sortable: true },
-      { key: 'years', label: 'Years', type: 'text' }
-    ],
-    rows: [
-      { venue: 'SIGIR', publications: 18, authors: 5, years: '2020–2025' },
-      { venue: 'CHIIR', publications: 9, authors: 4, years: '2021–2025' },
-      { venue: 'CHI', publications: 7, authors: 3, years: '2020–2024' },
-      { venue: 'UIST', publications: 5, authors: 2, years: '2020–2023' },
-      { venue: 'JASIST', publications: 4, authors: 3, years: '2020–2024' }
-    ],
-    observations: ['SIGIR dominates as the primary venue, accounting for 18 publications across all five authors.'],
-    suggestions: ['Show me how this changed over time', 'Compare SIGIR and CHIIR', 'Why is SIGIR prominent?'],
-    sparql_query: `PREFIX schema: <http://schema.org/>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-
-SELECT ?venue
-       (COUNT(?pub) AS ?publications)
-       (COUNT(DISTINCT ?author) AS ?authors)
-       (CONCAT(MIN(STR(?year)), "\u2013", MAX(STR(?year))) AS ?years)
-WHERE {
-  ?pub a schema:ScholarlyArticle ;
-       dcterms:creator ?author ;
-       schema:isPartOf ?venue ;
-       dcterms:date ?year .
-  FILTER(?year >= 2020 && ?year <= 2025)
-}
-GROUP BY ?venue
-ORDER BY DESC(?publications)
-LIMIT 5`
-  },
-
-  timeline: {
-    intent: 'User is asking how publication activity changed over time.',
-    columns: [
-      { key: 'year', label: 'Year', type: 'text' },
-      { key: 'SIGIR', label: 'SIGIR', type: 'number' },
-      { key: 'CHIIR', label: 'CHIIR', type: 'number' },
-      { key: 'CHI', label: 'CHI', type: 'number' }
-    ],
-    rows: [
-      { year: '2020', SIGIR: 12, CHIIR: 3, CHI: 2 },
-      { year: '2021', SIGIR: 14, CHIIR: 4, CHI: 2 },
-      { year: '2022', SIGIR: 15, CHIIR: 5, CHI: 1 },
-      { year: '2023', SIGIR: 16, CHIIR: 6, CHI: 3 },
-      { year: '2024', SIGIR: 18, CHIIR: 7, CHI: 2 },
-      { year: '2025', SIGIR: 19, CHIIR: 8, CHI: 2 }
-    ],
-    observations: ['Publication activity at SIGIR shows a steady upward trend, growing from 12 to 19 publications over the period. CHIIR also shows consistent growth.'],
-    suggestions: ['Compare SIGIR and CHIIR', 'Which authors contributed most to this growth?', 'Go back to all authors'],
-    sparql_query: `PREFIX schema: <http://schema.org/>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-
-SELECT ?year
-       (COUNT(IF(?venueName = "SIGIR", ?pub, NULL)) AS ?SIGIR)
-       (COUNT(IF(?venueName = "CHIIR", ?pub, NULL)) AS ?CHIIR)
-       (COUNT(IF(?venueName = "CHI", ?pub, NULL)) AS ?CHI)
-WHERE {
-  ?pub a schema:ScholarlyArticle ;
-       schema:isPartOf ?venue ;
-       dcterms:date ?year .
-  ?venue schema:name ?venueName .
-  FILTER(?year >= 2020 && ?year <= 2025)
-  FILTER(?venueName IN ("SIGIR", "CHIIR", "CHI"))
-}
-GROUP BY ?year
-ORDER BY ?year`
-  },
-
-  comparison: {
-    intent: 'User is asking to compare SIGIR and CHIIR venues.',
-    columns: [
-      { key: 'metric', label: 'Metric', type: 'text' },
-      { key: 'SIGIR', label: 'SIGIR', type: 'text' },
-      { key: 'CHIIR', label: 'CHIIR', type: 'text' }
-    ],
-    rows: [
-      { metric: 'Total Publications', SIGIR: '18', CHIIR: '9' },
-      { metric: 'Authors', SIGIR: '5', CHIIR: '4' },
-      { metric: 'Years Active', SIGIR: '2020–2025', CHIIR: '2021–2025' },
-      { metric: 'Avg Publications/Year', SIGIR: '3.0', CHIIR: '1.8' },
-      { metric: 'Growth Trend', SIGIR: 'Increasing', CHIIR: 'Stable' }
-    ],
-    observations: ['SIGIR has twice the publication volume of CHIIR and shows stronger growth. However, CHIIR has been steadily gaining relevance since its inception.'],
-    suggestions: ['Why is SIGIR prominent?', 'Which authors publish in both venues?', 'Show publication trends for all venues'],
-    sparql_query: `PREFIX schema: <http://schema.org/>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-
-SELECT ?venueName
-       (COUNT(?pub) AS ?publications)
-       (COUNT(DISTINCT ?author) AS ?authors)
-       (CONCAT(MIN(STR(?year)), "\u2013", MAX(STR(?year))) AS ?years)
-WHERE {
-  ?pub a schema:ScholarlyArticle ;
-       dcterms:creator ?author ;
-       schema:isPartOf ?venue ;
-       dcterms:date ?year .
-  ?venue schema:name ?venueName .
-  FILTER(?venueName IN ("SIGIR", "CHIIR"))
-  FILTER(?year >= 2020 && ?year <= 2025)
-}
-GROUP BY ?venueName`
-  },
-
-  'why-sigir': {
-    intent: 'User is asking why SIGIR is a prominent venue.',
-    observations: [
-      'SIGIR (ACM Special Interest Group on Information Retrieval) is the premier venue for information retrieval research. It accounts for the highest publication count in the current result set.',
-      'The venue has been active since the 1970s and consistently attracts top researchers in search, retrieval, and exploratory search specifically.',
-      'In the current filtered context (top authors, last 5 years), SIGIR represents 38% of all publications.'
-    ],
-    suggestions: ['Compare SIGIR and CHIIR', 'Which authors publish most at SIGIR?', 'Show all venues'],
-    sparql_query: `PREFIX schema: <http://schema.org/>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-
-SELECT ?venueName
-       (COUNT(?pub) AS ?publications)
-       (COUNT(DISTINCT ?author) AS ?authors)
-       (CONCAT(MIN(STR(?year)), "\u2013", MAX(STR(?year))) AS ?years)
-WHERE {
-  ?pub a schema:ScholarlyArticle ;
-       dcterms:creator ?author ;
-       schema:isPartOf ?venue ;
-       dcterms:date ?year .
-  ?venue schema:name ?venueName .
-  FILTER(?venueName = "SIGIR")
-  FILTER(?year >= 2020 && ?year <= 2025)
-}
-GROUP BY ?venueName`
-  },
-
-  unsupported: {
-    intent: 'User is asking about a topic that cannot be answered with available data.',
-    limitation: 'I don\'t have data on this topic. The knowledge graph only contains information about authors, venues, and publications.',
-    suggestions: ['Which authors published in this venue?', 'How did publication activity change over time?', 'Show me the most cited papers']
+  'clarification-response': {
+    intent: 'User is asking about something ambiguous.',
+    clarification: 'Could you clarify whether you are looking for authors, venues, or publications?',
+    suggestions: ['Show me the most prolific authors', 'Show me publication venues']
   }
 };

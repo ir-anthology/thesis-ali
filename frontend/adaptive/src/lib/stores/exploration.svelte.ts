@@ -61,26 +61,14 @@ function createExplorationStore() {
   function findMockResponse(message: string): ExplorationResponse | null {
     const lower = message.toLowerCase();
 
-    if (lower.includes('prolific') || lower.includes('most authors')) {
-      return mockResponses['prolific-authors'];
+    if (lower.includes('tell me about') || lower.includes('help me') || lower.includes('something')) {
+      return mockResponses['clarification-response'];
     }
-    if (lower.includes('last five') || lower.includes('last 5')) {
-      return mockResponses['filtered-years'];
-    }
-    if (lower.includes('venue') || lower.includes('publish in')) {
-      return mockResponses['venues'];
-    }
-    if (lower.includes('changed over time') || lower.includes('how has')) {
-      return mockResponses['timeline'];
-    }
-    if (lower.includes('compare')) {
-      return mockResponses['comparison'];
-    }
-    if (lower.includes('why') && lower.includes('sigir')) {
-      return mockResponses['why-sigir'];
+    if (lower.includes('citation') || lower.includes('h-index') || lower.includes('impact factor')) {
+      return mockResponses['limitation-response'];
     }
 
-    return mockResponses['unsupported'];
+    return mockResponses['full-response'];
   }
 
   async function sendMessage(content: string): Promise<void> {
