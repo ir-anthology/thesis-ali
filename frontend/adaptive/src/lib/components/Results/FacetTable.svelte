@@ -10,7 +10,7 @@
     columns: ResultColumn[];
     rows: ResultRow[];
     title?: string;
-    onCellClick?: (columnKey: string, row: ResultRow) => void;
+    onCellClick?: (question: string) => void;
   } = $props();
 
   let sortField = $state<string | null>(null);
@@ -68,8 +68,8 @@
   let sortedRows = $derived.by(() => {
     if (!sortField) return rows;
     return [...rows].sort((a, b) => {
-      const aVal = a[sortField!];
-      const bVal = b[sortField!];
+      const aVal = a[sortField!].value;
+      const bVal = b[sortField!].value;
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       }
@@ -111,15 +111,17 @@
             class:focused={focusedRowIndex === i}
           >
             {#each columns as column}
+              {@const cell = row[column.key]}
               <td
                 role="gridcell"
                 class:clickable={!!onCellClick}
-                onclick={() => onCellClick?.(column.key, row)}
+                title={cell.question}
+                onclick={() => onCellClick?.(cell.question)}
               >
                 {#if column.type === 'badge'}
-                  <span class="cell-badge">{row[column.key]}</span>
+                  <span class="cell-badge">{cell.value}</span>
                 {:else}
-                  {row[column.key]}
+                  {cell.value}
                 {/if}
               </td>
             {/each}

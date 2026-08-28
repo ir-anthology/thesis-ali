@@ -31,8 +31,13 @@ export interface ResultColumn {
   sortable?: boolean;
 }
 
+export interface CellValue {
+  value: string | number;
+  question: string;
+}
+
 export interface ResultRow {
-  [key: string]: string | number;
+  [key: string]: CellValue;
 }
 
 export interface HistoryTurn {

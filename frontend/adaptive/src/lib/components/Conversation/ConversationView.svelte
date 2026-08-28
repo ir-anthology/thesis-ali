@@ -4,7 +4,7 @@
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
   import FacetTable from '$lib/components/Results/FacetTable.svelte';
-  import { overviewData, overviewQueryMap } from '$lib/data/mock-overview';
+  import { overviewData } from '$lib/data/mock-overview';
 
   let {
     conversation,
@@ -32,11 +32,8 @@
 
   let container: HTMLDivElement | undefined = $state();
 
-  function handleOverviewClick(columnKey: string, _row: ResultRow): void {
-    const query = overviewQueryMap[columnKey];
-    if (query) {
-      onSelectSuggestion(query);
-    }
+  function handleOverviewClick(question: string): void {
+    onSelectSuggestion(question);
   }
 
   $effect(() => {

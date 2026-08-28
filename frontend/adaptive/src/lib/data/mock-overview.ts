@@ -9,13 +9,11 @@ export const overviewData: { title: string; columns: ResultColumn[]; rows: Resul
     { key: 'publications', label: 'Publications', type: 'number' }
   ],
   rows: [
-    { authors: 50, venues: 12, years: 5, publications: 42 }
+    {
+      authors: { value: 50, question: 'Who are the most prolific authors?' },
+      venues: { value: 12, question: 'Which venues do they publish in?' },
+      years: { value: 5, question: 'Show me publication trends over time' },
+      publications: { value: 42, question: 'Who are the most prolific authors?' }
+    }
   ]
-};
-
-export const overviewQueryMap: Record<string, string> = {
-  authors: 'Who are the most prolific authors?',
-  venues: 'Which venues do they publish in?',
-  years: 'Show me publication trends over time',
-  publications: 'Who are the most prolific authors?'
 };

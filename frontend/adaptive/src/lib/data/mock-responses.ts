@@ -10,11 +10,11 @@ export const mockResponses: Record<string, ExplorationResponse> = {
       { key: 'years', label: 'Years', type: 'text' }
     ],
     rows: [
-      { author: 'Marti A. Hearst', publications: 42, venues: 12, years: '1995–2024' },
-      { author: 'Ryen W. White', publications: 38, venues: 10, years: '2003–2024' },
-      { author: 'Gary Marchionini', publications: 31, venues: 9, years: '1997–2023' },
-      { author: 'Daniel M. Russell', publications: 27, venues: 8, years: '2000–2022' },
-      { author: 'Andrei Z. Broder', publications: 24, venues: 7, years: '1998–2021' }
+      { author: { value: 'Marti A. Hearst', question: 'Tell me about Marti A. Hearst' }, publications: { value: 42, question: 'How many publications does Marti A. Hearst have?' }, venues: { value: 12, question: 'Which venues does Marti A. Hearst publish in?' }, years: { value: '1995–2024', question: 'What years was Marti A. Hearst active?' } },
+      { author: { value: 'Ryen W. White', question: 'Tell me about Ryen W. White' }, publications: { value: 38, question: 'How many publications does Ryen W. White have?' }, venues: { value: 10, question: 'Which venues does Ryen W. White publish in?' }, years: { value: '2003–2024', question: 'What years was Ryen W. White active?' } },
+      { author: { value: 'Gary Marchionini', question: 'Tell me about Gary Marchionini' }, publications: { value: 31, question: 'How many publications does Gary Marchionini have?' }, venues: { value: 9, question: 'Which venues does Gary Marchionini publish in?' }, years: { value: '1997–2023', question: 'What years was Gary Marchionini active?' } },
+      { author: { value: 'Daniel M. Russell', question: 'Tell me about Daniel M. Russell' }, publications: { value: 27, question: 'How many publications does Daniel M. Russell have?' }, venues: { value: 8, question: 'Which venues does Daniel M. Russell publish in?' }, years: { value: '2000–2022', question: 'What years was Daniel M. Russell active?' } },
+      { author: { value: 'Andrei Z. Broder', question: 'Tell me about Andrei Z. Broder' }, publications: { value: 24, question: 'How many publications does Andrei Z. Broder have?' }, venues: { value: 7, question: 'Which venues does Andrei Z. Broder publish in?' }, years: { value: '1998–2021', question: 'What years was Andrei Z. Broder active?' } }
     ],
     observations: ['Marti A. Hearst leads with 42 publications spanning nearly three decades, indicating sustained research activity in exploratory search.'],
     suggestions: ['Who are the most prolific authors?', 'What about citation counts?', 'Tell me about something'],
