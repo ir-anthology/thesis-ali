@@ -6,11 +6,13 @@
   let {
     columns,
     rows,
-    sparqlQuery
+    sparqlQuery,
+    onCellClick
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
     sparqlQuery?: string;
+    onCellClick?: (question: string) => void;
   } = $props();
 
   let showSparql = $state(true);
@@ -46,7 +48,7 @@
     </div>
   {:else}
     <div role="tabpanel">
-      <FacetTable {columns} {rows} />
+      <FacetTable {columns} {rows} {onCellClick} />
     </div>
   {/if}
 </div>

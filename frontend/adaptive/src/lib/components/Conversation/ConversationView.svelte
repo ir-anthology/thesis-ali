@@ -89,6 +89,7 @@
           suggestions={suggestionsByTurn.get(turn.id)}
           sparqlQuery={sparqlByTurn.get(turn.id)}
           {onSelectSuggestion}
+          onCellClick={onSelectSuggestion}
         />
       {/if}
     {/each}

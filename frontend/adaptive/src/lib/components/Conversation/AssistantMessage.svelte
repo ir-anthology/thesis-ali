@@ -15,7 +15,8 @@
     observations,
     suggestions,
     sparqlQuery,
-    onSelectSuggestion
+    onSelectSuggestion,
+    onCellClick
   }: {
     message: ConversationTurn;
     intent?: string;
@@ -27,6 +28,7 @@
     suggestions?: string[];
     sparqlQuery?: string;
     onSelectSuggestion: (suggestion: string) => void;
+    onCellClick?: (question: string) => void;
   } = $props();
 
   function formatTime(date: Date): string {
@@ -68,7 +70,7 @@
       {/if}
 
       {#if columns && rows && !message.loading && !message.error}
-        <ResultBox {columns} {rows} {sparqlQuery} />
+        <ResultBox {columns} {rows} {sparqlQuery} {onCellClick} />
       {/if}
 
       {#if observations && observations.length > 0 && !message.loading}
