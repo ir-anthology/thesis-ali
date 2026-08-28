@@ -38,9 +38,7 @@
 
 <div class="message assistant" class:error={message.error}>
   <div class="avatar">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-    </svg>
+    <span class="avatar-text">IR</span>
   </div>
 
   <div class="content">
@@ -111,7 +109,13 @@
     justify-content: center;
     flex-shrink: 0;
     background-color: var(--bg-tertiary);
-    color: var(--text-secondary);
+  }
+
+  .avatar-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #ef4444;
+    letter-spacing: -0.02em;
   }
 
   .content {
