@@ -114,7 +114,8 @@
   .avatar-text {
     font-size: 0.75rem;
     font-weight: 700;
-    color: #ef4444;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: rgb(149, 21, 21);
     letter-spacing: -0.02em;
   }
 
