@@ -15,7 +15,7 @@
     onCellClick?: (question: string) => void;
   } = $props();
 
-  let showSparql = $state(true);
+  let showSparql = $state(false);
 </script>
 
 <div class="result-box">
