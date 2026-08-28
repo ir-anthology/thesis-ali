@@ -114,9 +114,9 @@
               {@const cell = row[column.key]}
               <td
                 role="gridcell"
-                class:clickable={!!onCellClick}
-                title={cell.question}
-                onclick={() => onCellClick?.(cell.question)}
+                class:clickable={!!onCellClick && !!cell.question}
+                title={cell.question || undefined}
+                onclick={cell.question ? () => onCellClick?.(cell.question) : undefined}
               >
                 {#if column.type === 'badge'}
                   <span class="cell-badge">{cell.value}</span>
