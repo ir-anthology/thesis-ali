@@ -55,6 +55,7 @@
 
 <style>
   .result-box {
+    margin-top: 0.75rem;
     border: 1px solid var(--border);
     border-radius: 6px;
     overflow: hidden;
