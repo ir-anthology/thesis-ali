@@ -43,7 +43,7 @@
 
   <div class="content">
     <div class="message-header">
-      <span class="role">Assistant</span>
+      <span class="role">IR Anthology</span>
       <span class="time">{formatTime(message.timestamp)}</span>
     </div>
 
