@@ -39,7 +39,7 @@ function createExplorationStore() {
   }
 
   function buildHistory(): HistoryTurn[] {
-    return conversation.map((turn) => {
+    return conversation.filter(turn => !turn.loading).map((turn) => {
       if (turn.role === 'user') {
         return { role: 'user', content: turn.content };
       }
