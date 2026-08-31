@@ -73,9 +73,9 @@
   }
 
   .message-body {
-    color: var(--text-primary);
+    color: var(--accent);
     line-height: 1.5;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 
   .message-body p {
