@@ -7,8 +7,7 @@
  * - Per-turn response data (columns, rows, observations, suggestions)
  * - Per-turn intent, clarification, limitation
  *
- * The store uses mock data for demonstration purposes.
- * In production, it would integrate with a backend API.
+ * The store communicates with the backend API at http://localhost:8000.
  */
 
 import type {
@@ -18,7 +17,8 @@ import type {
   ExplorationResponse,
   HistoryTurn
 } from '$lib/types/exploration';
-import { mockResponses } from '$lib/data/mock-responses';
+
+const API_BASE = 'http://localhost:8000';
 
 function createExplorationStore() {
   let conversation = $state<ConversationTurn[]>([]);
@@ -58,19 +58,6 @@ function createExplorationStore() {
     });
   }
 
-  function findMockResponse(message: string): ExplorationResponse | null {
-    const lower = message.toLowerCase();
-
-    if (lower.includes('tell me about') || lower.includes('help me') || lower.includes('something')) {
-      return mockResponses['clarification-response'];
-    }
-    if (lower.includes('citation') || lower.includes('h-index') || lower.includes('impact factor')) {
-      return mockResponses['limitation-response'];
-    }
-
-    return mockResponses['full-response'];
-  }
-
   async function sendMessage(content: string): Promise<void> {
     if (!content.trim() || loading) return;
 
@@ -95,11 +82,19 @@ function createExplorationStore() {
 
     const history = buildHistory();
 
-    await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 700));
+    try {
+      const res = await fetch(`${API_BASE}/api/exploration`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: content, history })
+      });
 
-    const response = findMockResponse(content);
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`);
+      }
 
-    if (response) {
+      const response: ExplorationResponse = await res.json();
+
       const displayText = response.clarification || response.limitation || response.intent || '';
 
       conversation = conversation.map((t) =>
@@ -132,18 +127,19 @@ function createExplorationStore() {
       if (response.sparql_query) {
         sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, response.sparql_query);
       }
-    } else {
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unknown error';
       conversation = conversation.map((t) =>
         t.id === assistantTurn.id
           ? {
               ...t,
-              content: 'Sorry, I encountered an error. Please try again.',
+              content: `Failed to get response: ${message}`,
               loading: false,
               error: true
             }
           : t
       );
-      error = 'Failed to get response';
+      error = message;
     }
 
     loading = false;
