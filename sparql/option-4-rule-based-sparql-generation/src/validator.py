@@ -63,9 +63,14 @@ class SPARQLValidator:
         """Validate basic SPARQL syntax."""
         errors = []
 
-        # Check if query starts with SELECT
+        # Check if query contains SELECT (may be after PREFIX declarations)
         sparql_upper = sparql.strip().upper()
-        if not sparql_upper.startswith("SELECT"):
+        # Remove PREFIX declarations for SELECT check
+        lines = sparql_upper.split("\n")
+        non_prefix_lines = [l for l in lines if not l.strip().startswith("PREFIX")]
+        query_body = "\n".join(non_prefix_lines).strip()
+
+        if not query_body.startswith("SELECT"):
             errors.append("Query must start with SELECT")
 
         # Check for WHERE clause
