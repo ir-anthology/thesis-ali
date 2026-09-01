@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "question": "Which papers did Geoffrey Hinton author?",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nSELECT ?pub ?title ?year WHERE {\n  ?pub dblp:authoredBy <https://dblp.org/pid/10/3248> .\n  ?pub dblp:title ?title .\n  ?pub dblp:yearOfPublication ?year .\n} ORDER BY DESC(?year)",
+    "query_type": "find_publications_by_author"
+  },
+  {
+    "id": 2,
+    "question": "Papers published at SIGMOD conference",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nSELECT ?pub ?title ?year WHERE {\n  ?pub dblp:publishedInStream <https://dblp.org/streams/conf/sigmod> .\n  ?pub dblp:title ?title .\n  ?pub dblp:yearOfPublication ?year .\n} ORDER BY DESC(?year)",
+    "query_type": "find_publications_by_venue"
+  },
+  {
+    "id": 3,
+    "question": "Who are the co-authors of Yann LeCun?",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nSELECT ?coauthor ?name WHERE {\n  <https://dblp.org/pid/l/YannLeCun> dblp:coAuthorWith ?coauthor .\n  ?coauthor dblp:creatorName ?name .\n}",
+    "query_type": "find_coauthors"
+  },
+  {
+    "id": 4,
+    "question": "How many papers did Jiawei Han publish at KDD?",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nSELECT (COUNT(?pub) AS ?count) WHERE {\n  ?pub dblp:authoredBy <https://dblp.org/pid/h/JiaweiHan> .\n  ?pub dblp:publishedInStream <https://dblp.org/streams/conf/kdd> .\n}",
+    "query_type": "count_publications"
+  },
+  {
+    "id": 5,
+    "question": "What is the affiliation of Michael Stonebraker?",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nSELECT ?name ?affiliation WHERE {\n  <https://dblp.org/pid/s/MichaelStonebraker> dblp:primaryCreatorName ?name .\n  OPTIONAL { <https://dblp.org/pid/s/MichaelStonebraker> dblp:primaryAffiliation ?affiliation }\n}",
+    "query_type": "find_author_metadata"
+  },
+  {
+    "id": 6,
+    "question": "Conference papers by Christos Faloutsos from 2020",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nSELECT ?pub ?title ?venue WHERE {\n  ?pub dblp:authoredBy <https://dblp.org/pid/f/CFaloutsos> .\n  ?pub dblp:title ?title .\n  ?pub dblp:yearOfPublication \"2020\"^^xsd:gYear .\n  ?pub dblp:publishedInStream ?stream .\n  ?stream dblp:streamTitle ?venue .\n  ?pub a dblp:Inproceedings .\n}",
+    "query_type": "find_publications_by_author_and_year"
+  },
+  {
+    "id": 7,
+    "question": "Who authored the paper titled 'Attention Is All You Need'?",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nSELECT ?author ?name WHERE {\n  ?pub dblp:title \"Attention Is All You Need\" .\n  ?pub dblp:authoredBy ?author .\n  ?author dblp:creatorName ?name .\n}",
+    "query_type": "find_authors_of_publication"
+  },
+  {
+    "id": 8,
+    "question": "What journals are available in DBLP?",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nSELECT ?journal ?title WHERE {\n  ?journal a dblp:Journal .\n  ?journal dblp:primaryStreamTitle ?title .\n} ORDER BY ?title",
+    "query_type": "find_venue_info"
+  },
+  {
+    "id": 9,
+    "question": "Papers by Jennifer Widom at VLDB after 2018",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nSELECT ?pub ?title ?year WHERE {\n  ?pub dblp:authoredBy <https://dblp.org/pid/w/JenniferWidom> .\n  ?pub dblp:publishedInStream <https://dblp.org/streams/conf/vldb> .\n  ?pub dblp:title ?title .\n  ?pub dblp:yearOfPublication ?year .\n  FILTER(?year >= \"2018\"^^xsd:gYear)\n} ORDER BY DESC(?year)",
+    "query_type": "find_publications_by_author_and_venue"
+  },
+  {
+    "id": 10,
+    "question": "What is the homepage of Donald Knuth?",
+    "sparql": "PREFIX dblp: <https://dblp.org/rdf/schema#>\nSELECT ?homepage WHERE {\n  <https://dblp.org/pid/k/DonaldEKnuth> dblp:primaryHomepage ?homepage .\n}",
+    "query_type": "find_author_metadata"
+  }
+]
