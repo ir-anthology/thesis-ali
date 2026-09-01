@@ -7,6 +7,7 @@ from src.models import (
     EntityMention,
     ResolvedEntity,
     ClarificationResult,
+    Candidate,
 )
 from src.clarification_detector import ClarificationDetector
 
@@ -37,8 +38,8 @@ def test_ambiguous_entity(detector):
             mention="Smith",
             ambiguous=True,
             candidates=[
-                {"uri": "https://dblp.org/pid/s/JohnSmith", "label": "John Smith"},
-                {"uri": "https://dblp.org/pid/s/MikeSmith", "label": "Mike Smith"},
+                Candidate(uri="https://dblp.org/pid/s/JohnSmith", label="John Smith"),
+                Candidate(uri="https://dblp.org/pid/s/MikeSmith", label="Mike Smith"),
             ],
         )
     ]

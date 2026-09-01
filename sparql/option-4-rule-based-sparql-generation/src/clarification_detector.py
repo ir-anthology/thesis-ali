@@ -71,9 +71,7 @@ class ClarificationDetector:
         # Check for ambiguous entities
         for entity in resolved_entities:
             if entity.ambiguous and entity.candidates:
-                candidates = [
-                    c.get("label", "") for c in entity.candidates[:3] if c.get("label")
-                ]
+                candidates = [c.label for c in entity.candidates[:3] if c.label]
                 if candidates:
                     logger.info(
                         "Ambiguous entity: %s, candidates: %s",

@@ -14,7 +14,7 @@ from .config import (
     KNOWN_PERSON_URIS,
     KNOWN_VENUE_URIS,
 )
-from .models import EntityMention, ResolvedEntity, EntityResolutionResult
+from .models import EntityMention, ResolvedEntity, EntityResolutionResult, Candidate
 
 logger = logging.getLogger(__name__)
 
@@ -147,10 +147,10 @@ class EntityResolver:
             for hit in hits[:3]:
                 info = hit.get("info", {})
                 candidates.append(
-                    {
-                        "uri": info.get("author-url", ""),
-                        "label": info.get("author", ""),
-                    }
+                    Candidate(
+                        uri=info.get("author-url", ""),
+                        label=info.get("author", ""),
+                    )
                 )
 
             logger.info("Ambiguous author: %s, %d candidates", name, len(candidates))
@@ -204,10 +204,10 @@ class EntityResolver:
             for hit in hits[:3]:
                 info = hit.get("info", {})
                 candidates.append(
-                    {
-                        "uri": info.get("url", ""),
-                        "label": info.get("venue", ""),
-                    }
+                    Candidate(
+                        uri=info.get("url", ""),
+                        label=info.get("venue", ""),
+                    )
                 )
 
             logger.info("Ambiguous venue: %s, %d candidates", name, len(candidates))

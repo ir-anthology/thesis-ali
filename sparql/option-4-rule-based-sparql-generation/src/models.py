@@ -30,6 +30,15 @@ class EntityMention(BaseModel):
     )
 
 
+class Constraints(BaseModel):
+    """Extracted constraints from the query."""
+
+    year: str | None = Field(default=None, description="Year filter (e.g., '2023')")
+    publication_type: str | None = Field(
+        default=None, description="Publication type (Article, Inproceedings, etc.)"
+    )
+
+
 class IntentResult(BaseModel):
     """Result of intent classification."""
 
@@ -37,8 +46,8 @@ class IntentResult(BaseModel):
     entities_mentioned: list[EntityMention] = Field(
         default_factory=list, description="Extracted entity mentions"
     )
-    constraints: dict = Field(
-        default_factory=dict,
+    constraints: Constraints = Field(
+        default_factory=Constraints,
         description="Extracted constraints (year, publication_type, etc.)",
     )
     needs_clarification: bool = Field(
@@ -47,6 +56,13 @@ class IntentResult(BaseModel):
     clarification_question: str | None = Field(
         default=None, description="Clarification question if needed"
     )
+
+
+class Candidate(BaseModel):
+    """A candidate entity match."""
+
+    uri: str = Field(default="", description="DBLP URI")
+    label: str = Field(default="", description="Human-readable label")
 
 
 class ResolvedEntity(BaseModel):
@@ -61,7 +77,7 @@ class ResolvedEntity(BaseModel):
     )
     ambiguous: bool = Field(default=False, description="Whether multiple matches found")
     not_found: bool = Field(default=False, description="Whether entity was not found")
-    candidates: list[dict] = Field(
+    candidates: list[Candidate] = Field(
         default_factory=list, description="Candidate matches if ambiguous"
     )
 
