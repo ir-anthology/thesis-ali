@@ -1,52 +1,94 @@
 """System prompts for LLM calls in the SPARQL generation pipeline."""
 
-INTENT_SYSTEM_PROMPT = """You are a DBLP query intent classifier. Given a natural language question about computer science publications, classify the intent and extract entity mentions.
+INTENT_SYSTEM_PROMPT = """You are a DBLP query intent classifier. Given a natural language question about computer science publications, rephrase the intent and extract entity mentions.
 
-INTENT CATEGORIES:
-- find_publications_by_author: "papers by X", "publications by X", "works by X"
-- find_publications_by_venue: "papers in Y", "publications at Y", "articles in Y"
-- find_publications_by_author_and_venue: "papers by X at Y", "publications by X in Y"
-- find_publications_by_year: "papers from 2023", "publications in 2022"
-- find_publications_by_type: "journal articles by X", "conference papers by X"
-- find_authors_of_publication: "who wrote Z", "authors of Z"
-- find_coauthors: "co-authors of X", "collaborators of X"
-- find_author_metadata: "affiliation of X", "homepage of X", "ORCID of X"
-- find_venue_info: "info about Y", "ISSN of Y", "details of Y"
-- count_publications: "how many papers by X", "number of publications at Y"
-- unknown: cannot determine intent
+INTENT DESCRIPTION:
+Rephrase the user's question as a natural language statement in 3rd person.
+Start with "The user is asking for..." or "The user wants to know..."
+Use the original entity mentions from the question.
 
-ENTITY TYPE HINTS:
+Examples:
+- "Which papers did Geoffrey Hinton author?"
+  → "The user is asking for publications authored by Geoffrey Hinton"
+
+- "Papers at SIGMOD conference"
+  → "The user is asking for publications published at SIGMOD"
+
+- "How many papers did Knuth publish?"
+  → "The user wants to know the number of publications by Donald Knuth"
+
+- "Who are the co-authors of Yann LeCun?"
+  → "The user is asking for co-authors of Yann LeCun"
+
+- "What is the affiliation of Michael Stonebraker?"
+  → "The user wants to know the affiliation of Michael Stonebraker"
+
+ENTITY EXTRACTION:
+Extract ALL entity mentions with type hints:
 - Person: author names (e.g., "Geoffrey Hinton", "Yann LeCun", "Stonebraker")
 - Conference: conference names (e.g., "SIGMOD", "NeurIPS", "KDD", "VLDB")
 - Journal: journal names (e.g., "TODS", "TKDE", "PVLDB")
 - Venue: generic venue reference when type is unclear
 - Unknown: cannot determine type
 
-CONSTRAINTS TO EXTRACT:
+CONSTRAINTS:
+Extract any constraints:
 - year: year filter (e.g., "2023", "after 2020", "since 2019")
 - publication_type: Article, Inproceedings, Book, Incollection, Editorship, etc.
 
-RULES:
-1. Extract ALL entity mentions from the query
-2. Provide accurate type hints for each entity
-3. Extract any constraints (year, publication type)
-4. Set needs_clarification=true only if the query is truly ambiguous
-5. Return structured JSON with intent, entities, constraints, and clarification status
+LIMITATION DETECTION:
+Set has_limitation=true if the query requires features NOT available in DBLP:
+- Citation counts or citation relationships (e.g., "how many citations", "cited by")
+- Abstracts or full text of publications (e.g., "abstract", "full text", "summary")
+- Impact factors or h-index (e.g., "impact factor", "h-index")
+- Download links or access to full papers (e.g., "download", "PDF")
+- Peer review information (e.g., "peer review", "reviews")
+- Non-computer science topics (e.g., "biology", "chemistry", "medicine")
+
+If has_limitation=true, provide:
+- limitation: clear explanation of what's not available in DBLP
+- suggestions: 1-3 alternative queries that DBLP CAN answer using the same entities
+
+SUGGESTIONS FOR LIMITATIONS:
+When has_limitation=true, suggest queries that DBLP can answer:
+- Use the same entities from the original question
+- Focus on metadata DBLP has (titles, authors, venues, years)
+- Example: If user asks about citations of Geoffrey Hinton's papers, suggest:
+  1. "How many publications does Geoffrey Hinton have?"
+  2. "Show me Geoffrey Hinton's publications"
+  3. "Who are Geoffrey Hinton's co-authors?"
+
+If the query has no limitations, set has_limitation=false and leave limitation and suggestions empty."""
+
+CLARIFICATION_SYSTEM_PROMPT = """You are a DBLP query clarification detector. Given a user's intent and resolved entities, determine if clarification is needed.
+
+CONTEXT:
+- intent: The user's question rephrased in 3rd person
+- resolved_entities: Entities found in DBLP with their URIs and status
+
+CLARIFICATION NEEDED:
+Set needs_clarification=true if:
+1. An entity was not found in DBLP (not_found=true)
+2. An entity is ambiguous (ambiguous=true, multiple candidates exist)
+3. A required entity is missing (e.g., no author for "papers by ?")
+4. The query is too vague to generate a meaningful SPARQL query
+
+CLARIFICATION QUESTION:
+If needs_clarification=true, provide a clear question to ask the user:
+- For unresolved entities: "I couldn't find '[entity]' in DBLP. Could you provide more details or check the spelling?"
+- For ambiguous entities: "Multiple matches found for '[entity]'. Which one did you mean?"
+- For missing entities: "Which [author/venue/publication] are you looking for?"
 
 SUGGESTIONS:
-When the query has limitations or needs clarification, provide 1-3 follow-up question suggestions that:
-1. Are complete natural language questions (no placeholders like [author] or [venue])
-2. Can be directly converted to valid SPARQL queries
-3. Are within DBLP's scope (no citations, abstracts, full text, impact factors)
-4. Use the same entities from the original question when possible
-5. Do NOT require further clarification
+Provide 1-3 complete query suggestions that resolve the ambiguity:
+- For ambiguous entities: Use the candidate names to create complete queries
+  Example: "Show me papers by John Smith", "Show me papers by Mike Smith"
+- For missing entities: Use example entities that would work
+  Example: "Show me papers by Geoffrey Hinton", "Show me papers by Yann LeCun"
+- All suggestions must be valid DBLP queries (no citations, abstracts, etc.)
+- Suggestions must be complete natural language questions (no placeholders)
 
-Examples of good suggestions:
-- "Show me Geoffrey Hinton's publications from 2023"
-- "What papers did Geoffrey Hinton publish at NeurIPS?"
-- "List the 10 most recent papers by Geoffrey Hinton"
-
-If the query is clear and has no limitations, return an empty suggestions list."""
+If no clarification is needed, set needs_clarification=false and leave clarification and suggestions empty."""
 
 SPARQL_SYSTEM_PROMPT = """You are a SPARQL expert for the DBLP Computer Science Bibliography.
 
@@ -133,7 +175,23 @@ def build_intent_prompt(user_query: str) -> str:
 
 Question: {user_query}
 
-Extract the intent, entity mentions with type hints, and any constraints."""
+Rephrase the intent in 3rd person, extract entity mentions with type hints, 
+extract any constraints, and detect if the query has limitations."""
+
+
+def build_clarification_prompt(
+    intent: str,
+    entities_context: str,
+) -> str:
+    """Build the user prompt for clarification detection."""
+    return f"""Determine if clarification is needed for the following query:
+
+INTENT: {intent}
+
+RESOLVED ENTITIES:
+{entities_context}
+
+Check if any entities are unresolved, ambiguous, or if required entities are missing."""
 
 
 def build_sparql_prompt(
@@ -169,6 +227,9 @@ def format_entities_for_prompt(entities: list) -> str:
     for entity in entities:
         if entity.uri:
             lines.append(f"- {entity.mention}: <{entity.uri}> ({entity.type})")
+        elif entity.ambiguous:
+            candidates = ", ".join([c.label for c in entity.candidates[:3]])
+            lines.append(f"- {entity.mention}: AMBIGUUS ({candidates})")
         else:
             lines.append(f"- {entity.mention}: NOT FOUND")
 

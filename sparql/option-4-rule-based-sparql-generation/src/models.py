@@ -1,23 +1,6 @@
 """Pydantic models for rule-based SPARQL generation."""
 
-from enum import Enum
 from pydantic import BaseModel, Field
-
-
-class IntentType(str, Enum):
-    """Intent categories for DBLP queries."""
-
-    find_publications_by_author = "find_publications_by_author"
-    find_publications_by_venue = "find_publications_by_venue"
-    find_publications_by_author_and_venue = "find_publications_by_author_and_venue"
-    find_publications_by_year = "find_publications_by_year"
-    find_publications_by_type = "find_publications_by_type"
-    find_authors_of_publication = "find_authors_of_publication"
-    find_coauthors = "find_coauthors"
-    find_author_metadata = "find_author_metadata"
-    find_venue_info = "find_venue_info"
-    count_publications = "count_publications"
-    unknown = "unknown"
 
 
 class EntityMention(BaseModel):
@@ -40,9 +23,13 @@ class Constraints(BaseModel):
 
 
 class IntentResult(BaseModel):
-    """Result of intent classification."""
+    """Result of intent classification with limitation detection."""
 
-    intent: IntentType = Field(..., description="Classified intent")
+    intent: str = Field(
+        ...,
+        description="Natural language rephrasing in 3rd person. "
+        "Start with 'The user is asking for...' or 'The user wants to know...'",
+    )
     entities_mentioned: list[EntityMention] = Field(
         default_factory=list, description="Extracted entity mentions"
     )
@@ -50,16 +37,17 @@ class IntentResult(BaseModel):
         default_factory=Constraints,
         description="Extracted constraints (year, publication_type, etc.)",
     )
-    needs_clarification: bool = Field(
-        default=False, description="Whether clarification is needed"
+    has_limitation: bool = Field(
+        default=False,
+        description="True if query requires features not available in DBLP",
     )
-    clarification_question: str | None = Field(
-        default=None, description="Clarification question if needed"
+    limitation: str | None = Field(
+        default=None, description="Explanation of limitation if has_limitation is true"
     )
     suggestions: list[str] = Field(
         default_factory=list,
         max_length=3,
-        description="1-3 follow-up query suggestions",
+        description="1-3 follow-up suggestions when has_limitation is true",
     )
 
 
@@ -98,17 +86,6 @@ class EntityResolutionResult(BaseModel):
     )
 
 
-class LimitationResult(BaseModel):
-    """Result of limitation detection."""
-
-    has_limitation: bool = Field(
-        default=False, description="Whether query has limitations"
-    )
-    limitation: str | None = Field(
-        default=None, description="Limitation message if applicable"
-    )
-
-
 class ClarificationResult(BaseModel):
     """Result of clarification detection."""
 
@@ -119,7 +96,9 @@ class ClarificationResult(BaseModel):
         default=None, description="Clarification question"
     )
     suggestions: list[str] = Field(
-        default_factory=list, description="Suggested alternatives"
+        default_factory=list,
+        max_length=3,
+        description="1-3 complete query suggestions that resolve the ambiguity",
     )
 
 

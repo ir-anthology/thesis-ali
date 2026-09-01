@@ -1,38 +1,31 @@
-"""Step 4: Clarification detection for DBLP queries."""
+"""Step 3: LLM-based clarification detection for DBLP queries."""
 
 import logging
+from openai import OpenAI
+from .config import OPENAI_API_KEY, LLM_MODEL
 from .models import IntentResult, ResolvedEntity, ClarificationResult
+from .prompts import (
+    CLARIFICATION_SYSTEM_PROMPT,
+    build_clarification_prompt,
+    format_entities_for_prompt,
+)
 
 logger = logging.getLogger(__name__)
 
-INTENTS_REQUIRING_AUTHOR = [
-    "find_publications_by_author",
-    "find_publications_by_author_and_venue",
-    "find_coauthors",
-    "find_author_metadata",
-    "count_publications",
-]
-
-INTENTS_REQUIRING_VENUE = [
-    "find_publications_by_venue",
-    "find_publications_by_author_and_venue",
-    "find_venue_info",
-]
-
-INTENTS_REQUIRING_PUBLICATION = [
-    "find_authors_of_publication",
-]
-
 
 class ClarificationDetector:
-    """Detects if clarification is needed for a query."""
+    """Detects if clarification is needed using LLM."""
+
+    def __init__(self):
+        self.client = OpenAI(api_key=OPENAI_API_KEY)
+        self.model = LLM_MODEL
 
     def detect(
         self,
         intent_result: IntentResult,
         resolved_entities: list[ResolvedEntity],
     ) -> ClarificationResult:
-        """Detect if clarification is needed.
+        """Detect if clarification is needed using LLM.
 
         Args:
             intent_result: Result from intent classification
@@ -41,134 +34,43 @@ class ClarificationDetector:
         Returns:
             ClarificationResult with clarification status and message
         """
-        logger.info(
-            "Checking clarification needs for intent: %s", intent_result.intent.value
-        )
+        logger.info("Checking clarification needs for intent: %s", intent_result.intent)
 
-        # Check if LLM already flagged clarification needed
-        if intent_result.needs_clarification and intent_result.clarification_question:
-            logger.info("LLM flagged clarification needed")
-            return ClarificationResult(
-                needs_clarification=True,
-                clarification=intent_result.clarification_question,
-                suggestions=[],
+        # Build context for LLM
+        entities_context = format_entities_for_prompt(resolved_entities)
+        prompt = build_clarification_prompt(intent_result.intent, entities_context)
+
+        try:
+            response = self.client.responses.parse(
+                model=self.model,
+                input=[
+                    {"role": "system", "content": CLARIFICATION_SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
+                ],
+                text_format=ClarificationResult,
             )
 
-        # Check for unresolved entities
-        for entity in resolved_entities:
-            if entity.not_found:
-                logger.info("Unresolved entity: %s", entity.mention)
+            result = response.output_parsed
+
+            if result is None:
+                logger.warning("LLM returned None for clarification detection")
                 return ClarificationResult(
-                    needs_clarification=True,
-                    clarification=f"I couldn't find '{entity.mention}' in DBLP. Could you provide more details or check the spelling?",
-                    suggestions=[
-                        f"Try the full name (e.g., 'Geoffrey Hinton' instead of 'Hinton')",
-                        f"Check the spelling of '{entity.mention}'",
-                        f"Provide additional context (e.g., affiliation or research area)",
-                    ],
+                    needs_clarification=False,
+                    clarification=None,
+                    suggestions=[],
                 )
 
-        # Check for ambiguous entities
-        for entity in resolved_entities:
-            if entity.ambiguous and entity.candidates:
-                candidates = [c.label for c in entity.candidates[:3] if c.label]
-                if candidates:
-                    logger.info(
-                        "Ambiguous entity: %s, candidates: %s",
-                        entity.mention,
-                        candidates,
-                    )
-                    # Generate complete query suggestions using candidate names
-                    suggestions = []
-                    intent = intent_result.intent.value
-                    for candidate in candidates:
-                        if intent in INTENTS_REQUIRING_AUTHOR:
-                            suggestions.append(f"Show me papers by {candidate}")
-                        elif intent in INTENTS_REQUIRING_VENUE:
-                            suggestions.append(
-                                f"Show me papers published in {candidate}"
-                            )
-                        else:
-                            suggestions.append(f"Tell me about {candidate}")
-                    return ClarificationResult(
-                        needs_clarification=True,
-                        clarification=f"Multiple matches found for '{entity.mention}'. Which one did you mean?",
-                        suggestions=suggestions,
-                    )
-                    return ClarificationResult(
-                        needs_clarification=True,
-                        clarification=f"Multiple matches found for '{entity.mention}'. Which one did you mean?",
-                        suggestions=candidates,
-                    )
+            if result.needs_clarification:
+                logger.info("Clarification needed: %s", result.clarification)
+            else:
+                logger.info("No clarification needed")
 
-        # Check for missing required entities based on intent
-        intent = intent_result.intent.value
+            return result
 
-        if intent in INTENTS_REQUIRING_AUTHOR:
-            has_author = any(e.type == "Person" and e.uri for e in resolved_entities)
-            if not has_author:
-                # Check if author was mentioned but not resolved
-                author_mentions = [
-                    e
-                    for e in intent_result.entities_mentioned
-                    if e.type_hint == "Person"
-                ]
-                if not author_mentions:
-                    logger.info("Missing author for intent: %s", intent)
-                    return ClarificationResult(
-                        needs_clarification=True,
-                        clarification="Which author are you looking for?",
-                        suggestions=[
-                            "Provide the author's full name",
-                            "Include the author's affiliation for better results",
-                        ],
-                    )
-
-        if intent in INTENTS_REQUIRING_VENUE:
-            has_venue = any(
-                e.type in ("Conference", "Journal") and e.uri for e in resolved_entities
+        except Exception as e:
+            logger.error("Clarification detection failed: %s", str(e))
+            return ClarificationResult(
+                needs_clarification=False,
+                clarification=None,
+                suggestions=[],
             )
-            if not has_venue:
-                venue_mentions = [
-                    e
-                    for e in intent_result.entities_mentioned
-                    if e.type_hint in ("Conference", "Journal", "Venue")
-                ]
-                if not venue_mentions:
-                    logger.info("Missing venue for intent: %s", intent)
-                    return ClarificationResult(
-                        needs_clarification=True,
-                        clarification="Which venue (conference or journal) are you interested in?",
-                        suggestions=[
-                            "Specify the venue name (e.g., SIGMOD, VLDB, TODS)",
-                            "Use the full name if the abbreviation is ambiguous",
-                        ],
-                    )
-
-        if intent in INTENTS_REQUIRING_PUBLICATION:
-            has_publication = any(
-                e.type in ("Publication", "Article", "Inproceedings") and e.uri
-                for e in resolved_entities
-            )
-            if not has_publication:
-                pub_mentions = [
-                    e
-                    for e in intent_result.entities_mentioned
-                    if e.type_hint
-                    in ("Publication", "Article", "Inproceedings", "Unknown")
-                ]
-                if not pub_mentions:
-                    logger.info("Missing publication for intent: %s", intent)
-                    return ClarificationResult(
-                        needs_clarification=True,
-                        clarification="Which publication are you asking about?",
-                        suggestions=[
-                            "Provide the publication title",
-                            "Include the author name for better results",
-                        ],
-                    )
-
-        logger.info("No clarification needed")
-        return ClarificationResult(
-            needs_clarification=False, clarification=None, suggestions=[]
-        )

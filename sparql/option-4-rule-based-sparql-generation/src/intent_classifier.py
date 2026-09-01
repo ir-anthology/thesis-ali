@@ -1,9 +1,9 @@
-"""Step 1: LLM-based intent classification for DBLP queries."""
+"""Step 1: LLM-based intent classification with limitation detection."""
 
 import logging
 from openai import OpenAI
-from .config import OPENAI_API_KEY, LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS
-from .models import IntentResult, IntentType
+from .config import OPENAI_API_KEY, LLM_MODEL
+from .models import IntentResult, Constraints
 from .prompts import INTENT_SYSTEM_PROMPT, build_intent_prompt
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class IntentClassifier:
             user_query: Natural language question about DBLP
 
         Returns:
-            IntentResult with classified intent, entity mentions, and constraints
+            IntentResult with intent, entity mentions, constraints, and limitation info
         """
         logger.info("Classifying intent for query: %s", user_query)
 
@@ -44,26 +44,29 @@ class IntentClassifier:
             if result is None:
                 logger.warning("LLM returned None for intent classification")
                 return IntentResult(
-                    intent=IntentType.unknown,
+                    intent="The user's query could not be understood",
                     entities_mentioned=[],
-                    constraints={},
-                    needs_clarification=True,
-                    clarification_question="I couldn't understand your query. Could you rephrase it?",
+                    constraints=Constraints(),
+                    has_limitation=False,
+                    limitation=None,
+                    suggestions=[],
                 )
 
             logger.info(
-                "Classified intent: %s, entities: %d",
-                result.intent.value,
+                "Classified intent: %s, entities: %d, has_limitation: %s",
+                result.intent,
                 len(result.entities_mentioned),
+                result.has_limitation,
             )
             return result
 
         except Exception as e:
             logger.error("Intent classification failed: %s", str(e))
             return IntentResult(
-                intent=IntentType.unknown,
+                intent="The user's query could not be processed due to an error",
                 entities_mentioned=[],
-                constraints={},
-                needs_clarification=True,
-                clarification_question=f"I encountered an error processing your query: {str(e)}",
+                constraints=Constraints(),
+                has_limitation=False,
+                limitation=None,
+                suggestions=[],
             )
