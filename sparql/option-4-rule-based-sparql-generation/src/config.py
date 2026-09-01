@@ -28,6 +28,10 @@ DBLP_API_DELAY = float(os.getenv("DBLP_API_DELAY", "1.0"))
 MAX_RESULT_ROWS = int(os.getenv("MAX_RESULT_ROWS", "50"))
 QUESTION_BATCH_SIZE = int(os.getenv("QUESTION_BATCH_SIZE", "10"))
 
+# FastAPI settings
+API_HOST = os.getenv("API_HOST", "0.0.0.0")
+API_PORT = int(os.getenv("API_PORT", "8000"))
+
 DBLP_PREFIXES = """PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>

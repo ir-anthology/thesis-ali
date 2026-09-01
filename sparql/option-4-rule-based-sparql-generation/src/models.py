@@ -172,8 +172,82 @@ class FormattedResponse(BaseModel):
     )
 
 
+# Frontend-compatible models
+
+
+class ResultColumn(BaseModel):
+    """Column definition matching frontend contract."""
+
+    key: str = Field(description="Column key")
+    label: str = Field(description="Display label")
+    type: str = Field(
+        default="text",
+        description="Column type: text, number, badge, link",
+    )
+    sortable: bool = Field(default=False, description="Whether column is sortable")
+
+
+class HistoryTurn(BaseModel):
+    """Conversation history turn."""
+
+    role: str = Field(description="Role: user or assistant")
+    content: str = Field(description="Message content")
+    intent: str | None = Field(
+        default=None, description="Backend intent (assistant only)"
+    )
+    clarification: str | None = Field(
+        default=None, description="Clarification question"
+    )
+    limitation: str | None = Field(default=None, description="Limitation message")
+    columns: list[ResultColumn] | None = Field(
+        default=None, description="Column definitions"
+    )
+    rows: list[dict[str, CellValue]] | None = Field(
+        default=None, description="Data rows"
+    )
+    observations: list[str] | None = Field(default=None, description="LLM insights")
+    suggestions: list[str] | None = Field(
+        default=None, description="Follow-up suggestions"
+    )
+    sparql_query: str | None = Field(default=None, description="SPARQL query used")
+
+
+class ChatRequest(BaseModel):
+    """Frontend request schema."""
+
+    message: str = Field(description="User's natural language query")
+    history: list[HistoryTurn] = Field(
+        default_factory=list, description="Conversation history"
+    )
+
+
+class ExplorationResponse(BaseModel):
+    """Frontend response schema."""
+
+    intent: str | None = Field(
+        default=None, description="Backend's understanding of intent"
+    )
+    clarification: str | None = Field(
+        default=None, description="Clarification question"
+    )
+    limitation: str | None = Field(default=None, description="Limitation message")
+    columns: list[ResultColumn] | None = Field(
+        default=None, description="Column definitions"
+    )
+    rows: list[dict[str, CellValue]] | None = Field(
+        default=None, description="Data rows"
+    )
+    observations: list[str] | None = Field(
+        default=None, description="LLM-generated insights"
+    )
+    suggestions: list[str] | None = Field(
+        default=None, description="Follow-up suggestions"
+    )
+    sparql_query: str | None = Field(default=None, description="SPARQL query used")
+
+
 class QueryResponse(BaseModel):
-    """Final response for a natural language query."""
+    """Internal response for pipeline (backward compatibility)."""
 
     intent: str = Field(..., description="Detected intent")
     clarification: str | None = Field(
@@ -194,10 +268,3 @@ class QueryResponse(BaseModel):
     )
     row_count: int = Field(default=0, description="Number of rows returned")
     error: str | None = Field(default=None, description="Execution error if any")
-    limitation: str | None = Field(
-        default=None, description="Limitation message if applicable"
-    )
-    sparql_query: str | None = Field(default=None, description="Generated SPARQL query")
-    suggestions: list[str] = Field(
-        default_factory=list, description="Suggested alternatives or next steps"
-    )

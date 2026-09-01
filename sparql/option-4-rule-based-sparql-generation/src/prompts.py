@@ -187,15 +187,46 @@ EXAMPLES:
 - For count column with value "42" and author "Geoffrey Hinton": "How many publications does Geoffrey Hinton have?"
 """
 
+OBSERVATION_GENERATION_PROMPT = """You are a data analyst for DBLP query results.
 
-def build_intent_prompt(user_query: str) -> str:
-    """Build the user prompt for intent classification."""
+Given a table of SPARQL query results, generate 1-3 key observations about the data.
+
+RULES:
+1. Observations should be concise (1-2 sentences each)
+2. Focus on patterns, trends, or notable findings
+3. Use specific numbers and names from the data
+4. Be factual - only state what the data shows
+5. Do not make assumptions beyond the data
+
+EXAMPLES:
+- "Geoffrey Hinton leads with 42 publications spanning nearly three decades."
+- "The top 5 authors account for 60% of all publications in this venue."
+- "Publication activity peaked in 2020 with 15 papers."
+
+Return a JSON object with structure:
+{
+  "observations": ["observation 1", "observation 2", "observation 3"]
+}
+"""
+
+
+def build_intent_prompt(user_query: str, history: list | None = None) -> str:
+    """Build the user prompt for intent classification with history."""
+    history_context = ""
+    if history:
+        history_lines = []
+        for turn in history[-5:]:  # Last 5 turns
+            history_lines.append(f"{turn.role}: {turn.content}")
+        history_context = f"\nCONVERSATION HISTORY:\n{chr(10).join(history_lines)}"
+
     return f"""Classify the following natural language question about DBLP:
+{history_context}
 
 Question: {user_query}
 
 Rephrase the intent in 3rd person, extract entity mentions with type hints, 
-extract any constraints, and detect if the query has limitations."""
+extract any constraints, and detect if the query has limitations.
+Use conversation history to resolve ambiguous references (e.g., "they", "those papers")."""
 
 
 def build_clarification_prompt(

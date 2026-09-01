@@ -3,7 +3,7 @@
 import logging
 from openai import OpenAI
 from .config import OPENAI_API_KEY, LLM_MODEL
-from .models import IntentResult, Constraints
+from .models import IntentResult, Constraints, HistoryTurn
 from .prompts import INTENT_SYSTEM_PROMPT, build_intent_prompt
 
 logger = logging.getLogger(__name__)
@@ -16,18 +16,23 @@ class IntentClassifier:
         self.client = OpenAI(api_key=OPENAI_API_KEY)
         self.model = LLM_MODEL
 
-    def classify(self, user_query: str) -> IntentResult:
+    def classify(
+        self,
+        user_query: str,
+        history: list[HistoryTurn] | None = None,
+    ) -> IntentResult:
         """Classify the intent of a user query.
 
         Args:
             user_query: Natural language question about DBLP
+            history: Optional conversation history for context
 
         Returns:
             IntentResult with intent, entity mentions, constraints, and limitation info
         """
         logger.info("Classifying intent for query: %s", user_query)
 
-        prompt = build_intent_prompt(user_query)
+        prompt = build_intent_prompt(user_query, history)
 
         try:
             response = self.client.responses.parse(

@@ -71,7 +71,12 @@ def run_single_query(query: str):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        query = " ".join(sys.argv[1:])
-        print(run_single_query(query))
+        if sys.argv[1] == "serve":
+            from src.api import run
+
+            run()
+        else:
+            query = " ".join(sys.argv[1:])
+            print(run_single_query(query))
     else:
         main()
