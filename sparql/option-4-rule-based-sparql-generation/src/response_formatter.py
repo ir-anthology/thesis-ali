@@ -3,7 +3,7 @@
 import json
 import logging
 from openai import OpenAI
-from .config import OPENAI_API_KEY, LLM_MODEL
+from .config import OPENAI_API_KEY, LLM_MODEL, QUESTION_BATCH_SIZE
 from .models import (
     QueryExecutionResult,
     ColumnDef,
@@ -21,6 +21,7 @@ class ResponseFormatter:
     def __init__(self):
         self.client = OpenAI(api_key=OPENAI_API_KEY)
         self.model = LLM_MODEL
+        self.batch_size = QUESTION_BATCH_SIZE
 
     def format(
         self,
@@ -58,7 +59,7 @@ class ResponseFormatter:
             for col in execution_result.columns
         ]
 
-        # Generate questions for all cells using LLM
+        # Generate questions for all cells using batched LLM calls
         rows_with_questions = self._generate_questions(
             user_query, intent, execution_result.columns, execution_result.rows
         )
@@ -77,7 +78,7 @@ class ResponseFormatter:
         columns: list[str],
         rows: list[dict[str, str]],
     ) -> list[dict[str, CellValue]]:
-        """Generate questions for all cells using LLM.
+        """Generate questions for all cells using batched LLM calls.
 
         Args:
             user_query: Original user question
@@ -88,13 +89,61 @@ class ResponseFormatter:
         Returns:
             List of rows with CellValue objects containing values and questions
         """
-        logger.info("Generating questions for %d rows", len(rows))
+        logger.info(
+            "Generating questions for %d rows (batch size: %d)",
+            len(rows),
+            self.batch_size,
+        )
 
-        # Build context for LLM (limit to first 10 rows for prompt)
+        all_result_rows = []
+
+        # Process rows in batches
+        for batch_start in range(0, len(rows), self.batch_size):
+            batch_end = min(batch_start + self.batch_size, len(rows))
+            batch_rows = rows[batch_start:batch_end]
+
+            logger.info(
+                "Processing batch %d-%d of %d rows",
+                batch_start + 1,
+                batch_end,
+                len(rows),
+            )
+
+            # Generate questions for this batch
+            batch_result = self._generate_questions_batch(
+                user_query, intent, columns, batch_rows, batch_start
+            )
+
+            all_result_rows.extend(batch_result)
+
+        return all_result_rows
+
+    def _generate_questions_batch(
+        self,
+        user_query: str,
+        intent: str,
+        columns: list[str],
+        batch_rows: list[dict[str, str]],
+        batch_offset: int,
+    ) -> list[dict[str, CellValue]]:
+        """Generate questions for a single batch of rows.
+
+        Args:
+            user_query: Original user question
+            intent: Intent description
+            columns: Column names
+            batch_rows: Rows in this batch
+            batch_offset: Starting row number for this batch
+
+        Returns:
+            List of rows with CellValue objects
+        """
+        # Build context for LLM
         rows_context = []
-        for i, row in enumerate(rows[:10]):
+        for i, row in enumerate(batch_rows):
+            row_num = batch_offset + i + 1
             row_str = ", ".join([f"{col}: {row.get(col, '')}" for col in columns])
-            rows_context.append(f"Row {i + 1}: {row_str}")
+            rows_context.append(f"Row {row_num}: {row_str}")
 
         prompt = f"""Generate a question for each cell in the following SPARQL query results.
 
@@ -124,7 +173,6 @@ Return a JSON object with structure:
 }}"""
 
         try:
-            # Use a simpler approach - generate questions as JSON
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -137,15 +185,15 @@ Return a JSON object with structure:
             content = response.choices[0].message.content
             if content:
                 data = json.loads(content)
-                return self._parse_questions(data, columns, rows)
+                return self._parse_questions(data, columns, batch_rows)
 
         except Exception as e:
-            logger.error("Question generation failed: %s", str(e))
+            logger.error("Question generation failed for batch: %s", str(e))
 
         # Fallback: return rows without questions
         return [
             {col: CellValue(value=row.get(col, ""), question="") for col in columns}
-            for row in rows
+            for row in batch_rows
         ]
 
     def _parse_questions(

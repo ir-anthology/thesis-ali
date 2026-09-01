@@ -26,6 +26,7 @@ EXAMPLES_PATH = BASE_DIR / os.getenv("EXAMPLES_PATH", "data/examples.json")
 MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
 DBLP_API_DELAY = float(os.getenv("DBLP_API_DELAY", "1.0"))
 MAX_RESULT_ROWS = int(os.getenv("MAX_RESULT_ROWS", "50"))
+QUESTION_BATCH_SIZE = int(os.getenv("QUESTION_BATCH_SIZE", "10"))
 
 DBLP_PREFIXES = """PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
