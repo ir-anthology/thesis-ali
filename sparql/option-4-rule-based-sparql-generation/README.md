@@ -1,25 +1,29 @@
 # Rule-Based SPARQL Generation for DBLP
 
-A multi-step LLM pipeline for converting natural language questions to SPARQL queries against the DBLP Computer Science Bibliography.
+A multi-step LLM pipeline for converting natural language questions to SPARQL queries against the DBLP Computer Science Bibliography, with a FastAPI service for frontend integration.
 
 ## Architecture
 
 ```
-User Query
-    ↓
-Step 1: Intent Classification (LLM Call #1)
-    ↓
-Step 2: Entity Resolution (DBLP API + Cache)
-    ↓
-Step 3: Limitation Detection (Rule-based)
-    ↓
-Step 4: Clarification Detection (Rule-based)
-    ↓
-Step 5: SPARQL Generation (LLM Call #2)
-    ↓
-Step 6: Validation (Rule-based)
-    ↓
-Final Response (JSON)
+User Query + History
+       ↓
+Step 1: Intent + Limitation (LLM #1)     → IntentResult
+       ↓
+Step 2: Entity Resolution (DBLP API)     → EntityResolutionResult
+       ↓
+Step 3: Clarification (LLM #2)           → ClarificationResult
+       ↓
+Step 4: SPARQL Generation (LLM #3)       → SPARQLResult
+       ↓
+Step 5: Validation (rules)               → ValidationResult
+       ↓
+Step 6: SPARQL Execution (DBLP endpoint)  → QueryExecutionResult
+       ↓
+Step 7: Response Formatting (LLM #4)     → FormattedResponse
+       ↓
+Step 8: Observation Generation (LLM #5)  → Observations
+       ↓
+ExplorationResponse (JSON)
 ```
 
 ## Setup
@@ -46,9 +50,25 @@ Create a `.env` file:
 ```env
 OPENAI_API_KEY=your-api-key-here
 LLM_MODEL=gpt-5.6-luna
+API_HOST=0.0.0.0
+API_PORT=8000
+MAX_RESULT_ROWS=50
+QUESTION_BATCH_SIZE=10
 ```
 
 ## Usage
+
+### FastAPI Server
+
+```bash
+# Start the server
+uv run serve
+
+# Or with custom port
+API_PORT=8080 uv run serve
+```
+
+The server starts at `http://localhost:8000` with auto-generated docs at `http://localhost:8000/docs`.
 
 ### Interactive CLI
 
@@ -65,21 +85,102 @@ python main.py "Which papers did Geoffrey Hinton author?"
 ### Run Tests
 
 ```bash
-pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
-## Output Format
+## API Endpoints
+
+### POST `/api/exploration`
+
+Main exploration endpoint. Sends a user message with conversation history and returns structured exploration response.
+
+**Request:**
 
 ```json
 {
-  "intent": "find_publications_by_author",
-  "clarification": null,
-  "limitation": null,
-  "sparql_query": "PREFIX dblp: <https://dblp.org/rdf/schema#> ...",
-  "suggestions": [
-    "Add a year filter: 'papers by [author] from 2023'",
-    "Filter by venue: 'papers by [author] at [venue]'"
-  ]
+  "message": "Who are the most prolific authors?",
+  "history": []
+}
+```
+
+**Response:**
+
+```json
+{
+  "intent": "The user is asking for the most prolific authors based on publication count.",
+  "columns": [
+    { "key": "author", "label": "Author", "type": "text", "sortable": true },
+    { "key": "publications", "label": "Publications", "type": "number", "sortable": true }
+  ],
+  "rows": [
+    {
+      "author": { "value": "Geoffrey Hinton", "question": "Tell me about Geoffrey Hinton" },
+      "publications": { "value": 42, "question": "How many publications does Geoffrey Hinton have?" }
+    }
+  ],
+  "observations": ["Geoffrey Hinton leads with 42 publications spanning nearly three decades."],
+  "suggestions": ["Show me Geoffrey Hinton's publications from 2023", "List Geoffrey Hinton's co-authors"],
+  "sparql_query": "PREFIX dblp: ..."
+}
+```
+
+### GET `/api/health`
+
+Health check endpoint.
+
+```json
+{
+  "status": "ok",
+  "version": "0.1.0"
+}
+```
+
+### GET `/docs`
+
+Auto-generated API documentation (Swagger UI).
+
+## Output Format
+
+### ExplorationResponse (success with data)
+
+```json
+{
+  "intent": "The user is asking for publications authored by Geoffrey Hinton",
+  "columns": [
+    { "key": "pub", "label": "Pub", "type": "text", "sortable": true },
+    { "key": "title", "label": "Title", "type": "text", "sortable": true },
+    { "key": "year", "label": "Year", "type": "text", "sortable": true }
+  ],
+  "rows": [
+    {
+      "pub": { "value": "https://dblp.org/rec/...", "question": "Tell me about this publication" },
+      "title": { "value": "Dynamic Routing Between Capsules", "question": "Tell me about the paper 'Dynamic Routing Between Capsules'" },
+      "year": { "value": "2017", "question": "What papers did Geoffrey Hinton publish in 2017?" }
+    }
+  ],
+  "observations": ["Geoffrey Hinton's most recent publication is from 2025 on AI Safety."],
+  "suggestions": ["Show me Geoffrey Hinton's publications from 2023", "What papers did Geoffrey Hinton publish at NeurIPS?"],
+  "sparql_query": "PREFIX dblp: <https://dblp.org/rdf/schema#> ..."
+}
+```
+
+### Limitation Response
+
+```json
+{
+  "intent": "The user is asking about citation counts for publications",
+  "limitation": "DBLP does not track citation counts between publications. Consider using Semantic Scholar or Google Scholar for citation data.",
+  "suggestions": ["How many publications does Geoffrey Hinton have?", "Show me Geoffrey Hinton's publications"]
+}
+```
+
+### Clarification Response
+
+```json
+{
+  "intent": "The user is asking for publications by Smith",
+  "clarification": "Multiple matches found for 'Smith': John Smith, Mike Smith, Sarah Smith. Which one did you mean?",
+  "suggestions": ["Show me papers by John Smith", "Show me papers by Mike Smith", "Show me papers by Sarah Smith"]
 }
 ```
 
@@ -110,24 +211,42 @@ The system detects and reports limitations for queries that require:
 
 ```
 ├── src/
-│   ├── config.py              # Configuration
-│   ├── models.py              # Pydantic models
-│   ├── prompts.py             # LLM prompts
-│   ├── intent_classifier.py   # Step 1
-│   ├── entity_resolver.py     # Step 2
-│   ├── limitation_detector.py # Step 3
-│   ├── clarification_detector.py # Step 4
-│   ├── sparql_generator.py    # Step 5
-│   ├── validator.py           # Step 6
-│   └── pipeline.py            # Orchestrator
+│   ├── __init__.py
+│   ├── config.py                  # Configuration
+│   ├── models.py                  # Pydantic models
+│   ├── prompts.py                 # LLM prompts
+│   ├── intent_classifier.py       # Step 1: Intent classification
+│   ├── entity_resolver.py         # Step 2: DBLP API resolution
+│   ├── clarification_detector.py  # Step 3: Clarification detection
+│   ├── sparql_generator.py        # Step 4: SPARQL generation
+│   ├── validator.py               # Step 5: SPARQL validation
+│   ├── sparql_executor.py         # Step 6: SPARQL execution
+│   ├── response_formatter.py      # Step 7: Response formatting
+│   ├── observation_generator.py   # Step 8: Observation generation
+│   ├── pipeline.py                # Orchestrator
+│   └── api.py                     # FastAPI application
 ├── tests/
-│   ├── test_limitation_detector.py
 │   ├── test_clarification_detector.py
-│   └── test_validator.py
+│   ├── test_response_formatter.py
+│   ├── test_sparql_executor.py
+│   ├── test_validator.py
+│   └── test_api.py
 ├── data/
-│   ├── examples.json          # Few-shot examples
-│   └── entity_cache.json      # Entity cache
-├── main.py                    # CLI entry point
-├── pyproject.toml             # Project config
+│   ├── examples.json              # Few-shot examples
+│   └── entity_cache.json          # Entity cache
+├── main.py                        # CLI entry point
+├── pyproject.toml                 # Project config
+├── .env                           # Environment variables
 └── README.md
 ```
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPENAI_API_KEY` | (required) | OpenAI API key |
+| `LLM_MODEL` | `gpt-5.6-luna` | LLM model to use |
+| `API_HOST` | `0.0.0.0` | FastAPI server host |
+| `API_PORT` | `8000` | FastAPI server port |
+| `MAX_RESULT_ROWS` | `50` | Maximum rows from SPARQL |
+| `QUESTION_BATCH_SIZE` | `10` | Rows per LLM call for question generation |
