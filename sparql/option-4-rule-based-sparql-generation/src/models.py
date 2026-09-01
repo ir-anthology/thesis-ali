@@ -56,6 +56,11 @@ class IntentResult(BaseModel):
     clarification_question: str | None = Field(
         default=None, description="Clarification question if needed"
     )
+    suggestions: list[str] = Field(
+        default_factory=list,
+        max_length=3,
+        description="1-3 follow-up query suggestions",
+    )
 
 
 class Candidate(BaseModel):
@@ -127,6 +132,11 @@ class SPARQLResult(BaseModel):
     )
     explanation: str = Field(
         default="", description="Explanation of the generated query"
+    )
+    suggestions: list[str] = Field(
+        default_factory=list,
+        max_length=3,
+        description="1-3 follow-up query suggestions",
     )
 
 

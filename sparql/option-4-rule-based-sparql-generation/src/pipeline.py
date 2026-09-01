@@ -61,7 +61,7 @@ class Pipeline:
                 clarification=None,
                 limitation=limitation_result.limitation,
                 sparql_query=None,
-                suggestions=self._generate_limitation_suggestions(intent_result),
+                suggestions=intent_result.suggestions,
             )
 
         # Step 4: Clarification Detection (Rule-based)
@@ -123,74 +123,8 @@ class Pipeline:
             clarification=None,
             limitation=None,
             sparql_query=sparql_result.sparql,
-            suggestions=self._generate_success_suggestions(
-                intent_result, sparql_result
-            ),
+            suggestions=sparql_result.suggestions,
         )
-
-    def _generate_limitation_suggestions(self, intent_result) -> list[str]:
-        """Generate suggestions when a limitation is detected."""
-        suggestions = []
-        intent = intent_result.intent.value
-
-        if "citation" in intent.lower():
-            suggestions.extend(
-                [
-                    "Ask for the paper's metadata instead (title, authors, venue)",
-                    "Find related papers in the same venue",
-                    "Look up the paper's DOI for external citation databases",
-                ]
-            )
-        elif "abstract" in intent.lower():
-            suggestions.extend(
-                [
-                    "Get the paper's title and authors",
-                    "Find the DOI to access the full paper",
-                    "Find other papers by the same authors",
-                ]
-            )
-        else:
-            suggestions.extend(
-                [
-                    "Try asking about publication metadata (title, authors, year)",
-                    "Ask about author information (affiliation, homepage)",
-                    "Query venue information (conference/journal details)",
-                ]
-            )
-
-        return suggestions
-
-    def _generate_success_suggestions(self, intent_result, sparql_result) -> list[str]:
-        """Generate suggestions for successful SPARQL generation."""
-        suggestions = []
-        intent = intent_result.intent.value
-
-        if "author" in intent:
-            suggestions.extend(
-                [
-                    "Add a year filter: 'papers by [author] from 2023'",
-                    "Filter by venue: 'papers by [author] at [venue]'",
-                    "Add LIMIT to restrict results: 'top 10 papers by [author]'",
-                ]
-            )
-        elif "venue" in intent:
-            suggestions.extend(
-                [
-                    "Filter by year: 'papers at [venue] from 2023'",
-                    "Add author filter: 'papers by [author] at [venue]'",
-                    "Try other venues: SIGMOD, VLDB, KDD, NeurIPS",
-                ]
-            )
-        else:
-            suggestions.extend(
-                [
-                    "Try adding filters for year, venue, or author",
-                    "Use LIMIT to restrict the number of results",
-                    "Ask follow-up questions to refine your search",
-                ]
-            )
-
-        return suggestions
 
     def close(self):
         """Cleanup resources."""

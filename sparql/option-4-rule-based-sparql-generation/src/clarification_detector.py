@@ -78,6 +78,23 @@ class ClarificationDetector:
                         entity.mention,
                         candidates,
                     )
+                    # Generate complete query suggestions using candidate names
+                    suggestions = []
+                    intent = intent_result.intent.value
+                    for candidate in candidates:
+                        if intent in INTENTS_REQUIRING_AUTHOR:
+                            suggestions.append(f"Show me papers by {candidate}")
+                        elif intent in INTENTS_REQUIRING_VENUE:
+                            suggestions.append(
+                                f"Show me papers published in {candidate}"
+                            )
+                        else:
+                            suggestions.append(f"Tell me about {candidate}")
+                    return ClarificationResult(
+                        needs_clarification=True,
+                        clarification=f"Multiple matches found for '{entity.mention}'. Which one did you mean?",
+                        suggestions=suggestions,
+                    )
                     return ClarificationResult(
                         needs_clarification=True,
                         clarification=f"Multiple matches found for '{entity.mention}'. Which one did you mean?",

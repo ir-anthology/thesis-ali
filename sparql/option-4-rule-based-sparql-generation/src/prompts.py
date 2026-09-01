@@ -31,7 +31,22 @@ RULES:
 2. Provide accurate type hints for each entity
 3. Extract any constraints (year, publication type)
 4. Set needs_clarification=true only if the query is truly ambiguous
-5. Return structured JSON with intent, entities, constraints, and clarification status"""
+5. Return structured JSON with intent, entities, constraints, and clarification status
+
+SUGGESTIONS:
+When the query has limitations or needs clarification, provide 1-3 follow-up question suggestions that:
+1. Are complete natural language questions (no placeholders like [author] or [venue])
+2. Can be directly converted to valid SPARQL queries
+3. Are within DBLP's scope (no citations, abstracts, full text, impact factors)
+4. Use the same entities from the original question when possible
+5. Do NOT require further clarification
+
+Examples of good suggestions:
+- "Show me Geoffrey Hinton's publications from 2023"
+- "What papers did Geoffrey Hinton publish at NeurIPS?"
+- "List the 10 most recent papers by Geoffrey Hinton"
+
+If the query is clear and has no limitations, return an empty suggestions list."""
 
 SPARQL_SYSTEM_PROMPT = """You are a SPARQL expert for the DBLP Computer Science Bibliography.
 
@@ -89,7 +104,27 @@ RULES:
 Return structured JSON with:
 - sparql: the complete SPARQL query
 - confidence: confidence score (0.0 to 1.0)
-- explanation: brief explanation of what the query does"""
+- explanation: brief explanation of what the query does
+- suggestions: 1-3 follow-up question suggestions
+
+SUGGESTIONS:
+After generating the SPARQL query, provide 1-3 follow-up question suggestions that:
+1. Are complete natural language questions (no placeholders like [author] or [venue])
+2. Can be directly converted to valid SPARQL queries
+3. Are within DBLP's scope (no citations, abstracts, full text, impact factors)
+4. Use the same entities from the original question
+5. Add useful filters (year, venue, type) or explore related information
+
+Examples of good suggestions:
+- "Show me Geoffrey Hinton's publications from 2023"
+- "What papers did Geoffrey Hinton publish at NeurIPS?"
+- "List Geoffrey Hinton's co-authors"
+
+Do NOT include suggestions that:
+- Have placeholders like [author] or [venue]
+- Require further clarification
+- Are outside DBLP's scope (citations, abstracts, full text)
+- Are vague or generic"""
 
 
 def build_intent_prompt(user_query: str) -> str:
