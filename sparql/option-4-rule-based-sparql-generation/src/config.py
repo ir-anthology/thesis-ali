@@ -16,12 +16,16 @@ LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "2000"))
 DBLP_SEARCH_API = os.getenv("DBLP_SEARCH_API", "https://dblp.org/search/publ/api")
 DBLP_AUTHOR_API = os.getenv("DBLP_AUTHOR_API", "https://dblp.org/search/author/api")
 DBLP_VENUE_API = os.getenv("DBLP_VENUE_API", "https://dblp.org/search/venue/api")
+DBLP_SPARQL_ENDPOINT = os.getenv(
+    "DBLP_SPARQL_ENDPOINT", "https://sparql.dblp.org/sparql"
+)
 
 ENTITY_CACHE_PATH = BASE_DIR / os.getenv("ENTITY_CACHE_PATH", "data/entity_cache.json")
 EXAMPLES_PATH = BASE_DIR / os.getenv("EXAMPLES_PATH", "data/examples.json")
 
 MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
 DBLP_API_DELAY = float(os.getenv("DBLP_API_DELAY", "1.0"))
+MAX_RESULT_ROWS = int(os.getenv("MAX_RESULT_ROWS", "50"))
 
 DBLP_PREFIXES = """PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>

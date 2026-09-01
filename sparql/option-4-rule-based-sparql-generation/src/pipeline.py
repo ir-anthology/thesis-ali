@@ -7,6 +7,8 @@ from .entity_resolver import EntityResolver
 from .clarification_detector import ClarificationDetector
 from .sparql_generator import SPARQLGenerator
 from .validator import SPARQLValidator
+from .sparql_executor import SPARQLExecutor
+from .response_formatter import ResponseFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,8 @@ class Pipeline:
         self.clarification_detector = ClarificationDetector()
         self.sparql_generator = SPARQLGenerator()
         self.validator = SPARQLValidator()
+        self.executor = SPARQLExecutor()
+        self.formatter = ResponseFormatter()
 
     def convert(self, user_query: str) -> QueryResponse:
         """Convert a natural language question to SPARQL.
@@ -101,20 +105,46 @@ class Pipeline:
                 intent=intent_result.intent,
                 clarification=None,
                 limitation=None,
-                sparql_query=None,
+                sparql_query=sparql_result.sparql,
                 suggestions=[],
+                error=f"Validation failed: {'; '.join(validation_result.errors)}",
             )
 
-        # Success - return valid SPARQL
-        logger.info("SPARQL generation successful")
+        # Step 6: SPARQL Execution (DBLP endpoint)
+        logger.info("Step 6: Executing SPARQL")
+        execution_result = self.executor.execute(sparql_result.sparql)
+
+        if not execution_result.success:
+            logger.warning("SPARQL execution failed: %s", execution_result.error)
+            return QueryResponse(
+                intent=intent_result.intent,
+                clarification=None,
+                limitation=None,
+                sparql_query=sparql_result.sparql,
+                suggestions=sparql_result.suggestions,
+                error=execution_result.error,
+            )
+
+        # Step 7: Response Formatting (LLM Call #4)
+        logger.info("Step 7: Formatting response")
+        formatted = self.formatter.format(
+            user_query, execution_result, intent_result.intent
+        )
+
+        # Success - return formatted response
+        logger.info("SPARQL generation and execution successful")
         return QueryResponse(
             intent=intent_result.intent,
             clarification=None,
             limitation=None,
             sparql_query=sparql_result.sparql,
             suggestions=sparql_result.suggestions,
+            columns=formatted.columns,
+            rows=formatted.rows,
+            row_count=formatted.row_count,
         )
 
     def close(self):
         """Cleanup resources."""
         self.entity_resolver.close()
+        self.executor.close()

@@ -127,6 +127,51 @@ class ValidationResult(BaseModel):
     warnings: list[str] = Field(default_factory=list, description="Validation warnings")
 
 
+class QueryExecutionResult(BaseModel):
+    """Result of executing SPARQL against DBLP endpoint."""
+
+    success: bool = Field(description="Whether execution succeeded")
+    columns: list[str] = Field(
+        default_factory=list, description="Column names from SPARQL result"
+    )
+    rows: list[dict[str, str]] = Field(
+        default_factory=list, description="Raw rows from SPARQL result"
+    )
+    row_count: int = Field(default=0, description="Number of rows returned")
+    error: str | None = Field(
+        default=None, description="Error message if execution failed"
+    )
+
+
+class ColumnDef(BaseModel):
+    """Column definition for formatted response."""
+
+    key: str = Field(description="Column key (SPARQL variable name)")
+    label: str = Field(description="Human-readable column label")
+    type: str = Field(default="text", description="Column type: text, number, uri")
+    sortable: bool = Field(default=True, description="Whether column is sortable")
+
+
+class CellValue(BaseModel):
+    """A cell value with associated question."""
+
+    value: str | int | float = Field(description="Cell value")
+    question: str = Field(description="Natural language question about this value")
+
+
+class FormattedResponse(BaseModel):
+    """Formatted response with columns, rows, and questions."""
+
+    columns: list[ColumnDef] = Field(description="Column definitions")
+    rows: list[dict[str, CellValue]] = Field(
+        description="Rows with cell values and questions"
+    )
+    row_count: int = Field(description="Number of rows")
+    query_explanation: str = Field(
+        default="", description="Explanation of what the query returns"
+    )
+
+
 class QueryResponse(BaseModel):
     """Final response for a natural language query."""
 
@@ -134,6 +179,21 @@ class QueryResponse(BaseModel):
     clarification: str | None = Field(
         default=None, description="Clarification question if needed"
     )
+    limitation: str | None = Field(
+        default=None, description="Limitation message if applicable"
+    )
+    sparql_query: str | None = Field(default=None, description="Generated SPARQL query")
+    suggestions: list[str] = Field(
+        default_factory=list, description="Suggested alternatives or next steps"
+    )
+    columns: list[ColumnDef] = Field(
+        default_factory=list, description="Column definitions for table display"
+    )
+    rows: list[dict[str, CellValue]] = Field(
+        default_factory=list, description="Rows with cell values and questions"
+    )
+    row_count: int = Field(default=0, description="Number of rows returned")
+    error: str | None = Field(default=None, description="Execution error if any")
     limitation: str | None = Field(
         default=None, description="Limitation message if applicable"
     )

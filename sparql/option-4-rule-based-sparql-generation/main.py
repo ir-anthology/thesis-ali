@@ -37,24 +37,8 @@ def main():
 
                 result = pipeline.convert(user_input)
 
-                print("\n" + "-" * 40)
-                print(f"Intent: {result.intent}")
-
-                if result.limitation:
-                    print(f"\nLimitation: {result.limitation}")
-
-                if result.clarification:
-                    print(f"\nClarification: {result.clarification}")
-
-                if result.sparql_query:
-                    print(f"\nSPARQL Query:\n{result.sparql_query}")
-
-                if result.suggestions:
-                    print("\nSuggestions:")
-                    for i, suggestion in enumerate(result.suggestions, 1):
-                        print(f"  {i}. {suggestion}")
-
-                print("-" * 40)
+                # Output as raw JSON
+                print(json.dumps(result.model_dump(), indent=2))
 
             except KeyboardInterrupt:
                 print("\nGoodbye!")

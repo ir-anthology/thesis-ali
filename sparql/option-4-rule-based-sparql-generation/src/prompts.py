@@ -168,6 +168,25 @@ Do NOT include suggestions that:
 - Are outside DBLP's scope (citations, abstracts, full text)
 - Are vague or generic"""
 
+QUESTION_GENERATION_PROMPT = """You are a question generator for DBLP query results.
+
+Given a table of SPARQL query results, generate a natural language question for each cell value.
+
+RULES:
+1. Questions should be self-contained (no placeholders like [author] or [venue])
+2. Questions should be answerable by DBLP
+3. Questions should relate to the cell value and column context
+4. Use entity names from other columns when relevant
+5. Questions should be in 3rd person (e.g., "Tell me about...", "What papers did...")
+
+EXAMPLES:
+- For author column with value "Geoffrey Hinton": "Tell me about Geoffrey Hinton"
+- For title column with value "Attention Is All You Need": "Tell me about the paper 'Attention Is All You Need'"
+- For year column with value "2023" and author "Geoffrey Hinton": "What papers did Geoffrey Hinton publish in 2023?"
+- For venue column with value "NeurIPS" and author "Geoffrey Hinton": "What papers did Geoffrey Hinton publish at NeurIPS?"
+- For count column with value "42" and author "Geoffrey Hinton": "How many publications does Geoffrey Hinton have?"
+"""
+
 
 def build_intent_prompt(user_query: str) -> str:
     """Build the user prompt for intent classification."""
