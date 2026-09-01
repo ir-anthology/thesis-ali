@@ -1,15 +1,15 @@
 # Backend API Guide: Frontend Consumption Contract
 
 **Application:** Adaptive Conversational Knowledge Graph Explorer
-**Frontend:** `frontend/adaptive/` (SvelteKit + Tailwind CSS)
+**Frontend:** `frontend/adaptive/` (SvelteKit)
 **Backend:** `backend/main/` (FastAPI + Python)
-**Date:** August 2026
+**Date:** September 2026
 
 ---
 
 ## 1. Overview
 
-This guide defines the API contract between the Scholarly Explorer frontend and backend. The frontend is a conversation-driven adaptive UI that renders structured exploration results from a scholarly knowledge graph. The backend must return **semantic exploration state** — not raw SPARQL or text — so the frontend can dynamically render the appropriate visualization.
+This guide defines the API contract between the IR Anthology Chat frontend and backend. The frontend is a conversation-driven adaptive UI that renders structured exploration results from a scholarly knowledge graph. The backend must return **semantic exploration state** — not raw SPARQL or text — so the frontend can dynamically render the appropriate visualization.
 
 ### Architecture
 
@@ -36,9 +36,10 @@ User Input (natural language)
 ### Key Principles
 
 1. **Frontend does NOT construct SPARQL** — the backend handles all query generation
-2. **Response is semantic** — columns, rows, observations, suggestions (not raw data)
-3. **Conversation is stateful** — backend receives context from previous turns
+2. **Response is flat** — optional fields for text, table data, observations, and suggestions
+3. **Backend is stateless** — frontend sends the full conversation history with each request
 4. **LLM generates insights** — observations and follow-up questions come from the backend
+5. **Cell values include questions** — each table cell has a clickable question for drill-down
 
 ---
 
@@ -57,7 +58,6 @@ All errors follow:
 
 ```json
 {
-  "status": "error",
   "error": {
     "code": "INTERNAL_ERROR",
     "message": "Something went wrong while processing your query."
@@ -94,17 +94,21 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
     },
     {
       "role": "assistant",
-      "content": "Here are the results:",
-      "result": {
-        "type": "facet_table",
-        "title": "Most Prolific Authors in Exploratory Search",
-        "columns": [...],
-        "rows": [...]
-      },
-      "observations": [...],
-      "suggestions": [...],
-      "sparql_query": "PREFIX ...",
-      "status": "answerable"
+      "content": "User is asking for the most prolific authors based on publication count.",
+      "intent": "User is asking for the most prolific authors based on publication count.",
+      "columns": [
+        { "key": "author", "label": "Author", "type": "text", "sortable": true },
+        { "key": "publications", "label": "Publications", "type": "number", "sortable": true }
+      ],
+      "rows": [
+        {
+          "author": { "value": "Marti A. Hearst", "question": "Tell me about Marti A. Hearst" },
+          "publications": { "value": 42, "question": "How many publications does Marti A. Hearst have?" }
+        }
+      ],
+      "observations": ["Marti A. Hearst leads with 42 publications."],
+      "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"],
+      "sparql_query": "PREFIX schema: <http://schema.org/> ..."
     }
   ]
 }
@@ -122,12 +126,22 @@ The primary endpoint for all exploration queries. The frontend sends a user mess
     { "key": "years", "label": "Years", "type": "text" }
   ],
   "rows": [
-    { "author": "Marti A. Hearst", "publications": 42, "venues": 12, "years": "1995–2024" },
-    { "author": "Ryen W. White", "publications": 38, "venues": 10, "years": "2003–2024" }
+    {
+      "author": { "value": "Marti A. Hearst", "question": "Tell me about Marti A. Hearst" },
+      "publications": { "value": 42, "question": "How many publications does Marti A. Hearst have?" },
+      "venues": { "value": 12, "question": "Which venues does Marti A. Hearst publish in?" },
+      "years": { "value": "1995–2024", "question": "What years was Marti A. Hearst active?" }
+    },
+    {
+      "author": { "value": "Ryen W. White", "question": "Tell me about Ryen W. White" },
+      "publications": { "value": 38, "question": "How many publications does Ryen W. White have?" },
+      "venues": { "value": 10, "question": "Which venues does Ryen W. White publish in?" },
+      "years": { "value": "2003–2024", "question": "What years was Ryen W. White active?" }
+    }
   ],
   "observations": ["Marti A. Hearst leads with 42 publications spanning nearly three decades."],
-  "suggestions": ["Only consider the last five years", "Which venues do these authors publish in?", "Show me how this changed over time"],
-  "sparql_query": "PREFIX schema: <http://schema.org/>\nPREFIX dcterms: <http://purl.org/dc/terms/>\n\nSELECT ?author\n       (COUNT(?pub) AS ?publications)\n       (COUNT(DISTINCT ?venue) AS ?venues)\nWHERE {\n  ?pub a schema:ScholarlyArticle ;\n       dcterms:creator ?author ;\n       schema:isPartOf ?venue .\n}\nGROUP BY ?author\nORDER BY DESC(?publications)\nLIMIT 5"
+  "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"],
+  "sparql_query": "PREFIX schema: <http://schema.org/>\nPREFIX dcterms: <http://purl.org/dc/terms/>\n\nSELECT ?author\n       (COUNT(?pub) AS ?publications)\n       (COUNT(DISTINCT ?venue) AS ?venues)\n       (CONCAT(MIN(STR(?year)), \"–\", MAX(STR(?year))) AS ?years)\nWHERE {\n  ?pub a schema:ScholarlyArticle ;\n       dcterms:creator ?author ;\n       schema:isPartOf ?venue ;\n       dcterms:date ?year .\n}\nGROUP BY ?author\nORDER BY DESC(?publications)\nLIMIT 5"
 }
 ```
 
@@ -176,6 +190,8 @@ Health check endpoint.
 
 ### ExplorationResponse
 
+The response is a flat object. All fields are optional except the backend should always return at least one text field.
+
 | Field | Type | Description |
 |-------|------|-------------|
 | `intent` | string | Backend's understanding of user intent (optional) |
@@ -196,16 +212,25 @@ Health check endpoint.
 | `type` | string | `"text"`, `"number"`, `"badge"`, or `"link"` |
 | `sortable` | boolean | Whether users can sort by this column |
 
+### CellValue
+
+Each cell in a row is a `CellValue` object with a display value and a clickable question.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `value` | string \| number | The display value for the cell |
+| `question` | string | The question sent as a user message when the cell is clicked. If empty/null, no tooltip or click handler. |
+
 ### ResultRow
 
-A JSON object where keys match column `key` values. Values are strings or numbers.
+A JSON object where keys match column `key` values. Each value is a `CellValue`.
 
 ```json
 {
-  "author": "Marti A. Hearst",
-  "publications": 42,
-  "venues": 12,
-  "years": "1995–2024"
+  "author": { "value": "Marti A. Hearst", "question": "Tell me about Marti A. Hearst" },
+  "publications": { "value": 42, "question": "How many publications does Marti A. Hearst have?" },
+  "venues": { "value": 12, "question": "Which venues does Marti A. Hearst publish in?" },
+  "years": { "value": "1995–2024", "question": "What years was Marti A. Hearst active?" }
 }
 ```
 
@@ -220,11 +245,19 @@ The response is a flat object with optional fields. The UI renders only what's p
 ```json
 {
   "intent": "User is asking for the most prolific authors based on publication count.",
-  "columns": [...],
-  "rows": [...],
-  "observations": ["..."],
-  "suggestions": ["..."],
-  "sparql_query": "PREFIX ..."
+  "columns": [
+    { "key": "author", "label": "Author", "type": "text", "sortable": true },
+    { "key": "publications", "label": "Publications", "type": "number", "sortable": true }
+  ],
+  "rows": [
+    {
+      "author": { "value": "Marti A. Hearst", "question": "Tell me about Marti A. Hearst" },
+      "publications": { "value": 42, "question": "How many publications does Marti A. Hearst have?" }
+    }
+  ],
+  "observations": ["Marti A. Hearst leads with 42 publications."],
+  "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"],
+  "sparql_query": "PREFIX schema: <http://schema.org/> ..."
 }
 ```
 
@@ -232,9 +265,9 @@ The response is a flat object with optional fields. The UI renders only what's p
 
 ```json
 {
-  "intent": "User is asking about a topic that cannot be answered with available data.",
-  "limitation": "I don't have data on this topic.",
-  "suggestions": ["Try asking about authors", "Ask about venues"]
+  "intent": "User is asking about citation counts for publications.",
+  "limitation": "I don't have data on citation counts. The knowledge graph only contains information about authors, venues, and publications.",
+  "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"]
 }
 ```
 
@@ -242,9 +275,9 @@ The response is a flat object with optional fields. The UI renders only what's p
 
 ```json
 {
-  "intent": "User is asking about authors or venues.",
-  "clarification": "Did you mean authors or venues?",
-  "suggestions": ["Show me authors", "Show me venues"]
+  "intent": "User is asking about something ambiguous.",
+  "clarification": "Could you clarify whether you are looking for authors, venues, or publications?",
+  "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"]
 }
 ```
 
@@ -253,151 +286,15 @@ The response is a flat object with optional fields. The UI renders only what's p
 1. **`intent`** — Backend's understanding of user intent. Rendered first if present.
 2. **`limitation`** — Query cannot be answered. Rendered second if present.
 3. **`clarification`** — Backend asks for more info. Rendered third if present.
-4. **`columns` + `rows`** — Present together for tabular data. Absent for unsupported queries.
+4. **`columns` + `rows`** — Present together for tabular data. Absent for unsupported queries. Each row value must be a `CellValue` object.
 5. **`observations`** — Optional. LLM-generated insights about the data.
 6. **`suggestions`** — Optional. Follow-up questions the user might ask.
 7. **`sparql_query`** — Optional. The SPARQL query used to retrieve data.
-  ],
-  "rows": [
-    { "author": "Marti A. Hearst", "publications": 42 },
-    { "author": "Ryen W. White", "publications": 38 }
-  ]
-}
-```
-
-**Use when:** Query asks for authors, venues, years, publications, or any faceted data.
-
-### 6.2 `entity_list`
-
-List of entities with metadata. Similar to facet_table but for individual entities.
-
-```json
-{
-  "type": "entity_list",
-  "title": "Publications by Marti A. Hearst",
-  "columns": [
-    { "key": "title", "label": "Title", "type": "text" },
-    { "key": "venue", "label": "Venue", "type": "badge" },
-    { "key": "year", "label": "Year", "type": "number" }
-  ],
-  "rows": [
-    { "title": "User Interfaces and Support for Exploratory Search", "venue": "SIGIR", "year": 2023 },
-    { "title": "Faceted Search for Digital Libraries", "venue": "JASIST", "year": 2021 }
-  ]
-}
-```
-
-**Use when:** Query asks for specific publications or entity details.
-
-### 6.3 `comparison`
-
-Side-by-side comparison of two or more entities.
-
-```json
-{
-  "type": "comparison",
-  "title": "SIGIR vs CHIIR",
-  "columns": [
-    { "key": "metric", "label": "Metric", "type": "text" },
-    { "key": "SIGIR", "label": "SIGIR", "type": "text" },
-    { "key": "CHIIR", "label": "CHIIR", "type": "text" }
-  ],
-  "rows": [
-    { "metric": "Total Publications", "SIGIR": "18", "CHIIR": "9" },
-    { "metric": "Authors", "SIGIR": "5", "CHIIR": "4" }
-  ]
-}
-```
-
-**Use when:** Query asks to compare two venues, authors, or years.
-
-### 6.4 `timeline`
-
-Temporal visualization with time on one axis and values as bars.
-
-```json
-{
-  "type": "timeline",
-  "title": "Publication Activity Over Time",
-  "columns": [
-    { "key": "year", "label": "Year", "type": "text" },
-    { "key": "SIGIR", "label": "SIGIR", "type": "number" },
-    { "key": "CHIIR", "label": "CHIIR", "type": "number" }
-  ],
-  "rows": [
-    { "year": "2020", "SIGIR": 12, "CHIIR": 3 },
-    { "year": "2021", "SIGIR": 14, "CHIIR": 4 }
-  ]
-}
-```
-
-**Use when:** Query asks about trends over time, changes, or temporal patterns.
-
-### 6.5 `summary`
-
-Text-based summary with no tabular data. Used for explanatory queries.
-
-```json
-{
-  "type": "summary",
-  "title": "Why SIGIR Is Prominent",
-  "columns": [],
-  "rows": []
-}
-```
-
-**Use when:** Query asks "why", "explain", or requires textual analysis rather than data.
+8. **Cell questions** — If a cell's `question` is empty/null, no tooltip or click handler is shown for that cell.
 
 ---
 
-## 7. Query Scenarios
-
-These are the 7 recognized query types. The backend should handle similar natural language variations.
-
-### 7.1 Prolific Authors
-
-**Input:** `"Who are the most prolific authors?"`
-**Result Type:** `facet_table`
-**Columns:** author, publications, venues, years
-
-### 7.2 Filtered Results
-
-**Input:** `"Only consider the last five years"`
-**Result Type:** `facet_table`
-
-### 7.3 Venue Pivot
-
-**Input:** `"Which venues do they publish in?"`
-**Result Type:** `facet_table`
-**Columns:** venue, publications, authors, years
-
-### 7.4 Timeline
-
-**Input:** `"Show me how this changed over time"`
-**Result Type:** `timeline`
-**Columns:** year, [venue1], [venue2], ...
-
-### 7.5 Comparison
-
-**Input:** `"Compare SIGIR and CHIIR"`
-**Result Type:** `comparison`
-**Columns:** metric, [entity1], [entity2]
-
-### 7.6 Explanation
-
-**Input:** `"Why is SIGIR prominent?"`
-**Result Type:** `summary`
-**Observations:** Multiple LLM-generated insights
-
-### 7.7 Unsupported
-
-**Input:** Any unrecognized query
-**Status:** `unsupported`
-**Suggestions:** Alternative queries the user can try
-
----
-
-## 8. Conversation Context
+## 7. Conversation Context
 
 The backend is **stateless**. The frontend sends the full conversation history with each request.
 
@@ -405,21 +302,21 @@ The backend is **stateless**. The frontend sends the full conversation history w
 
 ```
 Request 1: { message: "Who are the most prolific authors?", history: [] }
-  → Response: { result: facet_table with authors }
+  → Response: { intent: "...", columns: [...], rows: [...] }
 
 Request 2: { message: "Only consider the last five years", history: [
     { role: "user", content: "Who are the most prolific authors?" },
-    { role: "assistant", content: "...", result: {...}, status: "answerable" }
+    { role: "assistant", content: "...", intent: "...", columns: [...], rows: [...] }
   ]}
-  → Response: { result: facet_table with filtered authors }
+  → Response: { intent: "...", columns: [...], rows: [...] }
 
 Request 3: { message: "Which venues do they publish in?", history: [
     { role: "user", content: "Who are the most prolific authors?" },
-    { role: "assistant", content: "...", result: {...}, status: "answerable" },
+    { role: "assistant", content: "...", intent: "...", columns: [...], rows: [...] },
     { role: "user", content: "Only consider the last five years" },
-    { role: "assistant", content: "...", result: {...}, status: "answerable" }
+    { role: "assistant", content: "...", intent: "...", columns: [...], rows: [...] }
   ]}
-  → Response: { result: facet_table with venues }
+  → Response: { intent: "...", columns: [...], rows: [...] }
 ```
 
 ### Key Rules
@@ -427,34 +324,37 @@ Request 3: { message: "Which venues do they publish in?", history: [
 1. **Backend is stateless** — No session storage needed. Each request contains all required context.
 2. **History is advisory** — The backend may ignore or modify context if the query requires it.
 3. **First message has empty history** — `history: []` for the initial request.
+4. **Loading turns excluded** — The frontend filters out turns with `loading: true` from history.
 
 ---
 
-## 9. LLM Integration
+## 8. LLM Integration
 
 The backend must use an LLM for two purposes:
 
-### 9.1 Intent Parsing
+### 8.1 Intent Parsing
 
 Parse the user's natural language query into:
-- Result type (facet_table, comparison, timeline, summary)
+- **intent** — A sentence describing what the user is asking (e.g., "User is asking for the most prolific authors based on publication count.")
+- **clarification** — If the query is ambiguous, ask the user for more info
+- **limitation** — If the query cannot be answered, explain why
 
-### 9.2 Observation Generation
+### 8.2 Observation & Suggestion Generation
 
 After retrieving data from the knowledge graph, the LLM should generate:
 - **Observations** — Key insights about the data (1-3 per response)
 - **Suggestions** — Follow-up questions the user might ask (2-3 per response)
 
-### 9.3 Unsupported Handling
+### 8.3 Unsupported Handling
 
 When the LLM cannot map the query to a valid exploration:
-- Set `status: "unsupported"`
-- Provide observations explaining the limitation
-- Provide suggestions for alternative queries
+- Set `limitation` with an explanation
+- Provide `suggestions` for alternative queries
+- Do NOT include `columns` or `rows`
 
 ---
 
-## 10. Migration Guide
+## 9. Migration Guide
 
 ### Current Backend State
 
@@ -484,11 +384,12 @@ def chat(request: ChatRequest) -> ChatResponse:
 3. **Add observation generation** — Use LLM to generate insights from query results
 4. **Add suggestion generation** — Use LLM to generate follow-up questions
 5. **Update route** — Change `POST /chat` to `POST /api/exploration`
+6. **Add CellValue to rows** — Each cell must return `{ value, question }` objects
 
 ### New schemas.py
 
 ```python
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 
 class ResultColumn(BaseModel):
@@ -497,6 +398,10 @@ class ResultColumn(BaseModel):
     type: str  # "text", "number", "badge", "link"
     sortable: bool = False
 
+class CellValue(BaseModel):
+    value: str | int | float
+    question: str
+
 class HistoryTurn(BaseModel):
     role: str  # "user" or "assistant"
     content: str
@@ -504,7 +409,7 @@ class HistoryTurn(BaseModel):
     clarification: Optional[str] = None
     limitation: Optional[str] = None
     columns: Optional[list[ResultColumn]] = None
-    rows: Optional[list[dict]] = None
+    rows: Optional[list[dict[str, CellValue]]] = None
     observations: Optional[list[str]] = None
     suggestions: Optional[list[str]] = None
     sparql_query: Optional[str] = None
@@ -518,7 +423,7 @@ class ExplorationResponse(BaseModel):
     clarification: Optional[str] = None
     limitation: Optional[str] = None
     columns: Optional[list[ResultColumn]] = None
-    rows: Optional[list[dict]] = None
+    rows: Optional[list[dict[str, CellValue]]] = None
     observations: Optional[list[str]] = None
     suggestions: Optional[list[str]] = None
     sparql_query: Optional[str] = None
@@ -526,7 +431,7 @@ class ExplorationResponse(BaseModel):
 
 ---
 
-## 11. TypeScript Types Reference
+## 10. TypeScript Types Reference
 
 The frontend defines these types in `src/lib/types/exploration.ts`. The backend should return JSON that matches these shapes.
 
@@ -538,8 +443,13 @@ interface ResultColumn {
   sortable?: boolean;
 }
 
+interface CellValue {
+  value: string | number;
+  question: string;
+}
+
 interface ResultRow {
-  [key: string]: string | number;
+  [key: string]: CellValue;
 }
 
 interface HistoryTurn {
@@ -569,7 +479,7 @@ interface ExplorationResponse {
 
 ---
 
-## 12. Testing the API
+## 11. Testing the API
 
 ### cURL Examples
 
@@ -601,19 +511,20 @@ curl -X POST http://localhost:8000/api/exploration \
       },
       {
         "role": "assistant",
-        "content": "Here are the results:",
-        "result": {
-          "type": "facet_table",
-          "title": "Most Prolific Authors",
-          "columns": [
-            {"key": "author", "label": "Author", "type": "text", "sortable": true},
-            {"key": "publications", "label": "Publications", "type": "number", "sortable": true}
-          ],
-          "rows": [
-            {"author": "Marti A. Hearst", "publications": 42}
-          ]
-        },
-        "status": "answerable"
+        "content": "User is asking for the most prolific authors based on publication count.",
+        "intent": "User is asking for the most prolific authors based on publication count.",
+        "columns": [
+          {"key": "author", "label": "Author", "type": "text", "sortable": true},
+          {"key": "publications", "label": "Publications", "type": "number", "sortable": true}
+        ],
+        "rows": [
+          {
+            "author": {"value": "Marti A. Hearst", "question": "Tell me about Marti A. Hearst"},
+            "publications": {"value": 42, "question": "How many publications does Marti A. Hearst have?"}
+          }
+        ],
+        "observations": ["Marti A. Hearst leads with 42 publications."],
+        "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"]
       }
     ]
   }'
@@ -624,6 +535,8 @@ curl -X POST http://localhost:8000/api/exploration \
 - [ ] Request has `message` and `history` fields
 - [ ] Response has at least one of: `intent`, `clarification`, `limitation`
 - [ ] If `columns` present, `rows` must also be present
+- [ ] Each row value is a `CellValue` object with `value` and `question` fields
 - [ ] Column `key` values match row object keys
 - [ ] Sortable columns have `sortable: true`
 - [ ] Unsupported queries have `limitation` and `suggestions` (no `columns`/`rows`)
+- [ ] All 3 suggestions are consistent across responses
