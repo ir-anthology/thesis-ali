@@ -53,12 +53,23 @@ EXAMPLES OF BAD OBSERVATIONS (do NOT do this):
 - "These papers are very important." (subjective, not data-grounded)
 - "The data shows interesting patterns." (vague, not specific)
 
-Return a JSON object with structure:
+IMPORTANT: Return a JSON object with this EXACT structure:
 {
   "cell_questions": {
-    "<row_index>": {
-      "<column_name>": "generated question or empty string"
+    "0": {
+      "column_name_1": "question for row 0, column 1",
+      "column_name_2": "question for row 0, column 2"
+    },
+    "1": {
+      "column_name_1": "question for row 1, column 1",
+      "column_name_2": "question for row 1, column 2"
     }
   },
   "observations": ["observation 1", "observation 2", "observation 3"]
 }
+
+Where:
+- "cell_questions" is a dictionary keyed by ROW INDEX (as string: "0", "1", "2", ...)
+- Each row index maps to a dictionary of COLUMN NAME -> QUESTION
+- Use the exact column names provided in the input
+- Generate a question for EVERY cell in EVERY row

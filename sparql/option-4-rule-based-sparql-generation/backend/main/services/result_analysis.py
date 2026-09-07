@@ -91,12 +91,14 @@ class ResultAnalysisService:
         )
 
         if data is None:
+            logger.warning("Stage 3: LLM returned None for questions")
             # Fallback: rows without questions
             return [
                 {k: CellValue(value=str(row.get(k, "")), question="") for k in col_keys}
                 for row in batch_rows
             ]
 
+        logger.info("Stage 3: LLM response keys: %s", list(data.keys()))
         return self._parse_cell_questions(data, col_keys, batch_rows)
 
     @staticmethod
@@ -106,7 +108,24 @@ class ResultAnalysisService:
         batch_rows: list[dict[str, object]],
     ) -> list[dict[str, CellValue]]:
         result: list[dict[str, CellValue]] = []
-        llm_rows = data.get("rows", data.get("cell_questions", {}))
+
+        # Try multiple possible keys for the questions data
+        llm_rows = None
+        for key in ["cell_questions", "rows", "questions"]:
+            if key in data:
+                llm_rows = data[key]
+                logger.info("Stage 3: Found questions under key '%s'", key)
+                break
+
+        if llm_rows is None:
+            logger.warning(
+                "Stage 3: No questions key found in LLM response: %s", list(data.keys())
+            )
+            # Fallback: rows without questions
+            return [
+                {k: CellValue(value=str(row.get(k, "")), question="") for k in col_keys}
+                for row in batch_rows
+            ]
 
         for i, row in enumerate(batch_rows):
             parsed: dict[str, CellValue] = {}
