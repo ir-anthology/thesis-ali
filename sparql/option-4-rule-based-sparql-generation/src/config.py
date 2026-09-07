@@ -13,18 +13,13 @@ LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5.6-luna")
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.0"))
 LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "2000"))
 
-DBLP_SEARCH_API = os.getenv("DBLP_SEARCH_API", "https://dblp.org/search/publ/api")
-DBLP_AUTHOR_API = os.getenv("DBLP_AUTHOR_API", "https://dblp.org/search/author/api")
-DBLP_VENUE_API = os.getenv("DBLP_VENUE_API", "https://dblp.org/search/venue/api")
 DBLP_SPARQL_ENDPOINT = os.getenv(
     "DBLP_SPARQL_ENDPOINT", "https://sparql.dblp.org/sparql"
 )
 
-ENTITY_CACHE_PATH = BASE_DIR / os.getenv("ENTITY_CACHE_PATH", "data/entity_cache.json")
 EXAMPLES_PATH = BASE_DIR / os.getenv("EXAMPLES_PATH", "data/examples.json")
 
 MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
-DBLP_API_DELAY = float(os.getenv("DBLP_API_DELAY", "1.0"))
 MAX_RESULT_ROWS = int(os.getenv("MAX_RESULT_ROWS", "50"))
 QUESTION_BATCH_SIZE = int(os.getenv("QUESTION_BATCH_SIZE", "10"))
 
@@ -148,39 +143,6 @@ DBLP_KEY_PREDICATES = [
     "yearOfEvent",
     "yearOfPublication",
 ]
-
-KNOWN_PERSON_URIS = {
-    "michael stonebraker": "https://dblp.org/pid/s/MichaelStonebraker",
-    "donald knuth": "https://dblp.org/pid/k/DonaldEKnuth",
-    "geoffrey hinton": "https://dblp.org/pid/10/3248",
-    "yann lecun": "https://dblp.org/pid/l/YannLeCun",
-    "christos faloutsos": "https://dblp.org/pid/f/CFaloutsos",
-    "jiawei han": "https://dblp.org/pid/h/JiaweiHan",
-    "jennifer widom": "https://dblp.org/pid/w/JenniferWidom",
-    "hector garcia-molina": "https://dblp.org/pid/g/HGarciaMolina",
-}
-
-KNOWN_VENUE_URIS = {
-    "sigmod": "https://dblp.org/streams/conf/sigmod",
-    "vldb": "https://dblp.org/streams/conf/vldb",
-    "sigir": "https://dblp.org/streams/conf/sigir",
-    "kdd": "https://dblp.org/streams/conf/kdd",
-    "icde": "https://dblp.org/streams/conf/icde",
-    "icdt": "https://dblp.org/streams/conf/icdt",
-    "edbt": "https://dblp.org/streams/conf/edbt",
-    "pods": "https://dblp.org/streams/conf/pods",
-    "cidr": "https://dblp.org/streams/conf/cidr",
-    "neurips": "https://dblp.org/streams/conf/neurips",
-    "nips": "https://dblp.org/streams/conf/neurips",
-    "icml": "https://dblp.org/streams/conf/icml",
-    "aaai": "https://dblp.org/streams/conf/aaai",
-    "ijcai": "https://dblp.org/streams/conf/ijcai",
-    "tods": "https://dblp.org/streams/journals/tods",
-    "tkde": "https://dblp.org/streams/journals/tkde",
-    "debulk": "https://dblp.org/streams/journals/debu",
-    "tos": "https://dblp.org/streams/journals/tos",
-    "pvldb": "https://dblp.org/streams/journals/pvldb",
-}
 
 LIMITATION_KEYWORDS = {
     "citation": "DBLP does not track citation counts between publications. Consider using Semantic Scholar or Google Scholar for citation data.",

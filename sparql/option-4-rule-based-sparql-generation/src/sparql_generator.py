@@ -1,4 +1,4 @@
-"""Step 5: LLM-based SPARQL query generation."""
+"""LLM-based SPARQL query generation."""
 
 import json
 import logging
@@ -12,11 +12,10 @@ from .config import (
     EXAMPLES_PATH,
     DBLP_PREFIXES,
 )
-from .models import ResolvedEntity, SPARQLResult
+from .models import SPARQLResult
 from .prompts import (
     SPARQL_SYSTEM_PROMPT,
     build_sparql_prompt,
-    format_entities_for_prompt,
     format_examples_for_prompt,
 )
 
@@ -44,14 +43,12 @@ class SPARQLGenerator:
     def generate(
         self,
         user_query: str,
-        resolved_entities: list[ResolvedEntity],
         schema_context: str = "",
     ) -> SPARQLResult:
         """Generate a SPARQL query for the given question.
 
         Args:
             user_query: Original natural language question
-            resolved_entities: List of resolved entities with URIs
             schema_context: Optional schema context for prompting
 
         Returns:
@@ -59,12 +56,9 @@ class SPARQLGenerator:
         """
         logger.info("Generating SPARQL for query: %s", user_query)
 
-        entities_context = format_entities_for_prompt(resolved_entities)
         examples_context = format_examples_for_prompt(self.examples[:5])
 
-        prompt = build_sparql_prompt(
-            user_query, entities_context, schema_context, examples_context
-        )
+        prompt = build_sparql_prompt(user_query, schema_context, examples_context)
 
         try:
             response = self.client.responses.parse(
@@ -106,7 +100,6 @@ class SPARQLGenerator:
         original_query: str,
         failed_sparql: str,
         error_message: str,
-        resolved_entities: list[ResolvedEntity],
     ) -> SPARQLResult:
         """Attempt to repair a failed SPARQL query.
 
@@ -114,14 +107,11 @@ class SPARQLGenerator:
             original_query: Original natural language question
             failed_sparql: The SPARQL query that failed
             error_message: Error message from execution
-            resolved_entities: List of resolved entities
 
         Returns:
             SPARQLResult with repaired SPARQL query
         """
         logger.info("Attempting to repair SPARQL query")
-
-        entities_context = format_entities_for_prompt(resolved_entities)
 
         repair_prompt = f"""The following SPARQL query failed:
 
@@ -131,10 +121,8 @@ Error: {error_message}
 
 Original question: {original_query}
 
-Resolved entities:
-{entities_context}
-
-Fix the query and return a corrected SPARQL query that will work against the DBLP endpoint."""
+Fix the query and return a corrected SPARQL query that will work against the DBLP endpoint.
+Use entity names in string literals (e.g., dblp:creatorName "Geoffrey Hinton"), NOT URIs."""
 
         try:
             response = self.client.responses.parse(

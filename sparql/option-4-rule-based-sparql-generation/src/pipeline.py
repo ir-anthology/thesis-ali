@@ -8,7 +8,6 @@ from .models import (
     HistoryTurn,
 )
 from .query_interpreter import QueryInterpreter
-from .entity_resolver import EntityResolver
 from .sparql_generator import SPARQLGenerator
 from .validator import SPARQLValidator
 from .sparql_executor import SPARQLExecutor
@@ -23,7 +22,6 @@ class Pipeline:
 
     def __init__(self):
         self.interpreter = QueryInterpreter()
-        self.entity_resolver = EntityResolver()
         self.sparql_generator = SPARQLGenerator()
         self.validator = SPARQLValidator()
         self.executor = SPARQLExecutor()
@@ -37,7 +35,7 @@ class Pipeline:
             user_query: Natural language question about DBLP
 
         Returns:
-            QueryResponse with intent, clarification, limitation, or SPARQL query
+            QueryResponse with interpretation and SPARQL query
         """
         logger.info("Processing query: %s", user_query)
 
@@ -64,27 +62,9 @@ class Pipeline:
                 suggestions=interpretation.options or interpretation.suggestions,
             )
 
-        # Step 2: Entity Resolution (DBLP API)
-        logger.info("Step 2: Resolving entities")
-        resolution_result = self.entity_resolver.resolve_batch(
-            interpretation.entities_mentioned
-        )
-        logger.info(
-            "Resolved %d entities, %d unresolved",
-            len(resolution_result.resolved_entities),
-            len(resolution_result.unresolved_mentions),
-        )
-
-        # Step 2b: Rule-based ambiguity check after entity resolution
-        clarification_response = self._check_entity_ambiguity(resolution_result)
-        if clarification_response:
-            return clarification_response
-
-        # Step 3: SPARQL Generation (LLM Call #2)
-        logger.info("Step 3: Generating SPARQL")
-        sparql_result = self.sparql_generator.generate(
-            user_query, resolution_result.resolved_entities
-        )
+        # Step 2: SPARQL Generation (LLM Call #2)
+        logger.info("Step 2: Generating SPARQL")
+        sparql_result = self.sparql_generator.generate(user_query)
 
         if not sparql_result.sparql:
             logger.warning("SPARQL generation failed")
@@ -94,8 +74,8 @@ class Pipeline:
                 suggestions=[],
             )
 
-        # Step 4: Validation (Rule-based)
-        logger.info("Step 4: Validating SPARQL")
+        # Step 3: Validation (Rule-based)
+        logger.info("Step 3: Validating SPARQL")
         validation_result = self.validator.validate(sparql_result.sparql)
 
         if not validation_result.valid:
@@ -107,8 +87,8 @@ class Pipeline:
                 error=f"Validation failed: {'; '.join(validation_result.errors)}",
             )
 
-        # Step 5: SPARQL Execution (DBLP endpoint)
-        logger.info("Step 5: Executing SPARQL")
+        # Step 4: SPARQL Execution (DBLP endpoint)
+        logger.info("Step 4: Executing SPARQL")
         execution_result = self.executor.execute(sparql_result.sparql)
 
         if not execution_result.success:
@@ -120,8 +100,8 @@ class Pipeline:
                 error=execution_result.error,
             )
 
-        # Step 6: Response Formatting (LLM Call #3)
-        logger.info("Step 6: Formatting response")
+        # Step 5: Response Formatting (LLM Call #3)
+        logger.info("Step 5: Formatting response")
         formatted = self.formatter.format(
             user_query, execution_result, interpretation.intent
         )
@@ -174,29 +154,9 @@ class Pipeline:
                 suggestions=interpretation.options or interpretation.suggestions,
             )
 
-        # Step 2: Entity Resolution (DBLP API)
-        logger.info("Step 2: Resolving entities")
-        resolution_result = self.entity_resolver.resolve_batch(
-            interpretation.entities_mentioned
-        )
-        logger.info(
-            "Resolved %d entities, %d unresolved",
-            len(resolution_result.resolved_entities),
-            len(resolution_result.unresolved_mentions),
-        )
-
-        # Step 2b: Rule-based ambiguity check after entity resolution
-        clarification_response = self._check_entity_ambiguity_exploration(
-            resolution_result
-        )
-        if clarification_response:
-            return clarification_response
-
-        # Step 3: SPARQL Generation (LLM Call #2)
-        logger.info("Step 3: Generating SPARQL")
-        sparql_result = self.sparql_generator.generate(
-            user_query, resolution_result.resolved_entities
-        )
+        # Step 2: SPARQL Generation (LLM Call #2)
+        logger.info("Step 2: Generating SPARQL")
+        sparql_result = self.sparql_generator.generate(user_query)
 
         if not sparql_result.sparql:
             logger.warning("SPARQL generation failed")
@@ -209,8 +169,8 @@ class Pipeline:
                 ],
             )
 
-        # Step 4: Validation (Rule-based)
-        logger.info("Step 4: Validating SPARQL")
+        # Step 3: Validation (Rule-based)
+        logger.info("Step 3: Validating SPARQL")
         validation_result = self.validator.validate(sparql_result.sparql)
 
         if not validation_result.valid:
@@ -223,8 +183,8 @@ class Pipeline:
                 ],
             )
 
-        # Step 5: SPARQL Execution (DBLP endpoint)
-        logger.info("Step 5: Executing SPARQL")
+        # Step 4: SPARQL Execution (DBLP endpoint)
+        logger.info("Step 4: Executing SPARQL")
         execution_result = self.executor.execute(sparql_result.sparql)
 
         if not execution_result.success:
@@ -235,8 +195,8 @@ class Pipeline:
                 suggestions=sparql_result.suggestions,
             )
 
-        # Step 6: Response Formatting (LLM Call #3)
-        logger.info("Step 6: Formatting response")
+        # Step 5: Response Formatting (LLM Call #3)
+        logger.info("Step 5: Formatting response")
         formatted = self.formatter.format(
             user_query, execution_result, interpretation.intent
         )
@@ -252,10 +212,10 @@ class Pipeline:
             for col in formatted.columns
         ]
 
-        # Step 7: Observation Generation (LLM Call #4 - only if data exists)
+        # Step 6: Observation Generation (LLM Call #4 - only if data exists)
         observations = []
         if formatted.row_count > 0:
-            logger.info("Step 7: Generating observations")
+            logger.info("Step 6: Generating observations")
             observations = self.observation_generator.generate(
                 user_query, interpretation.intent, result_columns, formatted.rows
             )
@@ -271,120 +231,6 @@ class Pipeline:
             sparql_query=sparql_result.sparql,
         )
 
-    def _check_entity_ambiguity(self, resolution_result) -> QueryResponse | None:
-        """Check for ambiguity after entity resolution and return clarification if needed.
-
-        Args:
-            resolution_result: Result from entity resolution
-
-        Returns:
-            QueryResponse with clarification if ambiguous, None otherwise
-        """
-        for entity in resolution_result.resolved_entities:
-            # Check for ambiguous entities
-            if entity.ambiguous:
-                candidates = [c.label for c in entity.candidates[:3]]
-                clarification = f"Multiple matches found for '{entity.mention}'. Which one did you mean?"
-                options = [f"Show me information about {c}" for c in candidates]
-                suggestions = [
-                    f"Try being more specific, e.g., '{entity.mention} from [affiliation]'"
-                ]
-                return QueryResponse(
-                    interpretation=clarification,
-                    sparql_query=None,
-                    suggestions=options + suggestions,
-                )
-
-            # Check for not found entities
-            if entity.not_found:
-                clarification = f"I couldn't find '{entity.mention}' in DBLP. Could you provide more details or check the spelling?"
-                suggestions = [
-                    "Try using the full name (e.g., 'Geoffrey Hinton' instead of 'Hinton')",
-                    "Check the spelling of the name",
-                    "Ask about a different author or venue",
-                ]
-                return QueryResponse(
-                    interpretation=clarification,
-                    sparql_query=None,
-                    suggestions=suggestions,
-                )
-
-        # Check for unresolved mentions
-        if resolution_result.unresolved_mentions:
-            mention = resolution_result.unresolved_mentions[0]
-            clarification = (
-                f"I couldn't find '{mention}' in DBLP. Could you provide more details?"
-            )
-            suggestions = [
-                "Try using the full name",
-                "Check the spelling",
-                "Ask about a different entity",
-            ]
-            return QueryResponse(
-                interpretation=clarification,
-                sparql_query=None,
-                suggestions=suggestions,
-            )
-
-        return None
-
-    def _check_entity_ambiguity_exploration(
-        self, resolution_result
-    ) -> ExplorationResponse | None:
-        """Check for ambiguity after entity resolution and return clarification if needed.
-
-        Args:
-            resolution_result: Result from entity resolution
-
-        Returns:
-            ExplorationResponse with clarification if ambiguous, None otherwise
-        """
-        for entity in resolution_result.resolved_entities:
-            # Check for ambiguous entities
-            if entity.ambiguous:
-                candidates = [c.label for c in entity.candidates[:3]]
-                clarification = f"Multiple matches found for '{entity.mention}'. Which one did you mean?"
-                options = [f"Show me information about {c}" for c in candidates]
-                suggestions = [
-                    f"Try being more specific, e.g., '{entity.mention} from [affiliation]'"
-                ]
-                return ExplorationResponse(
-                    interpretation=clarification,
-                    suggestions=options + suggestions,
-                )
-
-            # Check for not found entities
-            if entity.not_found:
-                clarification = f"I couldn't find '{entity.mention}' in DBLP. Could you provide more details or check the spelling?"
-                suggestions = [
-                    "Try using the full name (e.g., 'Geoffrey Hinton' instead of 'Hinton')",
-                    "Check the spelling of the name",
-                    "Ask about a different author or venue",
-                ]
-                return ExplorationResponse(
-                    interpretation=clarification,
-                    suggestions=suggestions,
-                )
-
-        # Check for unresolved mentions
-        if resolution_result.unresolved_mentions:
-            mention = resolution_result.unresolved_mentions[0]
-            clarification = (
-                f"I couldn't find '{mention}' in DBLP. Could you provide more details?"
-            )
-            suggestions = [
-                "Try using the full name",
-                "Check the spelling",
-                "Ask about a different entity",
-            ]
-            return ExplorationResponse(
-                interpretation=clarification,
-                suggestions=suggestions,
-            )
-
-        return None
-
     def close(self):
         """Cleanup resources."""
-        self.entity_resolver.close()
         self.executor.close()

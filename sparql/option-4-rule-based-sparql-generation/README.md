@@ -13,26 +13,22 @@ Step 1: Query Interpretation (LLM #1)   → QueryInterpretation
        ├── outcome="ambiguous"    → Clarification Response
        └── outcome="clear"        ↓
                                   ↓
-Step 2: Entity Resolution (DBLP API) → EntityResolutionResult
+Step 2: SPARQL Generation (LLM #2)  → SPARQL (using entity names)
        ↓
-Step 2b: Ambiguity Check (rules)    → Clarification if needed
+Step 3: Validation (rules)          → ValidationResult
        ↓
-Step 3: SPARQL Generation (LLM #2)  → SPARQLResult
+Step 4: SPARQL Execution (DBLP)     → QueryExecutionResult
        ↓
-Step 4: Validation (rules)          → ValidationResult
+Step 5: Response Formatting (LLM #3) → FormattedResponse
        ↓
-Step 5: SPARQL Execution (DBLP)     → QueryExecutionResult
-       ↓
-Step 6: Response Formatting (LLM #3) → FormattedResponse
-       ↓
-Step 7: Observation Generation (LLM #4) → Observations
+Step 6: Observation Generation (LLM #4) → Observations
        ↓
 ExplorationResponse (JSON)
 ```
 
-**4 LLM calls** (reduced from 5):
-1. Query Interpretation (intent + entities + outcome)
-2. SPARQL Generation
+**4 LLM calls**, no DBLP API calls (entity names used directly in SPARQL):
+1. Query Interpretation (intent + entities + ambiguity detection)
+2. SPARQL Generation (name-based lookups)
 3. Response Formatting (cell questions)
 4. Observation Generation
 
@@ -234,12 +230,11 @@ The system detects and reports limitations for queries that require:
 │   ├── models.py                  # Pydantic models
 │   ├── prompts.py                 # LLM prompts
 │   ├── query_interpreter.py       # Step 1: Unified query interpretation
-│   ├── entity_resolver.py         # Step 2: DBLP API resolution
-│   ├── sparql_generator.py        # Step 3: SPARQL generation
-│   ├── validator.py               # Step 4: SPARQL validation
-│   ├── sparql_executor.py         # Step 5: SPARQL execution
-│   ├── response_formatter.py      # Step 6: Response formatting
-│   ├── observation_generator.py   # Step 7: Observation generation
+│   ├── sparql_generator.py        # Step 2: SPARQL generation (name-based)
+│   ├── validator.py               # Step 3: SPARQL validation
+│   ├── sparql_executor.py         # Step 4: SPARQL execution
+│   ├── response_formatter.py      # Step 5: Response formatting
+│   ├── observation_generator.py   # Step 6: Observation generation
 │   ├── pipeline.py                # Orchestrator
 │   └── api.py                     # FastAPI application
 ├── tests/
@@ -249,8 +244,7 @@ The system detects and reports limitations for queries that require:
 │   ├── test_validator.py
 │   └── test_api.py
 ├── data/
-│   ├── examples.json              # Few-shot examples
-│   └── entity_cache.json          # Entity cache
+│   └── examples.json              # Few-shot examples (name-based SPARQL)
 ├── main.py                        # CLI entry point
 ├── pyproject.toml                 # Project config
 ├── .env                           # Environment variables
@@ -263,6 +257,7 @@ The system detects and reports limitations for queries that require:
 |----------|---------|-------------|
 | `OPENAI_API_KEY` | (required) | OpenAI API key |
 | `LLM_MODEL` | `gpt-5.6-luna` | LLM model to use |
+| `DBLP_SPARQL_ENDPOINT` | `https://sparql.dblp.org/sparql` | DBLP SPARQL endpoint |
 | `API_HOST` | `0.0.0.0` | FastAPI server host |
 | `API_PORT` | `8000` | FastAPI server port |
 | `MAX_RESULT_ROWS` | `50` | Maximum rows from SPARQL |

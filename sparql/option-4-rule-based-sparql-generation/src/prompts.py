@@ -30,6 +30,30 @@ DBLP LIMITATIONS (set outcome="out_of_scope" for these):
 - Peer review information
 - Non-computer science topics
 
+AMBIGUITY DETECTION (DBLP-SPECIFIC KNOWLEDGE):
+
+Common ambiguous names in computer science (set outcome="ambiguous" for these):
+- "Smith" → Could be: Michael I. Smith, John Smith, etc.
+- "Wang" → Could be: Wei Wang, Jennifer Widom (sometimes confused), etc.
+- "Zhang" → Could be: many researchers
+- "Liu" → Could be: many researchers
+- "Chen" → Could be: many researchers
+- "Kumar" → Could be: many researchers
+- Last names only without context (e.g., just "Smith", "Wang") → Usually ambiguous
+- Short venue names with typos → Might be ambiguous
+
+Do NOT set outcome="ambiguous" for:
+1. Full names of famous researchers (e.g., "Geoffrey Hinton", "Yann LeCun", "Michael Stonebraker")
+2. Well-known venue abbreviations (e.g., "SIGMOD", "NeurIPS", "KDD", "VLDB", "ICML")
+3. Specific paper titles (e.g., "Attention Is All You Need")
+4. Clear references from conversation history
+
+Set outcome="ambiguous" when:
+1. The entity name is a common last name without first name
+2. The query is vague (e.g., "papers by Smith", "papers from that conference")
+3. Multiple interpretations are possible (e.g., "papers about databases" → which venue?)
+4. The user refers to something from conversation history that is unclear
+
 ENTITY EXTRACTION (for "clear" and "ambiguous" outcomes):
 Extract ALL entity mentions with type hints:
 - Person: author names (e.g., "Geoffrey Hinton", "Yann LeCun", "Stonebraker")
@@ -90,13 +114,13 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 KEY PREDICATES:
 - dblp:authoredBy (Publication → Creator): links publication to its author
-- dblp:creatorName (Creator → string): full name of creator
+- dblp:creatorName (Creator → string): full name of creator (USE THIS for author lookup)
 - dblp:primaryCreatorName (Creator → string): primary name of creator
 - dblp:title (Publication → string): title of publication
 - dblp:yearOfPublication (Publication → gYear): year published
 - dblp:yearOfEvent (Publication → gYear): year of conference event
 - dblp:publishedInStream (Publication → Stream): links to venue
-- dblp:streamTitle (Stream → string): title of venue
+- dblp:streamTitle (Stream → string): title of venue (USE THIS for venue lookup)
 - dblp:primaryStreamTitle (Stream → string): primary title of venue
 - dblp:coAuthorWith (Creator → Creator): co-authorship relationship
 - dblp:primaryAffiliation (Creator → string): author affiliation
@@ -119,17 +143,30 @@ KEY CLASSES:
 - dblp:Conference: conference/workshop series
 - dblp:Journal: journals
 
+ENTITY LOOKUP PATTERNS:
+Use entity NAMES in string literals, NOT URIs. Example patterns:
+
+For authors:
+  ?author dblp:creatorName "Geoffrey Hinton" .
+  ?pub dblp:authoredBy ?author .
+
+For venues:
+  ?venue dblp:streamTitle "SIGMOD" .
+  ?pub dblp:publishedInStream ?venue .
+
+For paper titles:
+  ?pub dblp:title "Attention Is All You Need" .
+
 RULES:
 1. Use ONLY predicates from the schema provided above
-2. Use exact entity URIs provided (enclose in angle brackets <>)
+2. Use entity NAMES in string literals (e.g., "Geoffrey Hinton"), NOT URIs
 3. Always include mandatory prefixes at the top
 4. Use SELECT for queries that return results
 5. Use FILTER for date/string filtering
 6. Use COUNT/GROUP BY for aggregation queries
-7. Enclose all URIs in angle brackets: <https://dblp.org/...>
-8. For year comparisons, use: "2023"^^xsd:gYear
-9. Use OPTIONAL for optional fields
-10. Use DISTINCT to avoid duplicate results when needed
+7. For year comparisons, use: "2023"^^xsd:gYear
+8. Use OPTIONAL for optional fields
+9. Use DISTINCT to avoid duplicate results when needed
 
 Return structured JSON with:
 - sparql: the complete SPARQL query
@@ -222,7 +259,6 @@ Use conversation history to resolve ambiguous references (e.g., "they", "those p
 
 def build_sparql_prompt(
     user_query: str,
-    entities_context: str,
     schema_context: str,
     examples_context: str,
 ) -> str:
@@ -232,34 +268,15 @@ def build_sparql_prompt(
     if schema_context:
         parts.append(f"RELEVANT SCHEMA:\n{schema_context}")
 
-    if entities_context:
-        parts.append(f"\nRESOLVED ENTITIES:\n{entities_context}")
-
     if examples_context:
         parts.append(f"\nEXAMPLES:\n{examples_context}")
 
     parts.append(f"\nQUESTION:\n{user_query}")
-    parts.append("\nGenerate a SPARQL query for this question.")
+    parts.append(
+        "\nGenerate a SPARQL query for this question using entity names (not URIs)."
+    )
 
     return "\n".join(parts)
-
-
-def format_entities_for_prompt(entities: list) -> str:
-    """Format resolved entities for the SPARQL generation prompt."""
-    if not entities:
-        return "No entities resolved."
-
-    lines = []
-    for entity in entities:
-        if entity.uri:
-            lines.append(f"- {entity.mention}: <{entity.uri}> ({entity.type})")
-        elif entity.ambiguous:
-            candidates = ", ".join([c.label for c in entity.candidates[:3]])
-            lines.append(f"- {entity.mention}: AMBIGUUS ({candidates})")
-        else:
-            lines.append(f"- {entity.mention}: NOT FOUND")
-
-    return "\n".join(lines)
 
 
 def format_examples_for_prompt(examples: list) -> str:

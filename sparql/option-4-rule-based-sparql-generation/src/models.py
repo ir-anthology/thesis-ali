@@ -67,41 +67,6 @@ class QueryInterpretation(BaseModel):
     )
 
 
-class Candidate(BaseModel):
-    """A candidate entity match."""
-
-    uri: str = Field(default="", description="DBLP URI")
-    label: str = Field(default="", description="Human-readable label")
-
-
-class ResolvedEntity(BaseModel):
-    """An entity resolved to a DBLP URI."""
-
-    mention: str = Field(..., description="Original text mention")
-    uri: str | None = Field(default=None, description="Resolved DBLP URI")
-    label: str | None = Field(default=None, description="Human-readable label")
-    type: str | None = Field(default=None, description="Entity type")
-    confidence: float = Field(
-        default=0.0, ge=0.0, le=1.0, description="Confidence score"
-    )
-    ambiguous: bool = Field(default=False, description="Whether multiple matches found")
-    not_found: bool = Field(default=False, description="Whether entity was not found")
-    candidates: list[Candidate] = Field(
-        default_factory=list, description="Candidate matches if ambiguous"
-    )
-
-
-class EntityResolutionResult(BaseModel):
-    """Result of entity resolution step."""
-
-    resolved_entities: list[ResolvedEntity] = Field(
-        default_factory=list, description="Resolved entities"
-    )
-    unresolved_mentions: list[str] = Field(
-        default_factory=list, description="Mentions that could not be resolved"
-    )
-
-
 class SPARQLResult(BaseModel):
     """Result of SPARQL generation."""
 
