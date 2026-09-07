@@ -29,7 +29,7 @@ class InterpretationService:
 
         user_prompt = self._build_user_prompt(context)
 
-        result = self._llm.generate_structured(
+        result: Interpretation | None = self._llm.generate_structured(
             system_prompt=_SYSTEM_PROMPT,
             user_prompt=user_prompt,
             response_model=Interpretation,

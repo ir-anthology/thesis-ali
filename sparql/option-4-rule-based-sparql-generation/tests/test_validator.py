@@ -1,7 +1,7 @@
-"""Tests for SPARQL validator."""
+"""Tests for the SPARQL validator (new module structure)."""
 
 import pytest
-from src.validator import SPARQLValidator
+from backend.main.sparql.validator import SPARQLValidator
 
 
 @pytest.fixture

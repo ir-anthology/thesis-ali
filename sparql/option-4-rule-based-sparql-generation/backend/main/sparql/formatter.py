@@ -25,7 +25,7 @@ def format_result_rows(
     for raw_row in query_result.rows:
         row: dict[str, CellValue] = {}
         for col in query_result.columns:
-            value = raw_row.get(col, "")
+            value = str(raw_row.get(col, ""))
             row[col] = CellValue(value=value, question="")
         rows.append(row)
     return rows

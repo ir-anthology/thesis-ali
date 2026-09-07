@@ -1,10 +1,10 @@
-"""Tests for FastAPI API endpoints."""
+"""Tests for the FastAPI API endpoints (new module structure)."""
 
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
-from src.api import app, pipeline
-from src.models import ExplorationResponse, ResultColumn, CellValue
+from backend.main.main import app
+from backend.main.schemas.responses import ExplorationResponse, ResultColumn, CellValue
 
 
 @pytest.fixture
@@ -24,8 +24,8 @@ def test_exploration_endpoint_success(client):
     mock_response = ExplorationResponse(
         interpretation="Let me find the papers by Geoffrey Hinton",
         columns=[
-            ResultColumn(key="pub", label="Pub", type="text", sortable=True),
-            ResultColumn(key="title", label="Title", type="text", sortable=True),
+            ResultColumn(key="pub", label="Pub", type="text"),
+            ResultColumn(key="title", label="Title", type="text"),
         ],
         rows=[
             {
@@ -41,7 +41,11 @@ def test_exploration_endpoint_success(client):
         sparql_query="PREFIX dblp: ...",
     )
 
-    with patch.object(pipeline, "explore", return_value=mock_response):
+    with patch(
+        "backend.main.api.exploration._service.explore",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ):
         response = client.post(
             "/api/exploration",
             json={"message": "Which papers did Geoffrey Hinton author?", "history": []},
@@ -56,13 +60,17 @@ def test_exploration_endpoint_success(client):
     assert len(data["suggestions"]) == 1
 
 
-def test_exploration_endpoint_limitation(client):
+def test_exploration_endpoint_out_of_scope(client):
     mock_response = ExplorationResponse(
         interpretation="DBLP does not track citation counts.",
         suggestions=["Show me Geoffrey Hinton's publications"],
     )
 
-    with patch.object(pipeline, "explore", return_value=mock_response):
+    with patch(
+        "backend.main.api.exploration._service.explore",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ):
         response = client.post(
             "/api/exploration",
             json={"message": "How many citations does this paper have?", "history": []},
@@ -75,13 +83,20 @@ def test_exploration_endpoint_limitation(client):
     assert data["rows"] is None
 
 
-def test_exploration_endpoint_clarification(client):
+def test_exploration_endpoint_ambiguous(client):
     mock_response = ExplorationResponse(
-        interpretation="Multiple matches found for 'Smith'. Which one did you mean?",
-        suggestions=["Show me papers by John Smith", "Show me papers by Mike Smith"],
+        interpretation="There are multiple authors named Smith. Which one did you mean?",
+        suggestions=[
+            "Show me papers by John Smith",
+            "Show me papers by Mike Smith",
+        ],
     )
 
-    with patch.object(pipeline, "explore", return_value=mock_response):
+    with patch(
+        "backend.main.api.exploration._service.explore",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ):
         response = client.post(
             "/api/exploration",
             json={"message": "papers by Smith", "history": []},
@@ -90,11 +105,15 @@ def test_exploration_endpoint_clarification(client):
     assert response.status_code == 200
     data = response.json()
     assert data["interpretation"] is not None
-    assert "Multiple matches" in data["interpretation"]
+    assert "Smith" in data["interpretation"]
 
 
 def test_exploration_endpoint_error(client):
-    with patch.object(pipeline, "explore", side_effect=Exception("API Error")):
+    with patch(
+        "backend.main.api.exploration._service.explore",
+        new_callable=AsyncMock,
+        side_effect=Exception("API Error"),
+    ):
         response = client.post(
             "/api/exploration",
             json={"message": "test query", "history": []},
@@ -110,7 +129,7 @@ def test_exploration_endpoint_with_history(client):
     mock_response = ExplorationResponse(
         interpretation="Let me find papers by Geoffrey Hinton from 2023",
         columns=[
-            ResultColumn(key="title", label="Title", type="text", sortable=True),
+            ResultColumn(key="title", label="Title", type="text"),
         ],
         rows=[
             {
@@ -130,7 +149,11 @@ def test_exploration_endpoint_with_history(client):
         },
     ]
 
-    with patch.object(pipeline, "explore", return_value=mock_response):
+    with patch(
+        "backend.main.api.exploration._service.explore",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ):
         response = client.post(
             "/api/exploration",
             json={"message": "Only from 2023", "history": history},

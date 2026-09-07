@@ -6,8 +6,10 @@ the OpenAI SDK directly.  This isolates provider-specific code.
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
+from typing import TypeVar
 
 from openai import OpenAI
 from pydantic import BaseModel
@@ -20,6 +22,8 @@ from backend.main.config import (
 )
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class LLMClient:
@@ -39,8 +43,8 @@ class LLMClient:
         self,
         system_prompt: str,
         user_prompt: str,
-        response_model: type[BaseModel],
-    ) -> BaseModel | None:
+        response_model: type[T],
+    ) -> T | None:
         """Call the LLM and parse the response into *response_model*.
 
         Uses the OpenAI Responses API with structured outputs.
@@ -94,8 +98,6 @@ class LLMClient:
             if not content:
                 logger.warning("LLM returned empty content")
                 return None
-            import json
-
             return json.loads(content)
         except Exception:
             logger.exception("LLM JSON call failed")
