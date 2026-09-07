@@ -22,7 +22,7 @@ def test_health_endpoint(client):
 
 def test_exploration_endpoint_success(client):
     mock_response = ExplorationResponse(
-        intent="The user is asking for publications authored by Geoffrey Hinton",
+        interpretation="Let me find the papers by Geoffrey Hinton",
         columns=[
             ResultColumn(key="pub", label="Pub", type="text", sortable=True),
             ResultColumn(key="title", label="Title", type="text", sortable=True),
@@ -49,10 +49,7 @@ def test_exploration_endpoint_success(client):
 
     assert response.status_code == 200
     data = response.json()
-    assert (
-        data["intent"]
-        == "The user is asking for publications authored by Geoffrey Hinton"
-    )
+    assert data["interpretation"] == "Let me find the papers by Geoffrey Hinton"
     assert len(data["columns"]) == 2
     assert len(data["rows"]) == 1
     assert len(data["observations"]) == 1
@@ -61,8 +58,7 @@ def test_exploration_endpoint_success(client):
 
 def test_exploration_endpoint_limitation(client):
     mock_response = ExplorationResponse(
-        intent="The user is asking about citation counts",
-        limitation="DBLP does not track citation counts.",
+        interpretation="DBLP does not track citation counts.",
         suggestions=["Show me Geoffrey Hinton's publications"],
     )
 
@@ -74,16 +70,14 @@ def test_exploration_endpoint_limitation(client):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["intent"] == "The user is asking about citation counts"
-    assert data["limitation"] == "DBLP does not track citation counts."
+    assert data["interpretation"] == "DBLP does not track citation counts."
     assert data["columns"] is None
     assert data["rows"] is None
 
 
 def test_exploration_endpoint_clarification(client):
     mock_response = ExplorationResponse(
-        intent="The user is asking for publications by Smith",
-        clarification="Multiple matches found for 'Smith'. Which one did you mean?",
+        interpretation="Multiple matches found for 'Smith'. Which one did you mean?",
         suggestions=["Show me papers by John Smith", "Show me papers by Mike Smith"],
     )
 
@@ -95,8 +89,8 @@ def test_exploration_endpoint_clarification(client):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["clarification"] is not None
-    assert "Multiple matches" in data["clarification"]
+    assert data["interpretation"] is not None
+    assert "Multiple matches" in data["interpretation"]
 
 
 def test_exploration_endpoint_error(client):
@@ -108,13 +102,13 @@ def test_exploration_endpoint_error(client):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["limitation"] is not None
-    assert "error occurred" in data["limitation"].lower()
+    assert data["interpretation"] is not None
+    assert "error occurred" in data["interpretation"].lower()
 
 
 def test_exploration_endpoint_with_history(client):
     mock_response = ExplorationResponse(
-        intent="The user is asking for publications from 2023",
+        interpretation="Let me find papers by Geoffrey Hinton from 2023",
         columns=[
             ResultColumn(key="title", label="Title", type="text", sortable=True),
         ],
@@ -131,8 +125,8 @@ def test_exploration_endpoint_with_history(client):
         {"role": "user", "content": "Which papers did Geoffrey Hinton author?"},
         {
             "role": "assistant",
-            "content": "The user is asking for publications authored by Geoffrey Hinton",
-            "intent": "The user is asking for publications authored by Geoffrey Hinton",
+            "content": "Let me find the papers by Geoffrey Hinton",
+            "interpretation": "Let me find the papers by Geoffrey Hinton",
         },
     ]
 
@@ -144,4 +138,4 @@ def test_exploration_endpoint_with_history(client):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["intent"] == "The user is asking for publications from 2023"
+    assert data["interpretation"] == "Let me find papers by Geoffrey Hinton from 2023"

@@ -7,24 +7,34 @@ A multi-step LLM pipeline for converting natural language questions to SPARQL qu
 ```
 User Query + History
        ↓
-Step 1: Intent + Limitation (LLM #1)     → IntentResult
+Step 1: Query Interpretation (LLM #1)   → QueryInterpretation
+       │
+       ├── outcome="out_of_scope" → Limitation Response
+       ├── outcome="ambiguous"    → Clarification Response
+       └── outcome="clear"        ↓
+                                  ↓
+Step 2: Entity Resolution (DBLP API) → EntityResolutionResult
        ↓
-Step 2: Entity Resolution (DBLP API)     → EntityResolutionResult
+Step 2b: Ambiguity Check (rules)    → Clarification if needed
        ↓
-Step 3: Clarification (LLM #2)           → ClarificationResult
+Step 3: SPARQL Generation (LLM #2)  → SPARQLResult
        ↓
-Step 4: SPARQL Generation (LLM #3)       → SPARQLResult
+Step 4: Validation (rules)          → ValidationResult
        ↓
-Step 5: Validation (rules)               → ValidationResult
+Step 5: SPARQL Execution (DBLP)     → QueryExecutionResult
        ↓
-Step 6: SPARQL Execution (DBLP endpoint)  → QueryExecutionResult
+Step 6: Response Formatting (LLM #3) → FormattedResponse
        ↓
-Step 7: Response Formatting (LLM #4)     → FormattedResponse
-       ↓
-Step 8: Observation Generation (LLM #5)  → Observations
+Step 7: Observation Generation (LLM #4) → Observations
        ↓
 ExplorationResponse (JSON)
 ```
+
+**4 LLM calls** (reduced from 5):
+1. Query Interpretation (intent + entities + outcome)
+2. SPARQL Generation
+3. Response Formatting (cell questions)
+4. Observation Generation
 
 ## Setup
 
@@ -107,7 +117,7 @@ Main exploration endpoint. Sends a user message with conversation history and re
 
 ```json
 {
-  "intent": "The user is asking for the most prolific authors based on publication count.",
+  "interpretation": "Let me find the most prolific authors by publication count",
   "columns": [
     { "key": "author", "label": "Author", "type": "text", "sortable": true },
     { "key": "publications", "label": "Publications", "type": "number", "sortable": true }
@@ -145,7 +155,7 @@ Auto-generated API documentation (Swagger UI).
 
 ```json
 {
-  "intent": "The user is asking for publications authored by Geoffrey Hinton",
+  "interpretation": "Let me find the papers authored by Geoffrey Hinton",
   "columns": [
     { "key": "pub", "label": "Pub", "type": "text", "sortable": true },
     { "key": "title", "label": "Title", "type": "text", "sortable": true },
@@ -168,8 +178,7 @@ Auto-generated API documentation (Swagger UI).
 
 ```json
 {
-  "intent": "The user is asking about citation counts for publications",
-  "limitation": "DBLP does not track citation counts between publications. Consider using Semantic Scholar or Google Scholar for citation data.",
+  "interpretation": "DBLP does not track citation counts between publications. Consider using Semantic Scholar or Google Scholar for citation data.",
   "suggestions": ["How many publications does Geoffrey Hinton have?", "Show me Geoffrey Hinton's publications"]
 }
 ```
@@ -178,8 +187,17 @@ Auto-generated API documentation (Swagger UI).
 
 ```json
 {
+  "interpretation": "Multiple authors found for 'Smith'. Which one did you mean?",
+  "suggestions": ["Show me papers by John Smith", "Show me papers by Mike Smith", "Show me papers by Sarah Smith"]
+}
+```
+
+### Clarification Response
+
+```json
+{
   "intent": "The user is asking for publications by Smith",
-  "clarification": "Multiple matches found for 'Smith': John Smith, Mike Smith, Sarah Smith. Which one did you mean?",
+  "clarification": "There are multiple authors named Smith in DBLP. Which one did you mean?",
   "suggestions": ["Show me papers by John Smith", "Show me papers by Mike Smith", "Show me papers by Sarah Smith"]
 }
 ```
@@ -215,18 +233,17 @@ The system detects and reports limitations for queries that require:
 │   ├── config.py                  # Configuration
 │   ├── models.py                  # Pydantic models
 │   ├── prompts.py                 # LLM prompts
-│   ├── intent_classifier.py       # Step 1: Intent classification
+│   ├── query_interpreter.py       # Step 1: Unified query interpretation
 │   ├── entity_resolver.py         # Step 2: DBLP API resolution
-│   ├── clarification_detector.py  # Step 3: Clarification detection
-│   ├── sparql_generator.py        # Step 4: SPARQL generation
-│   ├── validator.py               # Step 5: SPARQL validation
-│   ├── sparql_executor.py         # Step 6: SPARQL execution
-│   ├── response_formatter.py      # Step 7: Response formatting
-│   ├── observation_generator.py   # Step 8: Observation generation
+│   ├── sparql_generator.py        # Step 3: SPARQL generation
+│   ├── validator.py               # Step 4: SPARQL validation
+│   ├── sparql_executor.py         # Step 5: SPARQL execution
+│   ├── response_formatter.py      # Step 6: Response formatting
+│   ├── observation_generator.py   # Step 7: Observation generation
 │   ├── pipeline.py                # Orchestrator
 │   └── api.py                     # FastAPI application
 ├── tests/
-│   ├── test_clarification_detector.py
+│   ├── test_query_interpreter.py
 │   ├── test_response_formatter.py
 │   ├── test_sparql_executor.py
 │   ├── test_validator.py

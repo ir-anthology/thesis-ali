@@ -38,8 +38,8 @@ async def explore(request: ChatRequest) -> ExplorationResponse:
     Args:
         request: ChatRequest with message and conversation history
 
-    Returns:
-        ExplorationResponse with intent, columns, rows, observations, suggestions
+        Returns:
+            ExplorationResponse with interpretation, columns, rows, observations, suggestions
     """
     logger.info("Received exploration request: %s", request.message)
 
@@ -49,8 +49,7 @@ async def explore(request: ChatRequest) -> ExplorationResponse:
     except Exception as e:
         logger.error("Pipeline failed: %s", str(e))
         return ExplorationResponse(
-            intent="The user's query could not be processed",
-            limitation=f"An error occurred while processing your query: {str(e)}",
+            interpretation=f"An error occurred while processing your query: {str(e)}",
             suggestions=[
                 "Try rephrasing your question",
                 "Ask about authors, publications, or venues",

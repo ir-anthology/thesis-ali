@@ -1,29 +1,36 @@
 """System prompts for LLM calls in the SPARQL generation pipeline."""
 
-INTENT_SYSTEM_PROMPT = """You are a DBLP query intent classifier. Given a natural language question about computer science publications, rephrase the intent and extract entity mentions.
+INTERPRETATION_SYSTEM_PROMPT = """You are a DBLP query interpreter. Given a natural language question about computer science publications, interpret the query and categorize it into one of three outcomes.
 
-INTENT DESCRIPTION:
-Rephrase the user's question as a natural language statement in 3rd person.
-Start with "The user is asking for..." or "The user wants to know..."
-Use the original entity mentions from the question.
+OUTCOMES:
 
-Examples:
-- "Which papers did Geoffrey Hinton author?"
-  → "The user is asking for publications authored by Geoffrey Hinton"
+1. CLEAR: The query is answerable via DBLP.
+   - Set outcome="clear"
+   - Provide a first-person intent: "Let me find..." or "Let me look up..."
+   - Extract entity mentions with type hints
+   - Extract any constraints (year, publication_type)
 
-- "Papers at SIGMOD conference"
-  → "The user is asking for publications published at SIGMOD"
+2. AMBIGUOUS: The query needs clarification.
+   - Set outcome="ambiguous"
+   - Provide a descriptive intent summary
+   - Ask a clear clarification question
+   - Give 2-3 specific clickable options for the user
 
-- "How many papers did Knuth publish?"
-  → "The user wants to know the number of publications by Donald Knuth"
+3. OUT_OF_SCOPE: The query cannot be answered via DBLP.
+   - Set outcome="out_of_scope"
+   - Provide a descriptive intent summary
+   - Explain the limitation clearly
+   - Offer 1-3 relevant DBLP query suggestions
 
-- "Who are the co-authors of Yann LeCun?"
-  → "The user is asking for co-authors of Yann LeCun"
+DBLP LIMITATIONS (set outcome="out_of_scope" for these):
+- Citation counts or citation relationships
+- Abstracts or full text of publications
+- Impact factors or h-index
+- Download links or access to full papers
+- Peer review information
+- Non-computer science topics
 
-- "What is the affiliation of Michael Stonebraker?"
-  → "The user wants to know the affiliation of Michael Stonebraker"
-
-ENTITY EXTRACTION:
+ENTITY EXTRACTION (for "clear" and "ambiguous" outcomes):
 Extract ALL entity mentions with type hints:
 - Person: author names (e.g., "Geoffrey Hinton", "Yann LeCun", "Stonebraker")
 - Conference: conference names (e.g., "SIGMOD", "NeurIPS", "KDD", "VLDB")
@@ -31,34 +38,45 @@ Extract ALL entity mentions with type hints:
 - Venue: generic venue reference when type is unclear
 - Unknown: cannot determine type
 
-CONSTRAINTS:
+CONSTRAINTS (for "clear" outcome):
 Extract any constraints:
 - year: year filter (e.g., "2023", "after 2020", "since 2019")
 - publication_type: Article, Inproceedings, Book, Incollection, Editorship, etc.
 
-LIMITATION DETECTION:
-Set has_limitation=true if the query requires features NOT available in DBLP:
-- Citation counts or citation relationships (e.g., "how many citations", "cited by")
-- Abstracts or full text of publications (e.g., "abstract", "full text", "summary")
-- Impact factors or h-index (e.g., "impact factor", "h-index")
-- Download links or access to full papers (e.g., "download", "PDF")
-- Peer review information (e.g., "peer review", "reviews")
-- Non-computer science topics (e.g., "biology", "chemistry", "medicine")
+INTENT FORMAT:
+- For "clear" outcome: First-person, e.g., "Let me find the papers by Geoffrey Hinton"
+- For "ambiguous" outcome: Descriptive, e.g., "The user is asking for publications by an author named Smith"
+- For "out_of_scope" outcome: Descriptive, e.g., "The user is asking about citation counts"
 
-If has_limitation=true, provide:
-- limitation: clear explanation of what's not available in DBLP
-- suggestions: 1-3 alternative queries that DBLP CAN answer using the same entities
+OPTIONS FORMAT (for "ambiguous" outcome):
+- Give 2-3 complete, specific queries the user can click
+- Example: ["Show me papers by John Smith", "Show me papers by Mike Smith", "Show me papers by Sarah Smith"]
+- NOT: ["John Smith", "Mike Smith"] (incomplete)
 
-SUGGESTIONS FOR LIMITATIONS:
-When has_limitation=true, suggest queries that DBLP can answer:
-- Use the same entities from the original question
-- Focus on metadata DBLP has (titles, authors, venues, years)
-- Example: If user asks about citations of Geoffrey Hinton's papers, suggest:
-  1. "How many publications does Geoffrey Hinton have?"
-  2. "Show me Geoffrey Hinton's publications"
-  3. "Who are Geoffrey Hinton's co-authors?"
+SUGGESTIONS FORMAT (for "ambiguous" and "out_of_scope" outcomes):
+- Give 1-3 relevant DBLP query suggestions
+- Must be complete natural language questions
+- Must be answerable via DBLP (no citations, abstracts, etc.)
 
-If the query has no limitations, set has_limitation=false and leave limitation and suggestions empty."""
+Examples:
+
+User: "Which papers did Geoffrey Hinton author?"
+outcome="clear"
+intent="Let me find the papers authored by Geoffrey Hinton"
+entities_mentioned=[{text: "Geoffrey Hinton", type_hint: "Person"}]
+
+User: "papers by Smith"
+outcome="ambiguous"
+intent="The user is asking for publications by an author named Smith"
+clarification="There are multiple authors named Smith in DBLP. Which one did you mean?"
+options=["Show me papers by John Smith", "Show me papers by Mike Smith", "Show me papers by Sarah Smith"]
+
+User: "How many citations does this paper have?"
+outcome="out_of_scope"
+intent="The user is asking about citation counts for a publication"
+limitation="DBLP does not track citation counts. Consider using Semantic Scholar or Google Scholar."
+suggestions=["How many publications does this author have?", "Show me papers by this author"]"""
+
 
 CLARIFICATION_SYSTEM_PROMPT = """You are a DBLP query clarification detector. Given a user's intent and resolved entities, determine if clarification is needed.
 
@@ -210,8 +228,8 @@ Return a JSON object with structure:
 """
 
 
-def build_intent_prompt(user_query: str, history: list | None = None) -> str:
-    """Build the user prompt for intent classification with history."""
+def build_interpretation_prompt(user_query: str, history: list | None = None) -> str:
+    """Build the user prompt for unified query interpretation."""
     history_context = ""
     if history:
         history_lines = []
@@ -219,29 +237,17 @@ def build_intent_prompt(user_query: str, history: list | None = None) -> str:
             history_lines.append(f"{turn.role}: {turn.content}")
         history_context = f"\nCONVERSATION HISTORY:\n{chr(10).join(history_lines)}"
 
-    return f"""Classify the following natural language question about DBLP:
+    return f"""Interpret the following natural language question about DBLP:
 {history_context}
 
 Question: {user_query}
 
-Rephrase the intent in 3rd person, extract entity mentions with type hints, 
-extract any constraints, and detect if the query has limitations.
+Categorize into one of three outcomes:
+1. "clear" - Query is answerable via DBLP. Provide first-person intent, extract entities and constraints.
+2. "ambiguous" - Query needs clarification. Provide clarification question and 2-3 clickable options.
+3. "out_of_scope" - Query cannot be answered via DBLP. Provide limitation explanation and DBLP suggestions.
+
 Use conversation history to resolve ambiguous references (e.g., "they", "those papers")."""
-
-
-def build_clarification_prompt(
-    intent: str,
-    entities_context: str,
-) -> str:
-    """Build the user prompt for clarification detection."""
-    return f"""Determine if clarification is needed for the following query:
-
-INTENT: {intent}
-
-RESOLVED ENTITIES:
-{entities_context}
-
-Check if any entities are unresolved, ambiguous, or if required entities are missing."""
 
 
 def build_sparql_prompt(

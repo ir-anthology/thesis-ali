@@ -51,6 +51,51 @@ class IntentResult(BaseModel):
     )
 
 
+class QueryInterpretation(BaseModel):
+    """Unified result of query interpretation.
+
+    Categorizes user queries into one of three outcomes:
+    - clear: Query is answerable, proceed with SPARQL generation
+    - ambiguous: Query needs clarification, return options
+    - out_of_scope: Query cannot be answered via DBLP
+    """
+
+    outcome: str = Field(
+        ...,
+        description="One of: 'clear', 'ambiguous', 'out_of_scope'",
+    )
+    intent: str = Field(
+        ...,
+        description="First-person intent for 'clear' outcome (e.g., 'Let me find papers by Geoffrey Hinton'). "
+        "Descriptive summary for 'ambiguous' and 'out_of_scope' outcomes.",
+    )
+    entities_mentioned: list[EntityMention] = Field(
+        default_factory=list, description="Extracted entity mentions"
+    )
+    constraints: Constraints = Field(
+        default_factory=Constraints,
+        description="Extracted constraints (year, publication_type, etc.)",
+    )
+    clarification: str | None = Field(
+        default=None,
+        description="Clarification question (only for 'ambiguous' outcome)",
+    )
+    options: list[str] = Field(
+        default_factory=list,
+        max_length=3,
+        description="2-3 specific clickable options for the user (only for 'ambiguous' outcome)",
+    )
+    limitation: str | None = Field(
+        default=None,
+        description="Explanation of limitation (only for 'out_of_scope' outcome)",
+    )
+    suggestions: list[str] = Field(
+        default_factory=list,
+        max_length=3,
+        description="1-3 DBLP query suggestions (for 'ambiguous' and 'out_of_scope' outcomes)",
+    )
+
+
 class Candidate(BaseModel):
     """A candidate entity match."""
 
@@ -83,22 +128,6 @@ class EntityResolutionResult(BaseModel):
     )
     unresolved_mentions: list[str] = Field(
         default_factory=list, description="Mentions that could not be resolved"
-    )
-
-
-class ClarificationResult(BaseModel):
-    """Result of clarification detection."""
-
-    needs_clarification: bool = Field(
-        default=False, description="Whether clarification is needed"
-    )
-    clarification: str | None = Field(
-        default=None, description="Clarification question"
-    )
-    suggestions: list[str] = Field(
-        default_factory=list,
-        max_length=3,
-        description="1-3 complete query suggestions that resolve the ambiguity",
     )
 
 
@@ -192,13 +221,9 @@ class HistoryTurn(BaseModel):
 
     role: str = Field(description="Role: user or assistant")
     content: str = Field(description="Message content")
-    intent: str | None = Field(
-        default=None, description="Backend intent (assistant only)"
+    interpretation: str | None = Field(
+        default=None, description="Backend's interpretation of the query"
     )
-    clarification: str | None = Field(
-        default=None, description="Clarification question"
-    )
-    limitation: str | None = Field(default=None, description="Limitation message")
     columns: list[ResultColumn] | None = Field(
         default=None, description="Column definitions"
     )
@@ -224,13 +249,9 @@ class ChatRequest(BaseModel):
 class ExplorationResponse(BaseModel):
     """Frontend response schema."""
 
-    intent: str | None = Field(
-        default=None, description="Backend's understanding of intent"
+    interpretation: str | None = Field(
+        default=None, description="Backend's interpretation of the query"
     )
-    clarification: str | None = Field(
-        default=None, description="Clarification question"
-    )
-    limitation: str | None = Field(default=None, description="Limitation message")
     columns: list[ResultColumn] | None = Field(
         default=None, description="Column definitions"
     )
@@ -249,12 +270,8 @@ class ExplorationResponse(BaseModel):
 class QueryResponse(BaseModel):
     """Internal response for pipeline (backward compatibility)."""
 
-    intent: str = Field(..., description="Detected intent")
-    clarification: str | None = Field(
-        default=None, description="Clarification question if needed"
-    )
-    limitation: str | None = Field(
-        default=None, description="Limitation message if applicable"
+    interpretation: str | None = Field(
+        default=None, description="Backend's interpretation of the query"
     )
     sparql_query: str | None = Field(default=None, description="Generated SPARQL query")
     suggestions: list[str] = Field(
