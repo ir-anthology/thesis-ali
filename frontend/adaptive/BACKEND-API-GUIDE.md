@@ -58,67 +58,7 @@ All errors follow:
 
 ```json
 {
-  "error": {
-    "code": "INTERNAL_ERROR",
-    "message": "Something went wrong while processing your query."
-  }
-}
-```
-
----
-
-## 3. Endpoints
-
-### 3.1 POST `/api/exploration`
-
-The primary endpoint for all exploration queries. The frontend sends a user message along with conversation context, and the backend returns a structured exploration response.
-
-**Request:**
-
-```json
-{
-  "message": "Who are the most prolific authors?",
-  "history": []
-}
-```
-
-**Follow-up Request (with conversation history):**
-
-```json
-{
-  "message": "Only consider the last five years",
-  "history": [
-    {
-      "role": "user",
-      "content": "Who are the most prolific authors?"
-    },
-    {
-      "role": "assistant",
-      "content": "User is asking for the most prolific authors based on publication count.",
-      "intent": "User is asking for the most prolific authors based on publication count.",
-      "columns": [
-        { "key": "author", "label": "Author", "type": "text", "sortable": true },
-        { "key": "publications", "label": "Publications", "type": "number", "sortable": true }
-      ],
-      "rows": [
-        {
-          "author": { "value": "Marti A. Hearst", "question": "Tell me about Marti A. Hearst" },
-          "publications": { "value": 42, "question": "How many publications does Marti A. Hearst have?" }
-        }
-      ],
-      "observations": ["Marti A. Hearst leads with 42 publications."],
-      "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"],
-      "sparql_query": "PREFIX schema: <http://schema.org/> ..."
-    }
-  ]
-}
-```
-
-**Response:**
-
-```json
-{
-  "intent": "User is asking for the most prolific authors based on publication count.",
+  "interpretation": "User is asking for the most prolific authors based on publication count.",
   "columns": [
     { "key": "author", "label": "Author", "type": "text", "sortable": true },
     { "key": "publications", "label": "Publications", "type": "number", "sortable": true },
@@ -175,9 +115,7 @@ Health check endpoint.
 |-------|------|----------|-------------|
 | `role` | string | Yes | `"user"` or `"assistant"` |
 | `content` | string | Yes | The message text |
-| `intent` | string | No | Backend's understanding of user intent (assistant turns only) |
-| `clarification` | string | No | Backend asks user for more info (assistant turns only) |
-| `limitation` | string | No | Query cannot be answered with available data (assistant turns only) |
+| `interpretation` | string | No | Backend's interpretation of the query (assistant turns only) |
 | `columns` | ResultColumn[] | No | Column definitions (assistant turns only) |
 | `rows` | ResultRow[] | No | Data rows (assistant turns only) |
 | `observations` | string[] | No | LLM-generated insights (assistant turns only) |
@@ -194,9 +132,7 @@ The response is a flat object. All fields are optional except the backend should
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `intent` | string | Backend's understanding of user intent (optional) |
-| `clarification` | string | Backend asks user for more info (optional) |
-| `limitation` | string | Query cannot be answered with available data (optional) |
+| `interpretation` | string | Backend's interpretation of the query (optional) |
 | `columns` | ResultColumn[] | Column definitions for tabular data (optional) |
 | `rows` | ResultRow[] | Data rows (optional) |
 | `observations` | string[] | LLM-generated insights (optional) |
@@ -265,8 +201,7 @@ The response is a flat object with optional fields. The UI renders only what's p
 
 ```json
 {
-  "intent": "User is asking about citation counts for publications.",
-  "limitation": "I don't have data on citation counts. The knowledge graph only contains information about authors, venues, and publications.",
+  "interpretation": "I don't have data on citation counts. The knowledge graph only contains information about authors, venues, and publications.",
   "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"]
 }
 ```
@@ -275,22 +210,19 @@ The response is a flat object with optional fields. The UI renders only what's p
 
 ```json
 {
-  "intent": "User is asking about something ambiguous.",
-  "clarification": "Could you clarify whether you are looking for authors, venues, or publications?",
+  "interpretation": "Could you clarify whether you are looking for authors, venues, or publications?",
   "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"]
 }
 ```
 
 ### Key Rules
 
-1. **`intent`** — Backend's understanding of user intent. Rendered first if present.
-2. **`limitation`** — Query cannot be answered. Rendered second if present.
-3. **`clarification`** — Backend asks for more info. Rendered third if present.
-4. **`columns` + `rows`** — Present together for tabular data. Absent for unsupported queries. Each row value must be a `CellValue` object.
-5. **`observations`** — Optional. LLM-generated insights about the data.
-6. **`suggestions`** — Optional. Follow-up questions the user might ask.
-7. **`sparql_query`** — Optional. The SPARQL query used to retrieve data.
-8. **Cell questions** — If a cell's `question` is empty/null, no tooltip or click handler is shown for that cell.
+1. **`interpretation`** — Backend's interpretation of the query (what the user is asking, clarification, or limitation).
+2. **`columns` + `rows`** — Present together for tabular data. Absent for unsupported queries. Each row value must be a `CellValue` object.
+3. **`observations`** — Optional. LLM-generated insights about the data.
+4. **`suggestions`** — Optional. Follow-up questions the user might ask.
+5. **`sparql_query`** — Optional. The SPARQL query used to retrieve data.
+6. **Cell questions** — If a cell's `question` is empty/null, no tooltip or click handler is shown for that cell.
 
 ---
 
@@ -302,21 +234,21 @@ The backend is **stateless**. The frontend sends the full conversation history w
 
 ```
 Request 1: { message: "Who are the most prolific authors?", history: [] }
-  → Response: { intent: "...", columns: [...], rows: [...] }
+  → Response: { interpretation: "...", columns: [...], rows: [...] }
 
 Request 2: { message: "Only consider the last five years", history: [
     { role: "user", content: "Who are the most prolific authors?" },
-    { role: "assistant", content: "...", intent: "...", columns: [...], rows: [...] }
+    { role: "assistant", content: "...", interpretation: "...", columns: [...], rows: [...] }
   ]}
-  → Response: { intent: "...", columns: [...], rows: [...] }
+  → Response: { interpretation: "...", columns: [...], rows: [...] }
 
 Request 3: { message: "Which venues do they publish in?", history: [
     { role: "user", content: "Who are the most prolific authors?" },
-    { role: "assistant", content: "...", intent: "...", columns: [...], rows: [...] },
+    { role: "assistant", content: "...", interpretation: "...", columns: [...], rows: [...] },
     { role: "user", content: "Only consider the last five years" },
-    { role: "assistant", content: "...", intent: "...", columns: [...], rows: [...] }
+    { role: "assistant", content: "...", interpretation: "...", columns: [...], rows: [...] }
   ]}
-  → Response: { intent: "...", columns: [...], rows: [...] }
+  → Response: { interpretation: "...", columns: [...], rows: [...] }
 ```
 
 ### Key Rules
@@ -332,12 +264,10 @@ Request 3: { message: "Which venues do they publish in?", history: [
 
 The backend must use an LLM for two purposes:
 
-### 8.1 Intent Parsing
+### 8.1 Query Interpretation
 
 Parse the user's natural language query into:
-- **intent** — A sentence describing what the user is asking (e.g., "User is asking for the most prolific authors based on publication count.")
-- **clarification** — If the query is ambiguous, ask the user for more info
-- **limitation** — If the query cannot be answered, explain why
+- **interpretation** — A sentence describing what the user is asking or clarifying (e.g., "User is asking for the most prolific authors based on publication count.")
 
 ### 8.2 Observation & Suggestion Generation
 
@@ -348,7 +278,7 @@ After retrieving data from the knowledge graph, the LLM should generate:
 ### 8.3 Unsupported Handling
 
 When the LLM cannot map the query to a valid exploration:
-- Set `limitation` with an explanation
+- Set `interpretation` with an explanation of the limitation
 - Provide `suggestions` for alternative queries
 - Do NOT include `columns` or `rows`
 
@@ -380,7 +310,7 @@ def chat(request: ChatRequest) -> ChatResponse:
 ### Migration Steps
 
 1. **Update `schemas.py`** — Replace `ChatResponse` with `ExplorationResponse` (see Section 5)
-2. **Integrate LLM for intent parsing** — Replace hardcoded SPARQL generation with LLM-based intent extraction
+2. **Integrate LLM for query interpretation** — Replace hardcoded SPARQL generation with LLM-based interpretation
 3. **Add observation generation** — Use LLM to generate insights from query results
 4. **Add suggestion generation** — Use LLM to generate follow-up questions
 5. **Update route** — Change `POST /chat` to `POST /api/exploration`
@@ -405,9 +335,7 @@ class CellValue(BaseModel):
 class HistoryTurn(BaseModel):
     role: str  # "user" or "assistant"
     content: str
-    intent: Optional[str] = None
-    clarification: Optional[str] = None
-    limitation: Optional[str] = None
+    interpretation: Optional[str] = None
     columns: Optional[list[ResultColumn]] = None
     rows: Optional[list[dict[str, CellValue]]] = None
     observations: Optional[list[str]] = None
@@ -419,9 +347,7 @@ class ChatRequest(BaseModel):
     history: list[HistoryTurn] = []
 
 class ExplorationResponse(BaseModel):
-    intent: Optional[str] = None
-    clarification: Optional[str] = None
-    limitation: Optional[str] = None
+    interpretation: Optional[str] = None
     columns: Optional[list[ResultColumn]] = None
     rows: Optional[list[dict[str, CellValue]]] = None
     observations: Optional[list[str]] = None
@@ -455,9 +381,7 @@ interface ResultRow {
 interface HistoryTurn {
   role: 'user' | 'assistant';
   content: string;
-  intent?: string;
-  clarification?: string;
-  limitation?: string;
+  interpretation?: string;
   columns?: ResultColumn[];
   rows?: ResultRow[];
   observations?: string[];
@@ -466,9 +390,7 @@ interface HistoryTurn {
 }
 
 interface ExplorationResponse {
-  intent?: string;
-  clarification?: string;
-  limitation?: string;
+  interpretation?: string;
   columns?: ResultColumn[];
   rows?: ResultRow[];
   observations?: string[];
@@ -512,7 +434,7 @@ curl -X POST http://localhost:8000/api/exploration \
       {
         "role": "assistant",
         "content": "User is asking for the most prolific authors based on publication count.",
-        "intent": "User is asking for the most prolific authors based on publication count.",
+        "interpretation": "User is asking for the most prolific authors based on publication count.",
         "columns": [
           {"key": "author", "label": "Author", "type": "text", "sortable": true},
           {"key": "publications", "label": "Publications", "type": "number", "sortable": true}
@@ -533,10 +455,10 @@ curl -X POST http://localhost:8000/api/exploration \
 ### Validation Checklist
 
 - [ ] Request has `message` and `history` fields
-- [ ] Response has at least one of: `intent`, `clarification`, `limitation`
+- [ ] Response has `interpretation` field
 - [ ] If `columns` present, `rows` must also be present
 - [ ] Each row value is a `CellValue` object with `value` and `question` fields
 - [ ] Column `key` values match row object keys
 - [ ] Sortable columns have `sortable: true`
-- [ ] Unsupported queries have `limitation` and `suggestions` (no `columns`/`rows`)
+- [ ] Unsupported queries have `interpretation` explaining the limitation and `suggestions` (no `columns`/`rows`)
 - [ ] All 3 suggestions are consistent across responses
