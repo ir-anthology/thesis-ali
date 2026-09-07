@@ -7,7 +7,7 @@
  * - Per-turn response data (columns, rows, observations, suggestions)
  * - Per-turn interpretation
  *
- * The store communicates with the backend API at http://localhost:8000.
+ * The store communicates with the backend API (configurable via VITE_API_BASE).
  */
 
 import type {
@@ -18,7 +18,7 @@ import type {
   HistoryTurn
 } from '$lib/types/exploration';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 function createExplorationStore() {
   let conversation = $state<ConversationTurn[]>([]);
