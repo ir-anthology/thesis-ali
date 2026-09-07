@@ -17,7 +17,6 @@ from pydantic import BaseModel
 from backend.main.config import (
     LLM_MAX_TOKENS,
     LLM_MODEL,
-    LLM_TEMPERATURE,
     OPENAI_API_KEY,
 )
 
@@ -32,7 +31,6 @@ class LLMClient:
     def __init__(self) -> None:
         self._client = OpenAI(api_key=OPENAI_API_KEY)
         self.model = LLM_MODEL
-        self.temperature = LLM_TEMPERATURE
         self.max_tokens = LLM_MAX_TOKENS
 
     # ------------------------------------------------------------------
@@ -59,8 +57,6 @@ class LLMClient:
                     {"role": "user", "content": user_prompt},
                 ],
                 text_format=response_model,
-                temperature=self.temperature,
-                max_output_tokens=self.max_tokens,
             )
             result = response.output_parsed
             if result is None:
@@ -91,8 +87,7 @@ class LLMClient:
                     {"role": "user", "content": user_prompt},
                 ],
                 response_format={"type": "json_object"},
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
+                max_completion_tokens=self.max_tokens,
             )
             content = response.choices[0].message.content
             if not content:
