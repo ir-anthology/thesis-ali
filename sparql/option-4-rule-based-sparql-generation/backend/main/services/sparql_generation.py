@@ -53,8 +53,8 @@ class SPARQLGenerationService:
         query = result.query
         if "PREFIX" not in query.upper():
             query = self._schema.get_prefixes() + "\n" + query
-            result = SPARQLGeneration(query=query)
 
+        result = SPARQLGeneration(query=query)
         logger.info("SPARQL generated (%d chars)", len(result.query))
         return result
 
