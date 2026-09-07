@@ -7,9 +7,7 @@
 
   let {
     message,
-    intent,
-    clarification,
-    limitation,
+    interpretation,
     columns,
     rows,
     observations,
@@ -19,9 +17,7 @@
     onCellClick
   }: {
     message: ConversationTurn;
-    intent?: string;
-    clarification?: string;
-    limitation?: string;
+    interpretation?: string;
     columns?: ResultColumn[];
     rows?: ResultRow[];
     observations?: string[];
@@ -54,16 +50,8 @@
           <span>Thinking about the question...</span>
         </div>
       {:else}
-        {#if intent}
-          <p class="intent-text">{intent}</p>
-        {/if}
-
-        {#if limitation}
-          <p class="limitation-text">{limitation}</p>
-        {/if}
-
-        {#if clarification}
-          <p class="clarification-text">{clarification}</p>
+        {#if interpretation}
+          <p class="interpretation-text">{interpretation}</p>
         {/if}
       {/if}
 
@@ -154,18 +142,8 @@
     margin: 0;
   }
 
-  .intent-text {
+  .interpretation-text {
     margin-bottom: 0.75rem;
-  }
-
-  .limitation-text {
-    margin-bottom: 0.75rem;
-    color: var(--warning);
-  }
-
-  .clarification-text {
-    margin-bottom: 0.75rem;
-    color: var(--accent);
   }
 
   .loading {
