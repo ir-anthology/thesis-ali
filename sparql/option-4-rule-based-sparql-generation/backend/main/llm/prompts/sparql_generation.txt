@@ -116,5 +116,12 @@ RULES:
 14. Use dblp:primaryCreatorName for author lookup (current display name)
 15. Use dblp:primaryStreamTitle for venue lookup (display title)
 
+EXTRACTING CONTEXT FROM THE QUESTION:
+Since you don't receive pre-extracted entities or constraints, extract them directly from the user's question:
+- Entities: author names, venue names, paper titles mentioned in the question
+- Constraints: year, publication type (conference/journal), count limits (top 10, etc.)
+- Requested information: what the user wants to know (papers, authors, counts, etc.)
+- Use conversation history to resolve references like "they", "those papers", "that venue"
+
 Return only the SPARQL query as a structured response with a single field:
 - query: the complete SPARQL query

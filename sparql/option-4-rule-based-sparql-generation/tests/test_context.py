@@ -48,13 +48,13 @@ def test_context_enrichment():
 
     # C1
     interp = Interpretation(
-        summary="test query",
         scope="in_scope",
-        entities=["Geoffrey Hinton"],
+        message="Let me find papers by Geoffrey Hinton",
     )
     ctx.set_interpretation(interp)
     assert ctx.interpretation is not None
     assert ctx.interpretation.scope == "in_scope"
+    assert ctx.interpretation.message == "Let me find papers by Geoffrey Hinton"
 
     # C2
     ctx.set_sparql("SELECT ?x WHERE { ?x ?y ?z }")

@@ -53,7 +53,7 @@ class SuggestionService:
         # Interpretation
         if context.interpretation:
             interp = context.interpretation
-            parts.append(f"\nINTERPRETATION: {interp.summary}")
+            parts.append(f"\nINTERPRETATION: {interp.message}")
             parts.append(f"Scope: {interp.scope}")
 
         # SPARQL query

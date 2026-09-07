@@ -1,7 +1,6 @@
 """Stage 2 — SPARQL generation service.
 
-Receives the accumulated context (including interpretation) and produces a
-SPARQL query.
+Receives the accumulated context and produces a SPARQL query.
 """
 
 from __future__ import annotations
@@ -71,18 +70,6 @@ class SPARQLGenerationService:
         examples_ctx = self._format_examples()
         if examples_ctx:
             parts.append(f"\nEXAMPLES:\n{examples_ctx}")
-
-        # Interpretation context
-        if context.interpretation:
-            interp = context.interpretation
-            parts.append(f"\nINTERPRETED REQUEST:")
-            parts.append(f"Summary: {interp.summary}")
-            if interp.entities:
-                parts.append(f"Entities: {', '.join(interp.entities)}")
-            if interp.constraints:
-                parts.append(f"Constraints: {', '.join(interp.constraints)}")
-            if interp.requested_information:
-                parts.append(f"Requested: {', '.join(interp.requested_information)}")
 
         # History context (for resolving references)
         if context.history:

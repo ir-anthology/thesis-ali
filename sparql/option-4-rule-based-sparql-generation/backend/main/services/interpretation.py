@@ -1,7 +1,6 @@
 """Stage 1 — Interpretation service.
 
-Determines what the user is asking, extracts entities/constraints, and decides
-the scope (in_scope / out_of_scope / ambiguous).
+Determines what the user is asking and decides the scope (in_scope / out_of_scope / ambiguous).
 """
 
 from __future__ import annotations
@@ -40,14 +39,11 @@ class InterpretationService:
                 "Interpretation LLM returned None — defaulting to out_of_scope"
             )
             return Interpretation(
-                summary="The query could not be understood",
                 scope="out_of_scope",
-                assumptions=["LLM interpretation failed"],
+                message="The query could not be understood. Please try rephrasing your question.",
             )
 
-        logger.info(
-            "Interpretation scope=%s, entities=%d", result.scope, len(result.entities)
-        )
+        logger.info("Interpretation scope=%s", result.scope)
         return result
 
     # ------------------------------------------------------------------

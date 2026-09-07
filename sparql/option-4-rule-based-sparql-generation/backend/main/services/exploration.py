@@ -54,9 +54,7 @@ class ExplorationService:
         interpretation = self._interpretation.run(context)
         context.set_interpretation(interpretation)
         logger.info("  → scope: %s", interpretation.scope)
-        logger.info("  → summary: %s", interpretation.summary)
-        if interpretation.entities:
-            logger.info("  → entities: %s", interpretation.entities)
+        logger.info("  → message: %s", interpretation.message)
 
         # Scope routing
         logger.info("[Scope Routing] → %s", interpretation.scope.upper())
@@ -86,7 +84,7 @@ class ExplorationService:
             logger.warning("  → SPARQL generation failed (returned None)")
             suggestions = self._suggestions.run(context)
             return ExplorationResponse(
-                interpretation=context.interpretation.summary
+                interpretation=context.interpretation.message
                 if context.interpretation
                 else None,
                 suggestions=suggestions or None,
@@ -162,7 +160,7 @@ class ExplorationService:
 
         interpretation_text = None
         if context.interpretation:
-            interpretation_text = context.interpretation.summary
+            interpretation_text = context.interpretation.message
 
         logger.info("PIPELINE COMPLETE (out_of_scope)")
         return ExplorationResponse(
@@ -178,23 +176,13 @@ class ExplorationService:
         if interp is None:
             return ExplorationResponse(interpretation="The request is ambiguous.")
 
-        # Use clarification questions + possible scopes as suggestions
-        suggestions: list[str] = []
-        if interp.possible_scopes:
-            suggestions = interp.possible_scopes[:3]
-            logger.info("  → possible_scopes: %s", suggestions)
-        elif interp.clarification_questions:
-            suggestions = interp.clarification_questions[:3]
-            logger.info("  → clarification_questions: %s", suggestions)
-
-        interpretation_text = interp.summary
-        if interp.clarification_questions:
-            interpretation_text = interp.clarification_questions[0]
+        # For ambiguous, the message contains the clarification question
+        interpretation_text = interp.message
 
         logger.info("PIPELINE COMPLETE (ambiguous)")
         return ExplorationResponse(
             interpretation=interpretation_text,
-            suggestions=suggestions or None,
+            suggestions=None,
         )
 
     # ------------------------------------------------------------------
@@ -205,7 +193,7 @@ class ExplorationService:
     def _build_response(context: ExplorationContext) -> ExplorationResponse:
         interpretation_text = None
         if context.interpretation:
-            interpretation_text = context.interpretation.summary
+            interpretation_text = context.interpretation.message
 
         has_data = (
             context.query_result is not None and context.query_result.row_count > 0

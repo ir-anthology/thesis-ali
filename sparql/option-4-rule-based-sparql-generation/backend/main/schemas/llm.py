@@ -14,37 +14,12 @@ from pydantic import BaseModel, Field
 class Interpretation(BaseModel):
     """Stage 1 output — query interpretation and scope decision."""
 
-    summary: str = Field(description="Brief summary of what the user is asking")
-
     scope: Literal["in_scope", "out_of_scope", "ambiguous"] = Field(
         description="Whether the request is answerable via DBLP"
     )
 
-    entities: list[str] = Field(
-        default_factory=list,
-        description="Entity names mentioned (authors, venues, etc.)",
-    )
-    constraints: list[str] = Field(
-        default_factory=list,
-        description="Extracted constraints (year, publication type, etc.)",
-    )
-    requested_information: list[str] = Field(
-        default_factory=list,
-        description="What information the user wants",
-    )
-
-    possible_scopes: list[str] = Field(
-        default_factory=list,
-        description="Possible interpretations (only for ambiguous scope)",
-    )
-    clarification_questions: list[str] = Field(
-        default_factory=list,
-        description="Questions to ask the user (only for ambiguous scope)",
-    )
-
-    assumptions: list[str] = Field(
-        default_factory=list,
-        description="Assumptions made during interpretation",
+    message: str = Field(
+        description="User-friendly message describing the interpretation"
     )
 
 
