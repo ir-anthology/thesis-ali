@@ -7,37 +7,47 @@ PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-
-KEY PREDICATES:
-- dblp:authoredBy (Publication -> Creator): links publication to its author
-- dblp:creatorName (Creator -> string): full name of creator (USE THIS for author lookup)
-- dblp:primaryCreatorName (Creator -> string): primary name of creator
-- dblp:title (Publication -> string): title of publication
-- dblp:yearOfPublication (Publication -> gYear): year published
-- dblp:yearOfEvent (Publication -> gYear): year of conference event
-- dblp:publishedInStream (Publication -> Stream): links to venue
-- dblp:streamTitle (Stream -> string): title of venue (USE THIS for venue lookup)
-- dblp:primaryStreamTitle (Stream -> string): primary title of venue
-- dblp:coAuthorWith (Creator -> Creator): co-authorship relationship
-- dblp:primaryAffiliation (Creator -> string): author affiliation
-- dblp:doi (Publication -> anyUri): Digital Object Identifier
-- dblp:pagination (Publication -> string): page numbers
-- dblp:publishedBy (Publication -> string): publisher name
-- dblp:publishedInJournal (Publication -> string): journal name
-- dblp:publishedInSeries (Publication -> string): series name
+PREFIX ex: <https://ir.webis.de/kg#>
+PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 
 KEY CLASSES:
 - dblp:Publication: base class for all publications
-- dblp:Article: journal articles
-- dblp:Inproceedings: conference/workshop papers
-- dblp:Book: books and theses
-- dblp:Incollection: parts/chapters in books
-- dblp:Creator: base class for creators
-- dblp:Person: actual persons
-- dblp:Group: groups/consortiums
-- dblp:Stream: base class for venues
-- dblp:Conference: conference/workshop series
-- dblp:Journal: journals
+- dblp:Creator: a person (author or editor)
+- dblp:Conference: a conference-series stream
+- dblp:Journal: a journal stream
+- dblp:AuthorSignature: an ordered Creator↔Publication link
+- bibtex:Article: journal article entry type
+- bibtex:Inproceedings: conference/workshop paper entry type
+- bibtex:Proceedings: proceedings-volume ("book") entry type
+- ex:Workshop: marks a dblp:Stream as a workshop
+
+KEY PREDICATES:
+- dblp:title: title of a publication
+- dblp:yearOfPublication: DBLP's publication-year metadata (fallback year)
+- dblp:yearOfEvent: upstream true-event-year property
+- ex:yearOfConference: this project's own property for conference event year (preferred for conference queries)
+- dblp:authoredBy: Publication → author Creator
+- dblp:createdBy: Publication → author-or-editor Creator (umbrella)
+- dblp:editedBy: Publication → editor Creator
+- dblp:publishedInStream: Publication → venue Stream
+- dblp:publishedAsPartOf: Publication → the Proceedings volume it's part of
+- dblp:primaryStreamTitle: display title of a Stream (USE THIS for venue lookup)
+- dblp:primaryCreatorName: a Creator's current display name (USE THIS for author lookup)
+- dblp:bibtexType: entry type (bibtex:Article / bibtex:Inproceedings / bibtex:Proceedings)
+- dblp:hasSignature: Publication → AuthorSignature node
+- dblp:signatureOrdinal: author/editor position within a publication
+- dblp:signatureCreator: Signature → the Creator IRI
+- dblp:signatureDblpName: author/editor display name at time of publication
+- dblp:doi: Digital Object Identifier
+- dblp:isbn: International Standard Book Number
+- dblp:pagination: page numbers
+- dblp:publishedBy: publisher name
+- dblp:publishedInJournalVolume: journal volume
+- dblp:publishedInJournalVolumeIssue: journal issue number
+- dblp:publishedInSeries: book series
+- dblp:publishedInSeriesVolume: book series volume
+- dblp:monthOfPublication: publication month
+- dblp:primaryDocumentPage: URL to publication page
 
 ENTITY LOOKUP PATTERNS:
 Use entity NAMES in string literals, NOT URIs. Example patterns:
@@ -45,7 +55,7 @@ Use entity NAMES in string literals, NOT URIs. Example patterns:
 For authors:
   DBLP may store full names with middle initials (e.g., "Geoffrey E. Hinton" instead of "Geoffrey Hinton").
   For well-known authors, try exact match first, but if no results, use FILTER(CONTAINS(...)):
-  ?author dblp:creatorName ?authorName .
+  ?author dblp:primaryCreatorName ?authorName .
   FILTER(CONTAINS(?authorName, "Hinton"))
   ?pub dblp:authoredBy ?author .
 
@@ -59,12 +69,35 @@ For venues:
   - "ICML" is stored as "International Conference on Machine Learning (ICML)"
 
   To match venue abbreviations, use FILTER(CONTAINS(...)):
-  ?venue dblp:streamTitle ?venueTitle .
+  ?venue dblp:primaryStreamTitle ?venueTitle .
   FILTER(CONTAINS(?venueTitle, "SIGIR"))
   ?pub dblp:publishedInStream ?venue .
 
 For paper titles:
   ?pub dblp:title "Attention Is All You Need" .
+
+YEAR HANDLING PATTERN:
+  For conference queries, use ex:yearOfConference (preferred) with fallback to dblp:yearOfPublication:
+  ?pub dblp:yearOfPublication ?pubYear .
+  OPTIONAL { ?pub ex:yearOfConference ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
+  For journal queries, use dblp:yearOfEvent with fallback:
+  ?pub dblp:yearOfPublication ?pubYear .
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
+AUTHOR SIGNATURE PATTERN (for ordered author lists):
+  ?pub dblp:hasSignature ?sig .
+  ?sig a dblp:AuthorSignature ;
+       dblp:signatureOrdinal ?ord ;
+       dblp:signatureCreator ?authorUri ;
+       dblp:signatureDblpName ?authorName .
+
+PUBLICATION TYPE FILTERING:
+  For conference papers: ?pub dblp:bibtexType bibtex:Inproceedings .
+  For journal articles: ?pub dblp:bibtexType bibtex:Article .
+  For proceedings volumes: ?pub dblp:bibtexType bibtex:Proceedings .
 
 RULES:
 1. Use ONLY predicates from the schema provided above
@@ -78,7 +111,10 @@ RULES:
 9. Use DISTINCT to avoid duplicate results when needed
 10. Do NOT invent predicates or classes not listed above
 11. Resolve entities using conversation history context when available
-12. CRITICAL: For venue lookups, DBLP stores FULL venue names (e.g., "Annual International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR)"). NEVER use exact match like dblp:streamTitle "SIGIR". ALWAYS use FILTER(CONTAINS(?venueTitle, "SIGIR")) pattern instead.
+12. CRITICAL: For venue lookups, DBLP stores FULL venue names. NEVER use exact match like dblp:primaryStreamTitle "SIGIR". ALWAYS use FILTER(CONTAINS(?venueTitle, "SIGIR")) pattern instead.
+13. CRITICAL: For author lookups, DBLP may store full names with middle initials. Use FILTER(CONTAINS(...)) for partial matches.
+14. Use dblp:primaryCreatorName for author lookup (current display name)
+15. Use dblp:primaryStreamTitle for venue lookup (display title)
 
 Return only the SPARQL query as a structured response with a single field:
 - query: the complete SPARQL query

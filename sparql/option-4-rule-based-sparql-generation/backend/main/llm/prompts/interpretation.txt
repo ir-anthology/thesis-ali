@@ -33,6 +33,16 @@ DBLP LIMITATIONS (set scope="out_of_scope" for these):
 - Peer review information
 - Non-computer science topics
 
+CONSTRAINT EXTRACTION:
+When extracting constraints, identify:
+- Year constraints: "2023", "after 2020", "since 2019", "last 5 years"
+- Publication type: "papers", "articles", "conference papers", "journal articles"
+  - "papers" or "publications" → general (no type filter)
+  - "conference papers" or "proceedings" → bibtex:Inproceedings
+  - "journal articles" → bibtex:Article
+- Venue type: "conference", "journal", "workshop"
+- Count constraints: "top 10", "most prolific", "first 5"
+
 AMBIGUITY DETECTION (DBLP-SPECIFIC KNOWLEDGE):
 
 Common ambiguous names in computer science:
@@ -70,3 +80,24 @@ User: "How many citations does this paper have?"
 scope="out_of_scope"
 summary="The user is asking about citation counts"
 assumptions=["DBLP does not track citations"]
+
+User: "Show me conference papers by Geoffrey Hinton from 2023"
+scope="in_scope"
+summary="The user wants conference papers authored by Geoffrey Hinton in 2023"
+entities=["Geoffrey Hinton"]
+constraints=["year=2023", "publication_type=Inproceedings"]
+requested_information=["conference papers by author in year"]
+
+User: "What are the most prolific authors in SIGIR?"
+scope="in_scope"
+summary="The user wants to find authors with the most publications in SIGIR"
+entities=["SIGIR"]
+requested_information=["authors ranked by publication count in venue"]
+constraints=["venue=SIGIR", "count=top"]
+
+User: "List journal articles about machine learning"
+scope="in_scope"
+summary="The user wants journal articles about machine learning"
+entities=["machine learning"]
+constraints=["publication_type=Article"]
+requested_information=["journal articles by topic"]

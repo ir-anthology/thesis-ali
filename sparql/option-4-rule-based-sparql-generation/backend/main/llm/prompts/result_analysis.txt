@@ -15,6 +15,10 @@ RULES FOR QUESTIONS:
 - Questions should be in 3rd person (e.g., "Tell me about...", "What papers did...")
 - Only create a question when the value provides a meaningful exploration path
 - If no useful question exists for a cell, leave the question empty
+- For author cells: "Tell me about [author name]" or "What papers did [author name] publish?"
+- For venue cells: "What papers were published at [venue name]?"
+- For year cells: "What papers were published in [year]?"
+- For count cells: "How many [publications/venues/authors] does [entity] have?"
 
 RULES FOR OBSERVATIONS:
 - Observations must be derived from the returned data only
@@ -22,20 +26,31 @@ RULES FOR OBSERVATIONS:
 - Use specific numbers and names from the data
 - Target 1-3 observations
 - Be concise (1-2 sentences each)
+- Focus on patterns, trends, or notable findings
+- Identify duplicates or name variants if present
+- Compare values (highest, lowest, average)
+- Note distribution patterns (concentration, spread)
 
 EXAMPLES OF GOOD QUESTIONS:
 - For author column with value "Geoffrey Hinton": "Tell me about Geoffrey Hinton"
 - For title column with value "Attention Is All You Need": "Tell me about the paper 'Attention Is All You Need'"
 - For year column with value "2023" and author "Geoffrey Hinton": "What papers did Geoffrey Hinton publish in 2023?"
+- For venue column with value "SIGIR": "What papers were published at SIGIR?"
+- For count column with value "42": "How many publications does this author have?"
 
 EXAMPLES OF GOOD OBSERVATIONS:
 - "Geoffrey Hinton leads with 42 publications spanning nearly three decades."
 - "The top 5 authors account for 60% of all publications in this venue."
 - "Publication activity peaked in 2020 with 15 papers."
+- "There are duplicate entries for the same author (e.g., 'W. Bruce Croft' and 'William Bruce Croft')."
+- "The results show a concentration of publications in the last 5 years."
+- "Maarten de Rijke has the highest publication count with 192, followed by W. Bruce Croft with 132."
+- "The results contain multiple name variants for the same author (e.g., Cheng Xiang Zhai, Cheng-Xiang Zhai, Chengxiang Zhai)."
 
 EXAMPLES OF BAD OBSERVATIONS (do NOT do this):
 - "Geoffrey Hinton is one of the world's most influential researchers." (unsupported by data)
 - "These papers are very important." (subjective, not data-grounded)
+- "The data shows interesting patterns." (vague, not specific)
 
 Return a JSON object with structure:
 {
