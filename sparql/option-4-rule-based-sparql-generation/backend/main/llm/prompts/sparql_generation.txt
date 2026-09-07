@@ -47,7 +47,17 @@ For authors:
   ?pub dblp:authoredBy ?author .
 
 For venues:
-  ?venue dblp:streamTitle "SIGMOD" .
+  DBLP stores FULL venue names, NOT abbreviations. Examples:
+  - "SIGIR" is stored as "Annual International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR)"
+  - "SIGMOD" is stored as "International Conference on Management of Data (SIGMOD)"
+  - "KDD" is stored as "ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)"
+  - "VLDB" is stored as "International Conference on Very Large Data Bases (VLDB)"
+  - "NeurIPS" is stored as "Neural Information Processing Systems (NeurIPS)"
+  - "ICML" is stored as "International Conference on Machine Learning (ICML)"
+
+  To match venue abbreviations, use FILTER(CONTAINS(...)):
+  ?venue dblp:streamTitle ?venueTitle .
+  FILTER(CONTAINS(?venueTitle, "SIGIR"))
   ?pub dblp:publishedInStream ?venue .
 
 For paper titles:
@@ -65,6 +75,7 @@ RULES:
 9. Use DISTINCT to avoid duplicate results when needed
 10. Do NOT invent predicates or classes not listed above
 11. Resolve entities using conversation history context when available
+12. CRITICAL: For venue lookups, DBLP stores FULL venue names (e.g., "Annual International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR)"). NEVER use exact match like dblp:streamTitle "SIGIR". ALWAYS use FILTER(CONTAINS(?venueTitle, "SIGIR")) pattern instead.
 
 Return only the SPARQL query as a structured response with a single field:
 - query: the complete SPARQL query
