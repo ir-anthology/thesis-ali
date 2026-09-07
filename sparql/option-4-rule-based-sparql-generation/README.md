@@ -94,6 +94,51 @@ python main.py "Which papers did Geoffrey Hinton author?"
 uv run pytest tests/ -v
 ```
 
+## Kubernetes Deployment
+
+### Prerequisites
+
+- Docker
+- `kubectl` configured for the target cluster
+- Access to `ghcr.io/ir-anthology` container registry
+
+### Build and Push the Docker Image
+
+```bash
+docker build -t ghcr.io/ir-anthology/ir-anthology-chat-api:latest .
+docker push ghcr.io/ir-anthology/ir-anthology-chat-api:latest
+```
+
+### Configure the Secret
+
+Edit `k8s.yaml` and replace the placeholder with your actual OpenAI API key:
+
+```yaml
+stringData:
+  OPENAI_API_KEY: "<REPLACE_WITH_ACTUAL_KEY>"
+```
+
+### Deploy to the Cluster
+
+```bash
+kubectl apply -f k8s.yaml
+```
+
+### Verify the Deployment
+
+```bash
+# Check pod status
+kubectl get pods -n webisservices -l app=ir-anthology-chat-api
+
+# View logs
+kubectl logs -n webisservices -l app=ir-anthology-chat-api
+
+# Check service and ingress
+kubectl get svc,ingress -n webisservices -l app=ir-anthology-chat-api
+```
+
+The API will be available at `https://dblp-sparql.web.webis.de`.
+
 ## API Endpoints
 
 ### POST `/api/exploration`
@@ -262,3 +307,4 @@ The system detects and reports limitations for queries that require:
 | `API_PORT` | `8000` | FastAPI server port |
 | `MAX_RESULT_ROWS` | `50` | Maximum rows from SPARQL |
 | `QUESTION_BATCH_SIZE` | `10` | Rows per LLM call for question generation |
+| `RELOAD` | `false` | Enable uvicorn hot-reload (development only) |

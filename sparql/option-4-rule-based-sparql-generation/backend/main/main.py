@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 import uvicorn
 from fastapi import FastAPI
@@ -11,6 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.main.api.exploration import router as exploration_router
 from backend.main.api.health import router as health_router
 from backend.main.config import API_HOST, API_PORT
+
+RELOAD = os.getenv("RELOAD", "false").lower() == "true"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -42,7 +45,7 @@ def run() -> None:
         "backend.main.main:app",
         host=API_HOST,
         port=API_PORT,
-        reload=True,
+        reload=RELOAD,
     )
 
 
