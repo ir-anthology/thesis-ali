@@ -2,7 +2,7 @@ import type { ExplorationResponse } from "$lib/types/exploration";
 
 export const mockResponses: Record<string, ExplorationResponse> = {
   "full-response": {
-    intent:
+    interpretation:
       "Here is the table that shows the most prolific authors based on publication count.",
     columns: [
       { key: "author", label: "Author", type: "text", sortable: true },
@@ -30,7 +30,7 @@ export const mockResponses: Record<string, ExplorationResponse> = {
           question: "Which venues does Marti A. Hearst publish in?",
         },
         years: {
-          value: "1995–2024",
+          value: "1995\u20132024",
           question: "What years was Marti A. Hearst active?",
         },
       },
@@ -48,7 +48,7 @@ export const mockResponses: Record<string, ExplorationResponse> = {
           question: "Which venues does Ryen W. White publish in?",
         },
         years: {
-          value: "2003–2024",
+          value: "2003\u20132024",
           question: "What years was Ryen W. White active?",
         },
       },
@@ -66,7 +66,7 @@ export const mockResponses: Record<string, ExplorationResponse> = {
           question: "Which venues does Gary Marchionini publish in?",
         },
         years: {
-          value: "1997–2023",
+          value: "1997\u20132023",
           question: "What years was Gary Marchionini active?",
         },
       },
@@ -84,7 +84,7 @@ export const mockResponses: Record<string, ExplorationResponse> = {
           question: "Which venues does Daniel M. Russell publish in?",
         },
         years: {
-          value: "2000–2022",
+          value: "2000\u20132022",
           question: "What years was Daniel M. Russell active?",
         },
       },
@@ -102,7 +102,7 @@ export const mockResponses: Record<string, ExplorationResponse> = {
           question: "Which venues does Andrei Z. Broder publish in?",
         },
         years: {
-          value: "1998–2021",
+          value: "1998\u20132021",
           question: "What years was Andrei Z. Broder active?",
         },
       },
@@ -134,8 +134,7 @@ LIMIT 5`,
   },
 
   "limitation-response": {
-    intent: "User is asking about citation counts for publications.",
-    limitation:
+    interpretation:
       "I don't have data on citation counts. The knowledge graph only contains information about authors, venues, and publications.",
     suggestions: [
       "Who are the most prolific authors?",
@@ -145,8 +144,7 @@ LIMIT 5`,
   },
 
   "clarification-response": {
-    intent: "User is asking about something ambiguous.",
-    clarification:
+    interpretation:
       "Could you clarify whether you are looking for authors, venues, or publications?",
     suggestions: [
       "Who are the most prolific authors?",
