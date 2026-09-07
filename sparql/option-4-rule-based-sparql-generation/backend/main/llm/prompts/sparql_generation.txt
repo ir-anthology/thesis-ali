@@ -115,6 +115,7 @@ RULES:
 13. CRITICAL: For author lookups, DBLP may store full names with middle initials. Use FILTER(CONTAINS(...)) for partial matches.
 14. Use dblp:primaryCreatorName for author lookup (current display name)
 15. Use dblp:primaryStreamTitle for venue lookup (display title)
+16. DEFAULT LIMIT: Always add LIMIT 15 to the query unless the user specifies a different number.
 
 EXTRACTING CONTEXT FROM THE QUESTION:
 Since you don't receive pre-extracted entities or constraints, extract them directly from the user's question:
