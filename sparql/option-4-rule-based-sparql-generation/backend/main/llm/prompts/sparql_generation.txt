@@ -43,7 +43,10 @@ ENTITY LOOKUP PATTERNS:
 Use entity NAMES in string literals, NOT URIs. Example patterns:
 
 For authors:
-  ?author dblp:creatorName "Geoffrey Hinton" .
+  DBLP may store full names with middle initials (e.g., "Geoffrey E. Hinton" instead of "Geoffrey Hinton").
+  For well-known authors, try exact match first, but if no results, use FILTER(CONTAINS(...)):
+  ?author dblp:creatorName ?authorName .
+  FILTER(CONTAINS(?authorName, "Hinton"))
   ?pub dblp:authoredBy ?author .
 
 For venues:
