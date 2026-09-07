@@ -1,0 +1,8 @@
+"""Prompt files live here as plain .txt files.
+
+Each prompt has one responsibility:
+  - interpretation.txt      — Stage 1
+  - sparql_generation.txt   — Stage 2
+  - result_analysis.txt     — Stage 3
+  - suggestions.txt         — Stage 4
+"""

@@ -1,0 +1,13 @@
+"""GET /api/health — health check endpoint."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter
+
+router = APIRouter()
+
+
+@router.get("/api/health")
+async def health() -> dict[str, str]:
+    """Health check."""
+    return {"status": "ok", "version": "0.1.0"}
