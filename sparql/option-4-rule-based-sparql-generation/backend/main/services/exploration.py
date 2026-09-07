@@ -42,16 +42,24 @@ class ExplorationService:
 
     async def explore(self, request: ChatRequest) -> ExplorationResponse:
         """Process an exploration request through the full pipeline."""
-        logger.info("Exploration request: %s", request.message)
+        logger.info("=" * 60)
+        logger.info("PIPELINE START: %s", request.message)
+        logger.info("=" * 60)
 
         # C0 — initial context
         context = self._context_builder.build(request)
 
         # C1 — interpretation
+        logger.info("[Stage 1/4] Interpretation")
         interpretation = self._interpretation.run(context)
         context.set_interpretation(interpretation)
+        logger.info("  → scope: %s", interpretation.scope)
+        logger.info("  → summary: %s", interpretation.summary)
+        if interpretation.entities:
+            logger.info("  → entities: %s", interpretation.entities)
 
         # Scope routing
+        logger.info("[Scope Routing] → %s", interpretation.scope.upper())
         if interpretation.scope == "out_of_scope":
             return await self._handle_out_of_scope(context)
 
@@ -69,10 +77,13 @@ class ExplorationService:
         self, context: ExplorationContext
     ) -> ExplorationResponse:
         """Full pipeline: SPARQL → execute → analyse → suggest."""
+        logger.info("[Path] IN_SCOPE — running full pipeline")
 
         # C2 — SPARQL generation
+        logger.info("[Stage 2/4] SPARQL Generation")
         sparql_gen = self._sparql_generation.run(context)
         if sparql_gen is None:
+            logger.warning("  → SPARQL generation failed (returned None)")
             suggestions = self._suggestions.run(context)
             return ExplorationResponse(
                 interpretation=context.interpretation.summary
@@ -82,11 +93,13 @@ class ExplorationService:
             )
 
         context.set_sparql(sparql_gen.query)
+        logger.info("  → SPARQL generated (%d chars)", len(sparql_gen.query))
 
         # Validate
+        logger.info("[Stage 2/4] SPARQL Validation")
         validation = self._sparql_validator.validate(sparql_gen.query)
         if not validation.valid:
-            logger.warning("SPARQL validation failed: %s", validation.errors)
+            logger.warning("  → Validation FAILED: %s", validation.errors)
             suggestions = self._suggestions.run(context)
             return ExplorationResponse(
                 interpretation=(
@@ -95,12 +108,14 @@ class ExplorationService:
                 sparql_query=sparql_gen.query,
                 suggestions=suggestions or None,
             )
+        logger.info("  → Validation PASSED")
 
         # Execute
+        logger.info("[Stage 2/4] SPARQL Execution")
         try:
             query_result = self._sparql_client.execute(sparql_gen.query)
         except SPARQLError as exc:
-            logger.error("SPARQL execution failed: %s", exc)
+            logger.error("  → Execution FAILED: %s", exc)
             suggestions = self._suggestions.run(context)
             return ExplorationResponse(
                 interpretation=f"Query execution failed: {exc}",
@@ -109,6 +124,7 @@ class ExplorationService:
             )
 
         context.set_query_result(query_result)
+        logger.info("  → Execution SUCCESS: %d rows returned", query_result.row_count)
 
         # Normalise result columns/rows
         columns = format_result_columns(query_result)
@@ -116,27 +132,39 @@ class ExplorationService:
 
         # C3 — result analysis (questions + observations)
         if query_result.row_count > 0:
+            logger.info("[Stage 3/4] Result Analysis")
             rows_with_questions, observations = self._result_analysis.run(context)
             context.set_result_table(columns, rows_with_questions)
             context.set_observations(observations)
+            logger.info("  → Generated %d observations", len(observations))
+        else:
+            logger.info("[Stage 3/4] Result Analysis — skipped (0 rows)")
 
         # C4 — suggestions
+        logger.info("[Stage 4/4] Suggestions")
         suggestions = self._suggestions.run(context)
         context.set_suggestions(suggestions)
+        logger.info("  → Generated %d suggestions", len(suggestions))
 
+        logger.info("PIPELINE COMPLETE")
         return self._build_response(context)
 
     async def _handle_out_of_scope(
         self, context: ExplorationContext
     ) -> ExplorationResponse:
         """Out-of-scope: skip SPARQL, generate suggestions only."""
+        logger.info("[Path] OUT_OF_SCOPE — skipping SPARQL pipeline")
+
+        logger.info("[Stage 4/4] Suggestions")
         suggestions = self._suggestions.run(context)
         context.set_suggestions(suggestions)
+        logger.info("  → Generated %d suggestions", len(suggestions))
 
         interpretation_text = None
         if context.interpretation:
             interpretation_text = context.interpretation.summary
 
+        logger.info("PIPELINE COMPLETE (out_of_scope)")
         return ExplorationResponse(
             interpretation=interpretation_text,
             suggestions=suggestions or None,
@@ -144,6 +172,8 @@ class ExplorationService:
 
     def _handle_ambiguous(self, context: ExplorationContext) -> ExplorationResponse:
         """Ambiguous: return clarification questions as suggestions."""
+        logger.info("[Path] AMBIGUOUS — returning clarification questions")
+
         interp = context.interpretation
         if interp is None:
             return ExplorationResponse(interpretation="The request is ambiguous.")
@@ -152,13 +182,16 @@ class ExplorationService:
         suggestions: list[str] = []
         if interp.possible_scopes:
             suggestions = interp.possible_scopes[:3]
+            logger.info("  → possible_scopes: %s", suggestions)
         elif interp.clarification_questions:
             suggestions = interp.clarification_questions[:3]
+            logger.info("  → clarification_questions: %s", suggestions)
 
         interpretation_text = interp.summary
         if interp.clarification_questions:
             interpretation_text = interp.clarification_questions[0]
 
+        logger.info("PIPELINE COMPLETE (ambiguous)")
         return ExplorationResponse(
             interpretation=interpretation_text,
             suggestions=suggestions or None,
