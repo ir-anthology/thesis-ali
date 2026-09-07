@@ -5,7 +5,7 @@
  * It provides a reactive store that handles:
  * - Conversation history (user and assistant turns)
  * - Per-turn response data (columns, rows, observations, suggestions)
- * - Per-turn intent, clarification, limitation
+ * - Per-turn interpretation
  *
  * The store communicates with the backend API at http://localhost:8000.
  */
@@ -25,9 +25,7 @@ function createExplorationStore() {
   let loading = $state(false);
   let error = $state<string | null>(null);
 
-  let intentByTurn = $state<Map<string, string>>(new Map());
-  let clarificationByTurn = $state<Map<string, string>>(new Map());
-  let limitationByTurn = $state<Map<string, string>>(new Map());
+  let interpretationByTurn = $state<Map<string, string>>(new Map());
   let columnsByTurn = $state<Map<string, ResultColumn[]>>(new Map());
   let rowsByTurn = $state<Map<string, ResultRow[]>>(new Map());
   let observationsByTurn = $state<Map<string, string[]>>(new Map());
@@ -46,9 +44,7 @@ function createExplorationStore() {
       return {
         role: 'assistant',
         content: turn.content,
-        intent: intentByTurn.get(turn.id),
-        clarification: clarificationByTurn.get(turn.id),
-        limitation: limitationByTurn.get(turn.id),
+        interpretation: interpretationByTurn.get(turn.id),
         columns: columnsByTurn.get(turn.id),
         rows: rowsByTurn.get(turn.id),
         observations: observationsByTurn.get(turn.id),
@@ -95,7 +91,7 @@ function createExplorationStore() {
 
       const response: ExplorationResponse = await res.json();
 
-      const displayText = response.clarification || response.limitation || response.intent || '';
+      const displayText = response.interpretation || '';
 
       conversation = conversation.map((t) =>
         t.id === assistantTurn.id
@@ -103,14 +99,8 @@ function createExplorationStore() {
           : t
       );
 
-      if (response.intent) {
-        intentByTurn = new Map(intentByTurn).set(assistantTurn.id, response.intent);
-      }
-      if (response.clarification) {
-        clarificationByTurn = new Map(clarificationByTurn).set(assistantTurn.id, response.clarification);
-      }
-      if (response.limitation) {
-        limitationByTurn = new Map(limitationByTurn).set(assistantTurn.id, response.limitation);
+      if (response.interpretation) {
+        interpretationByTurn = new Map(interpretationByTurn).set(assistantTurn.id, response.interpretation);
       }
       if (response.columns) {
         columnsByTurn = new Map(columnsByTurn).set(assistantTurn.id, response.columns);
@@ -161,9 +151,7 @@ function createExplorationStore() {
     conversation = [];
     loading = false;
     error = null;
-    intentByTurn = new Map();
-    clarificationByTurn = new Map();
-    limitationByTurn = new Map();
+    interpretationByTurn = new Map();
     columnsByTurn = new Map();
     rowsByTurn = new Map();
     observationsByTurn = new Map();
@@ -181,14 +169,8 @@ function createExplorationStore() {
     get error(): string | null {
       return error;
     },
-    get intentByTurn(): Map<string, string> {
-      return intentByTurn;
-    },
-    get clarificationByTurn(): Map<string, string> {
-      return clarificationByTurn;
-    },
-    get limitationByTurn(): Map<string, string> {
-      return limitationByTurn;
+    get interpretationByTurn(): Map<string, string> {
+      return interpretationByTurn;
     },
     get columnsByTurn(): Map<string, ResultColumn[]> {
       return columnsByTurn;
