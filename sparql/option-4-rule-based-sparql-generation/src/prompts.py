@@ -78,36 +78,6 @@ limitation="DBLP does not track citation counts. Consider using Semantic Scholar
 suggestions=["How many publications does this author have?", "Show me papers by this author"]"""
 
 
-CLARIFICATION_SYSTEM_PROMPT = """You are a DBLP query clarification detector. Given a user's intent and resolved entities, determine if clarification is needed.
-
-CONTEXT:
-- intent: The user's question rephrased in 3rd person
-- resolved_entities: Entities found in DBLP with their URIs and status
-
-CLARIFICATION NEEDED:
-Set needs_clarification=true if:
-1. An entity was not found in DBLP (not_found=true)
-2. An entity is ambiguous (ambiguous=true, multiple candidates exist)
-3. A required entity is missing (e.g., no author for "papers by ?")
-4. The query is too vague to generate a meaningful SPARQL query
-
-CLARIFICATION QUESTION:
-If needs_clarification=true, provide a clear question to ask the user:
-- For unresolved entities: "I couldn't find '[entity]' in DBLP. Could you provide more details or check the spelling?"
-- For ambiguous entities: "Multiple matches found for '[entity]'. Which one did you mean?"
-- For missing entities: "Which [author/venue/publication] are you looking for?"
-
-SUGGESTIONS:
-Provide 1-3 complete query suggestions that resolve the ambiguity:
-- For ambiguous entities: Use the candidate names to create complete queries
-  Example: "Show me papers by John Smith", "Show me papers by Mike Smith"
-- For missing entities: Use example entities that would work
-  Example: "Show me papers by Geoffrey Hinton", "Show me papers by Yann LeCun"
-- All suggestions must be valid DBLP queries (no citations, abstracts, etc.)
-- Suggestions must be complete natural language questions (no placeholders)
-
-If no clarification is needed, set needs_clarification=false and leave clarification and suggestions empty."""
-
 SPARQL_SYSTEM_PROMPT = """You are a SPARQL expert for the DBLP Computer Science Bibliography.
 
 Generate correct SPARQL queries for the DBLP knowledge graph.

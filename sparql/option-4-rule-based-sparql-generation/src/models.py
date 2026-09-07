@@ -22,35 +22,6 @@ class Constraints(BaseModel):
     )
 
 
-class IntentResult(BaseModel):
-    """Result of intent classification with limitation detection."""
-
-    intent: str = Field(
-        ...,
-        description="Natural language rephrasing in 3rd person. "
-        "Start with 'The user is asking for...' or 'The user wants to know...'",
-    )
-    entities_mentioned: list[EntityMention] = Field(
-        default_factory=list, description="Extracted entity mentions"
-    )
-    constraints: Constraints = Field(
-        default_factory=Constraints,
-        description="Extracted constraints (year, publication_type, etc.)",
-    )
-    has_limitation: bool = Field(
-        default=False,
-        description="True if query requires features not available in DBLP",
-    )
-    limitation: str | None = Field(
-        default=None, description="Explanation of limitation if has_limitation is true"
-    )
-    suggestions: list[str] = Field(
-        default_factory=list,
-        max_length=3,
-        description="1-3 follow-up suggestions when has_limitation is true",
-    )
-
-
 class QueryInterpretation(BaseModel):
     """Unified result of query interpretation.
 
