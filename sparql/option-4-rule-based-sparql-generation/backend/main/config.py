@@ -15,7 +15,7 @@ LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.0"))
 LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "2000"))
 
 DBLP_SPARQL_ENDPOINT = os.getenv(
-    "DBLP_SPARQL_ENDPOINT", "https://sparql.dblp.org/sparql"
+    "DBLP_SPARQL_ENDPOINT", "https://database-ir-anthology.srv.webis.de/"
 )
 
 EXAMPLES_PATH = BASE_DIR / os.getenv("EXAMPLES_PATH", "data/examples.json")
