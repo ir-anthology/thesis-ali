@@ -75,7 +75,6 @@
     align-items: flex-end;
     gap: 0;
     padding: 0.5rem 0.5rem 0.5rem 1rem;
-    background-color: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: 1.5rem;
   }
