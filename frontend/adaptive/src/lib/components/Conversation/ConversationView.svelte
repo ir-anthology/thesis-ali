@@ -73,16 +73,18 @@
   aria-live="polite"
   aria-relevant="additions"
 >
-  <div class="welcome-section" class:centered={conversation.length === 0}>
+  <div class="welcome-section" class:centered={conversation.length === 0} class:compact={conversation.length > 0}>
     <EmptyState
       title="Welcome to IR Anthology Chat"
       description="Ask me about authors, venues, and publications in the knowledge graph."
     >
-      {#snippet icon()}
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-      {/snippet}
+      {#if conversation.length === 0}
+        {#snippet icon()}
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        {/snippet}
+      {/if}
     </EmptyState>
     {#if statsLoading}
       <div class="stats-loading">
@@ -161,6 +163,19 @@
   .welcome-section :global(.empty-state) {
     height: auto;
     transition: all 0.3s ease;
+  }
+
+  .welcome-section.compact {
+    align-items: flex-start;
+  }
+
+  .welcome-section.compact :global(.empty-state) {
+    text-align: left;
+    align-items: flex-start;
+  }
+
+  .welcome-section.compact :global(.empty-icon) {
+    display: none;
   }
 
   .overview-wrapper {
