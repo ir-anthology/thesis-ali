@@ -73,24 +73,17 @@
   .input-wrapper {
     display: flex;
     align-items: flex-end;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    gap: 0;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
     background-color: var(--bg-primary);
     border-top: 1px solid var(--border);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .input-wrapper:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-light);
   }
 
   textarea {
     flex: 1;
-    padding: 0.5rem 0.625rem;
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    padding: 0.5rem 0;
+    background-color: transparent;
+    border: none;
     color: var(--text-primary);
     font-size: 0.875rem;
     font-family: inherit;
@@ -98,11 +91,6 @@
     outline: none;
     line-height: 1.5;
     max-height: 150px;
-    transition: border-color 0.15s ease;
-  }
-
-  textarea:focus {
-    border-color: var(--accent);
   }
 
   textarea::placeholder {
@@ -117,19 +105,24 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     background-color: var(--accent);
     border: none;
-    border-radius: 6px;
+    border-radius: 50%;
     color: white;
     cursor: pointer;
-    transition: background-color 0.15s ease;
+    transition: background-color 0.15s ease, transform 0.1s ease;
     flex-shrink: 0;
   }
 
   .send-btn:hover:not(:disabled) {
     background-color: var(--accent-hover);
+    transform: scale(1.05);
+  }
+
+  .send-btn:active:not(:disabled) {
+    transform: scale(0.95);
   }
 
   .send-btn:disabled {
@@ -146,12 +139,12 @@
     text-align: center;
     font-size: 0.6875rem;
     color: var(--text-muted);
-    margin-top: 0.5rem;
+    padding: 0.375rem 0;
   }
 
   kbd {
     padding: 0.0625rem 0.25rem;
-    background-color: transparent;
+    background-color: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 3px;
     font-family: inherit;
