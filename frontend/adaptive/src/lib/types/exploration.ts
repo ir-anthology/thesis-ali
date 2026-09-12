@@ -17,11 +17,13 @@ export type MessageRole = 'user' | 'assistant';
 
 export interface ConversationTurn {
   id: string;
+  parentId: string | null;
   role: MessageRole;
   content: string;
   timestamp: Date;
   loading?: boolean;
   error?: boolean;
+  branchCount?: number;
 }
 
 export interface ResultColumn {

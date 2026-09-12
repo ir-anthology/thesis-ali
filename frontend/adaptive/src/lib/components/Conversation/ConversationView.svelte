@@ -15,7 +15,8 @@
     observationsByTurn,
     suggestionsByTurn,
     sparqlByTurn,
-    onSelectSuggestion
+    onSelectSuggestion,
+    activePath
   }: {
     conversation: ConversationTurn[];
     interpretationByTurn: Map<string, string>;
@@ -24,7 +25,8 @@
     observationsByTurn: Map<string, string[]>;
     suggestionsByTurn: Map<string, string[]>;
     sparqlByTurn: Map<string, string>;
-    onSelectSuggestion: (suggestion: string) => void;
+    onSelectSuggestion: (suggestion: string, fromTurnId?: string) => void;
+    activePath: ConversationTurn[];
   } = $props();
 
   let container: HTMLDivElement | undefined = $state();
@@ -57,7 +59,7 @@
   }
 
   $effect(() => {
-    conversation.length;
+    activePath.length;
     if (container) {
       container.scrollTop = container.scrollHeight;
     }
@@ -109,7 +111,7 @@
     {/if}
   </div>
 
-  {#each conversation as turn (turn.id)}
+  {#each activePath as turn (turn.id)}
     {#if turn.role === 'user'}
       <UserMessage message={turn} />
     {:else}
@@ -121,8 +123,8 @@
         observations={observationsByTurn.get(turn.id)}
         suggestions={suggestionsByTurn.get(turn.id)}
         sparqlQuery={sparqlByTurn.get(turn.id)}
-        {onSelectSuggestion}
-        onCellClick={onSelectSuggestion}
+        onSelectSuggestion={(s) => onSelectSuggestion(s, turn.id)}
+        onCellClick={(q) => onSelectSuggestion(q, turn.id)}
       />
     {/if}
   {/each}

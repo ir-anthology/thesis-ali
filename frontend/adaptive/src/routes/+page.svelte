@@ -34,7 +34,8 @@
       observationsByTurn={exploration.observationsByTurn}
       suggestionsByTurn={exploration.suggestionsByTurn}
       sparqlByTurn={exploration.sparqlByTurn}
-      onSelectSuggestion={(s) => exploration.selectSuggestion(s)}
+      onSelectSuggestion={(s, fromTurnId) => exploration.selectSuggestion(s, fromTurnId)}
+      activePath={exploration.getActivePath()}
     />
 
     <PromptInput

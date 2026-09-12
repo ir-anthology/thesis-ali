@@ -24,6 +24,7 @@ function createExplorationStore() {
   let conversation = $state<ConversationTurn[]>([]);
   let loading = $state(false);
   let error = $state<string | null>(null);
+  let headTurnId = $state<string | null>(null);
 
   let interpretationByTurn = $state<Map<string, string>>(new Map());
   let columnsByTurn = $state<Map<string, ResultColumn[]>>(new Map());
@@ -36,8 +37,21 @@ function createExplorationStore() {
     return crypto.randomUUID();
   }
 
+  function getActivePath(): ConversationTurn[] {
+    const path: ConversationTurn[] = [];
+    let currentId = headTurnId;
+    while (currentId) {
+      const turn = conversation.find(t => t.id === currentId);
+      if (!turn) break;
+      path.unshift(turn);
+      currentId = turn.parentId;
+    }
+    return path;
+  }
+
   function buildHistory(): HistoryTurn[] {
-    return conversation.filter(turn => !turn.loading).map((turn) => {
+    const activePath = getActivePath();
+    return activePath.filter(turn => !turn.loading).map((turn) => {
       if (turn.role === 'user') {
         return { role: 'user', content: turn.content };
       }
@@ -54,25 +68,37 @@ function createExplorationStore() {
     });
   }
 
-  async function sendMessage(content: string): Promise<void> {
+  async function sendMessage(content: string, fromTurnId?: string): Promise<void> {
     if (!content.trim() || loading) return;
+
+    const parentId = fromTurnId ?? headTurnId;
+
+    if (fromTurnId && fromTurnId !== headTurnId) {
+      conversation = conversation.map(t =>
+        t.id === fromTurnId ? { ...t, branchCount: (t.branchCount || 0) + 1 } : t
+      );
+    }
 
     const userTurn: ConversationTurn = {
       id: generateId(),
+      parentId,
       role: 'user',
       content: content.trim(),
       timestamp: new Date()
     };
     conversation = [...conversation, userTurn];
+    headTurnId = userTurn.id;
 
     const assistantTurn: ConversationTurn = {
       id: generateId(),
+      parentId: userTurn.id,
       role: 'assistant',
       content: '',
       timestamp: new Date(),
       loading: true
     };
     conversation = [...conversation, assistantTurn];
+    headTurnId = assistantTurn.id;
     loading = true;
     error = null;
 
@@ -135,20 +161,23 @@ function createExplorationStore() {
     loading = false;
   }
 
-  function selectSuggestion(suggestion: string): void {
-    sendMessage(suggestion);
+  function selectSuggestion(suggestion: string, fromTurnId?: string): void {
+    sendMessage(suggestion, fromTurnId);
   }
 
   function retry(): void {
-    const lastUserTurn = [...conversation].reverse().find((t) => t.role === 'user');
+    const activePath = getActivePath();
+    const lastUserTurn = [...activePath].reverse().find((t) => t.role === 'user');
     if (lastUserTurn) {
       conversation = conversation.filter((t) => !t.loading && !(t.role === 'assistant' && t.error));
-      sendMessage(lastUserTurn.content);
+      headTurnId = lastUserTurn.parentId;
+      sendMessage(lastUserTurn.content, lastUserTurn.parentId ?? undefined);
     }
   }
 
   function clearExploration(): void {
     conversation = [];
+    headTurnId = null;
     loading = false;
     error = null;
     interpretationByTurn = new Map();
@@ -169,6 +198,9 @@ function createExplorationStore() {
     get error(): string | null {
       return error;
     },
+    get headTurnId(): string | null {
+      return headTurnId;
+    },
     get interpretationByTurn(): Map<string, string> {
       return interpretationByTurn;
     },
@@ -187,6 +219,7 @@ function createExplorationStore() {
     get sparqlByTurn(): Map<string, string> {
       return sparqlByTurn;
     },
+    getActivePath,
     sendMessage,
     selectSuggestion,
     retry,
