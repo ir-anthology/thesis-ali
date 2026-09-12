@@ -187,6 +187,12 @@
 
   .welcome-section.compact :global(.empty-description) {
     margin-bottom: 0;
+    max-width: none;
+    width: fit-content;
+  }
+
+  .welcome-section.compact :global(.empty-title) {
+    width: fit-content;
   }
 
   .overview-wrapper {
