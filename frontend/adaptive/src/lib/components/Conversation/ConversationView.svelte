@@ -72,59 +72,57 @@
   aria-live="polite"
   aria-relevant="additions"
 >
-  {#if conversation.length === 0}
-    <div class="empty-container">
-      <EmptyState
-        title="Welcome to IR Anthology Chat"
-        description="Ask me about authors, venues, and publications in the knowledge graph."
-      >
-        {#snippet icon()}
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-        {/snippet}
-      </EmptyState>
-      {#if statsLoading}
-        <div class="stats-loading">
-          <div class="spinner"></div>
-          <span>Loading statistics...</span>
-        </div>
-      {:else if statsError}
-        <div class="stats-error">
-          <span>{statsError}</span>
-        </div>
-      {:else if statistics}
-        <div class="overview-wrapper" id="stats-table" data-meta="stats-table">
-          <FacetTable
-            columns={statistics.columns}
-            rows={statistics.rows}
-            title="Knowledge Graph Overview"
-            onCellClick={handleOverviewClick}
-            tableId="stats-facet-table"
-            dataMeta="statistics"
-          />
-        </div>
-      {/if}
-    </div>
-  {:else}
-    {#each conversation as turn (turn.id)}
-      {#if turn.role === 'user'}
-        <UserMessage message={turn} />
-      {:else}
-        <AssistantMessage
-          message={turn}
-          interpretation={interpretationByTurn.get(turn.id)}
-          columns={columnsByTurn.get(turn.id)}
-          rows={rowsByTurn.get(turn.id)}
-          observations={observationsByTurn.get(turn.id)}
-          suggestions={suggestionsByTurn.get(turn.id)}
-          sparqlQuery={sparqlByTurn.get(turn.id)}
-          {onSelectSuggestion}
-          onCellClick={onSelectSuggestion}
+  <div class="welcome-section">
+    <EmptyState
+      title="Welcome to IR Anthology Chat"
+      description="Ask me about authors, venues, and publications in the knowledge graph."
+    >
+      {#snippet icon()}
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      {/snippet}
+    </EmptyState>
+    {#if statsLoading}
+      <div class="stats-loading">
+        <div class="spinner"></div>
+        <span>Loading statistics...</span>
+      </div>
+    {:else if statsError}
+      <div class="stats-error">
+        <span>{statsError}</span>
+      </div>
+    {:else if statistics}
+      <div class="overview-wrapper" id="stats-table" data-meta="stats-table">
+        <FacetTable
+          columns={statistics.columns}
+          rows={statistics.rows}
+          title="Knowledge Graph Overview"
+          onCellClick={handleOverviewClick}
+          tableId="stats-facet-table"
+          dataMeta="statistics"
         />
-      {/if}
-    {/each}
-  {/if}
+      </div>
+    {/if}
+  </div>
+
+  {#each conversation as turn (turn.id)}
+    {#if turn.role === 'user'}
+      <UserMessage message={turn} />
+    {:else}
+      <AssistantMessage
+        message={turn}
+        interpretation={interpretationByTurn.get(turn.id)}
+        columns={columnsByTurn.get(turn.id)}
+        rows={rowsByTurn.get(turn.id)}
+        observations={observationsByTurn.get(turn.id)}
+        suggestions={suggestionsByTurn.get(turn.id)}
+        sparqlQuery={sparqlByTurn.get(turn.id)}
+        {onSelectSuggestion}
+        onCellClick={onSelectSuggestion}
+      />
+    {/if}
+  {/each}
 </div>
 
 <style>
@@ -135,16 +133,15 @@
     background-color: var(--bg-secondary);
   }
 
-  .empty-container {
+  .welcome-section {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
+    align-items: flex-start;
     gap: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 
-  .empty-container :global(.empty-state) {
+  .welcome-section :global(.empty-state) {
     height: auto;
   }
 
