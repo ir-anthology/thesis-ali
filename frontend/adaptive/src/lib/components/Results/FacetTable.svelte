@@ -20,6 +20,7 @@
   let sortField = $state<string | null>(null);
   let sortDirection = $state<'asc' | 'desc'>('asc');
   let focusedRowIndex = $state(-1);
+  let focusedCellKey = $state<string | null>(null);
   let tableElement: HTMLTableElement | undefined = $state();
 
   function handleSort(column: ResultColumn): void {
@@ -30,6 +31,11 @@
       sortField = column.key;
       sortDirection = 'asc';
     }
+  }
+
+  function handleCellClick(question: string, columnKey: string): void {
+    focusedCellKey = columnKey;
+    onCellClick?.(question);
   }
 
   function handleKeydown(event: KeyboardEvent, rowIndex: number): void {
@@ -119,8 +125,9 @@
               <td
                 role="gridcell"
                 class:clickable={!!onCellClick && !!cell.question}
+                class:focused={focusedCellKey === column.key}
                 title={cell.question || undefined}
-                onclick={cell.question ? () => onCellClick?.(cell.question) : undefined}
+                onclick={cell.question ? () => handleCellClick(cell.question, column.key) : undefined}
               >
                 {#if column.type === 'badge'}
                   <span class="cell-badge">{cell.value}</span>
@@ -217,15 +224,15 @@
     background-color: var(--bg-secondary);
   }
 
-  tbody tr.focused td {
-    background-color: var(--accent-light);
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
   tbody tr {
     transition: background-color 0.1s ease;
     outline: none;
+  }
+
+  td.focused {
+    background-color: var(--accent-light);
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
   }
 
   .cell-badge {
