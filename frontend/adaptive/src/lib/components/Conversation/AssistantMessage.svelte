@@ -108,7 +108,7 @@
   }
 
   .content {
-    max-width: 80%;
+    max-width: 100%;
     padding: 0.625rem 0.875rem;
     background-color: var(--assistant-bubble);
     border-radius: 12px 12px 12px 2px;
@@ -172,10 +172,6 @@
   }
 
   @media (max-width: 640px) {
-    .content {
-      max-width: 90%;
-    }
-
     .message {
       padding: 0.625rem 0.75rem;
     }

@@ -154,7 +154,7 @@
   th,
   td {
     padding: 0.5rem 0.75rem;
-    text-align: center;
+    text-align: left;
     border-bottom: 1px solid var(--border-light);
     white-space: nowrap;
   }
