@@ -167,15 +167,26 @@
 
   .welcome-section.compact {
     align-items: flex-start;
+    gap: 0.5rem;
   }
 
   .welcome-section.compact :global(.empty-state) {
     text-align: left;
     align-items: flex-start;
+    padding: 0;
+    margin-bottom: 0;
   }
 
   .welcome-section.compact :global(.empty-icon) {
     display: none;
+  }
+
+  .welcome-section.compact :global(.empty-actions) {
+    display: none;
+  }
+
+  .welcome-section.compact :global(.empty-description) {
+    margin-bottom: 0;
   }
 
   .overview-wrapper {
