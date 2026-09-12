@@ -66,13 +66,14 @@
 
 <div
   class="conversation-container"
+  class:has-conversation={conversation.length > 0}
   bind:this={container}
   role="log"
   aria-label="Conversation history"
   aria-live="polite"
   aria-relevant="additions"
 >
-  <div class="welcome-section">
+  <div class="welcome-section" class:centered={conversation.length === 0}>
     <EmptyState
       title="Welcome to IR Anthology Chat"
       description="Ask me about authors, venues, and publications in the knowledge graph."
@@ -131,6 +132,13 @@
     overflow-y: auto;
     padding: 1rem;
     background-color: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    transition: padding 0.3s ease;
+  }
+
+  .conversation-container.has-conversation {
+    padding-top: 1rem;
   }
 
   .welcome-section {
@@ -139,10 +147,20 @@
     align-items: flex-start;
     gap: 1.25rem;
     margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    width: 100%;
+  }
+
+  .welcome-section.centered {
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0;
   }
 
   .welcome-section :global(.empty-state) {
     height: auto;
+    transition: all 0.3s ease;
   }
 
   .overview-wrapper {
@@ -152,6 +170,7 @@
     border-radius: 6px;
     border: 1px solid var(--border);
     overflow: hidden;
+    transition: all 0.3s ease;
   }
 
   .stats-loading {
