@@ -21,6 +21,7 @@
   let sortDirection = $state<'asc' | 'desc'>('asc');
   let focusedRowIndex = $state(-1);
   let focusedCellKey = $state<string | null>(null);
+  let focusedCellRow = $state(-1);
   let tableElement: HTMLTableElement | undefined = $state();
 
   function handleSort(column: ResultColumn): void {
@@ -33,8 +34,9 @@
     }
   }
 
-  function handleCellClick(question: string, columnKey: string): void {
+  function handleCellClick(question: string, columnKey: string, rowIndex: number): void {
     focusedCellKey = columnKey;
+    focusedCellRow = rowIndex;
     onCellClick?.(question);
   }
 
@@ -120,14 +122,14 @@
             onfocus={() => focusedRowIndex = i}
             class:focused={focusedRowIndex === i}
           >
-            {#each columns as column}
+            {#each columns as column, j (j)}
               {@const cell = row[column.key]}
               <td
                 role="gridcell"
                 class:clickable={!!onCellClick && !!cell.question}
-                class:focused={focusedCellKey === column.key}
+                class:focused={focusedCellKey === column.key && focusedCellRow === i}
                 title={cell.question || undefined}
-                onclick={cell.question ? () => handleCellClick(cell.question, column.key) : undefined}
+                onclick={cell.question ? () => handleCellClick(cell.question, column.key, i) : undefined}
               >
                 {#if column.type === 'badge'}
                   <span class="cell-badge">{cell.value}</span>
