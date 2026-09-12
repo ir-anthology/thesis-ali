@@ -68,10 +68,10 @@ function createExplorationStore() {
     });
   }
 
-  async function sendMessage(content: string, fromTurnId?: string): Promise<void> {
+  async function sendMessage(content: string, fromTurnId?: string | null): Promise<void> {
     if (!content.trim() || loading) return;
 
-    const parentId = fromTurnId ?? headTurnId;
+    const parentId = fromTurnId !== undefined ? fromTurnId : headTurnId;
 
     if (fromTurnId && fromTurnId !== headTurnId) {
       conversation = conversation.map(t =>
@@ -161,7 +161,7 @@ function createExplorationStore() {
     loading = false;
   }
 
-  function selectSuggestion(suggestion: string, fromTurnId?: string): void {
+  function selectSuggestion(suggestion: string, fromTurnId?: string | null): void {
     sendMessage(suggestion, fromTurnId);
   }
 

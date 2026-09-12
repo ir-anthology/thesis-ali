@@ -25,7 +25,7 @@
     observationsByTurn: Map<string, string[]>;
     suggestionsByTurn: Map<string, string[]>;
     sparqlByTurn: Map<string, string>;
-    onSelectSuggestion: (suggestion: string, fromTurnId?: string) => void;
+    onSelectSuggestion: (suggestion: string, fromTurnId?: string | null) => void;
     activePath: ConversationTurn[];
   } = $props();
 
@@ -55,7 +55,7 @@
   });
 
   function handleOverviewClick(question: string): void {
-    onSelectSuggestion(question);
+    onSelectSuggestion(question, null);
   }
 
   $effect(() => {
