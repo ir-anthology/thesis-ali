@@ -59,3 +59,8 @@ export interface ExplorationResponse {
   suggestions?: string[];
   sparql_query?: string;
 }
+
+export interface StatisticsResponse {
+  columns: ResultColumn[];
+  rows: ResultRow[];
+}

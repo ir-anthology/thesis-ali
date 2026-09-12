@@ -5,12 +5,16 @@
     columns,
     rows,
     title,
-    onCellClick
+    onCellClick,
+    tableId,
+    dataMeta
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
     title?: string;
     onCellClick?: (question: string) => void;
+    tableId?: string;
+    dataMeta?: string;
   } = $props();
 
   let sortField = $state<string | null>(null);
@@ -79,7 +83,7 @@
   });
 </script>
 
-<div class="table-container">
+<div class="table-container" id={tableId} data-meta={dataMeta}>
   <div class="table-wrapper">
     <table bind:this={tableElement} role="grid" aria-label={title || 'Data table'}>
       <thead>

@@ -1,10 +1,11 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultColumn, ResultRow } from '$lib/types/exploration';
+  import type { ConversationTurn, ResultColumn, ResultRow, StatisticsResponse } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
   import FacetTable from '$lib/components/Results/FacetTable.svelte';
-  import { overviewData } from '$lib/data/mock-overview';
+
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
   let {
     conversation,
@@ -27,6 +28,29 @@
   } = $props();
 
   let container: HTMLDivElement | undefined = $state();
+  let statistics = $state<StatisticsResponse | null>(null);
+  let statsLoading = $state(true);
+  let statsError = $state<string | null>(null);
+
+  async function fetchStatistics(): Promise<void> {
+    try {
+      statsLoading = true;
+      statsError = null;
+      const res = await fetch(`${API_BASE}/api/statistics`);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch statistics: ${res.status}`);
+      }
+      statistics = await res.json();
+    } catch (e) {
+      statsError = e instanceof Error ? e.message : 'Failed to load statistics';
+    } finally {
+      statsLoading = false;
+    }
+  }
+
+  $effect(() => {
+    fetchStatistics();
+  });
 
   function handleOverviewClick(question: string): void {
     onSelectSuggestion(question);
@@ -60,14 +84,27 @@
           </svg>
         {/snippet}
       </EmptyState>
-      <div class="overview-wrapper">
-        <FacetTable
-          columns={overviewData.columns}
-          rows={overviewData.rows}
-          title={overviewData.title}
-          onCellClick={handleOverviewClick}
-        />
-      </div>
+      {#if statsLoading}
+        <div class="stats-loading">
+          <div class="spinner"></div>
+          <span>Loading statistics...</span>
+        </div>
+      {:else if statsError}
+        <div class="stats-error">
+          <span>{statsError}</span>
+        </div>
+      {:else if statistics}
+        <div class="overview-wrapper" id="stats-table" data-meta="stats-table">
+          <FacetTable
+            columns={statistics.columns}
+            rows={statistics.rows}
+            title="Knowledge Graph Overview"
+            onCellClick={handleOverviewClick}
+            tableId="stats-facet-table"
+            dataMeta="statistics"
+          />
+        </div>
+      {/if}
     </div>
   {:else}
     {#each conversation as turn (turn.id)}
@@ -118,6 +155,23 @@
     border-radius: 6px;
     border: 1px solid var(--border);
     overflow: hidden;
+  }
+
+  .stats-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .stats-error {
+    color: var(--error);
+    font-size: 0.875rem;
+    padding: 0.75rem;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
   }
 
   @media (max-width: 640px) {
