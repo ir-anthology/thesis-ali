@@ -1,0 +1,219 @@
+/**
+ * Exploration Store
+ *
+ * This module manages the entire exploration state using Svelte 5 runes.
+ * It provides a reactive store that handles:
+ * - Conversation history (user and assistant turns)
+ * - Per-turn response data (columns, rows, observations, suggestions)
+ * - Per-turn intent, clarification, limitation
+ *
+ * The store uses mock data for demonstration purposes.
+ * In production, it would integrate with a backend API.
+ */
+
+import type {
+  ConversationTurn,
+  ResultColumn,
+  ResultRow,
+  ExplorationResponse,
+  HistoryTurn
+} from '$lib/types/exploration';
+import { mockResponses } from '$lib/data/mock-responses';
+
+function createExplorationStore() {
+  let conversation = $state<ConversationTurn[]>([]);
+  let loading = $state(false);
+  let error = $state<string | null>(null);
+
+  let intentByTurn = $state<Map<string, string>>(new Map());
+  let clarificationByTurn = $state<Map<string, string>>(new Map());
+  let limitationByTurn = $state<Map<string, string>>(new Map());
+  let columnsByTurn = $state<Map<string, ResultColumn[]>>(new Map());
+  let rowsByTurn = $state<Map<string, ResultRow[]>>(new Map());
+  let observationsByTurn = $state<Map<string, string[]>>(new Map());
+  let suggestionsByTurn = $state<Map<string, string[]>>(new Map());
+  let sparqlByTurn = $state<Map<string, string>>(new Map());
+
+  function generateId(): string {
+    return crypto.randomUUID();
+  }
+
+  function buildHistory(): HistoryTurn[] {
+    return conversation.filter(turn => !turn.loading).map((turn) => {
+      if (turn.role === 'user') {
+        return { role: 'user', content: turn.content };
+      }
+      return {
+        role: 'assistant',
+        content: turn.content,
+        intent: intentByTurn.get(turn.id),
+        clarification: clarificationByTurn.get(turn.id),
+        limitation: limitationByTurn.get(turn.id),
+        columns: columnsByTurn.get(turn.id),
+        rows: rowsByTurn.get(turn.id),
+        observations: observationsByTurn.get(turn.id),
+        suggestions: suggestionsByTurn.get(turn.id),
+        sparql_query: sparqlByTurn.get(turn.id)
+      };
+    });
+  }
+
+  function findMockResponse(message: string): ExplorationResponse | null {
+    const lower = message.toLowerCase();
+
+    if (lower.includes('tell me about') || lower.includes('help me') || lower.includes('something')) {
+      return mockResponses['clarification-response'];
+    }
+    if (lower.includes('citation') || lower.includes('h-index') || lower.includes('impact factor')) {
+      return mockResponses['limitation-response'];
+    }
+
+    return mockResponses['full-response'];
+  }
+
+  async function sendMessage(content: string): Promise<void> {
+    if (!content.trim() || loading) return;
+
+    const userTurn: ConversationTurn = {
+      id: generateId(),
+      role: 'user',
+      content: content.trim(),
+      timestamp: new Date()
+    };
+    conversation = [...conversation, userTurn];
+
+    const assistantTurn: ConversationTurn = {
+      id: generateId(),
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      loading: true
+    };
+    conversation = [...conversation, assistantTurn];
+    loading = true;
+    error = null;
+
+    const history = buildHistory();
+
+    await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 700));
+
+    const response = findMockResponse(content);
+
+    if (response) {
+      const displayText = response.clarification || response.limitation || response.intent || '';
+
+      conversation = conversation.map((t) =>
+        t.id === assistantTurn.id
+          ? { ...t, content: displayText, loading: false }
+          : t
+      );
+
+      if (response.intent) {
+        intentByTurn = new Map(intentByTurn).set(assistantTurn.id, response.intent);
+      }
+      if (response.clarification) {
+        clarificationByTurn = new Map(clarificationByTurn).set(assistantTurn.id, response.clarification);
+      }
+      if (response.limitation) {
+        limitationByTurn = new Map(limitationByTurn).set(assistantTurn.id, response.limitation);
+      }
+      if (response.columns) {
+        columnsByTurn = new Map(columnsByTurn).set(assistantTurn.id, response.columns);
+      }
+      if (response.rows) {
+        rowsByTurn = new Map(rowsByTurn).set(assistantTurn.id, response.rows);
+      }
+      if (response.observations) {
+        observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.observations);
+      }
+      if (response.suggestions) {
+        suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.suggestions);
+      }
+      if (response.sparql_query) {
+        sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, response.sparql_query);
+      }
+    } else {
+      conversation = conversation.map((t) =>
+        t.id === assistantTurn.id
+          ? {
+              ...t,
+              content: 'Sorry, I encountered an error. Please try again.',
+              loading: false,
+              error: true
+            }
+          : t
+      );
+      error = 'Failed to get response';
+    }
+
+    loading = false;
+  }
+
+  function selectSuggestion(suggestion: string): void {
+    sendMessage(suggestion);
+  }
+
+  function retry(): void {
+    const lastUserTurn = [...conversation].reverse().find((t) => t.role === 'user');
+    if (lastUserTurn) {
+      conversation = conversation.filter((t) => !t.loading && !(t.role === 'assistant' && t.error));
+      sendMessage(lastUserTurn.content);
+    }
+  }
+
+  function clearExploration(): void {
+    conversation = [];
+    loading = false;
+    error = null;
+    intentByTurn = new Map();
+    clarificationByTurn = new Map();
+    limitationByTurn = new Map();
+    columnsByTurn = new Map();
+    rowsByTurn = new Map();
+    observationsByTurn = new Map();
+    suggestionsByTurn = new Map();
+    sparqlByTurn = new Map();
+  }
+
+  return {
+    get conversation(): ConversationTurn[] {
+      return conversation;
+    },
+    get loading(): boolean {
+      return loading;
+    },
+    get error(): string | null {
+      return error;
+    },
+    get intentByTurn(): Map<string, string> {
+      return intentByTurn;
+    },
+    get clarificationByTurn(): Map<string, string> {
+      return clarificationByTurn;
+    },
+    get limitationByTurn(): Map<string, string> {
+      return limitationByTurn;
+    },
+    get columnsByTurn(): Map<string, ResultColumn[]> {
+      return columnsByTurn;
+    },
+    get rowsByTurn(): Map<string, ResultRow[]> {
+      return rowsByTurn;
+    },
+    get observationsByTurn(): Map<string, string[]> {
+      return observationsByTurn;
+    },
+    get suggestionsByTurn(): Map<string, string[]> {
+      return suggestionsByTurn;
+    },
+    get sparqlByTurn(): Map<string, string> {
+      return sparqlByTurn;
+    },
+    sendMessage,
+    selectSuggestion,
+    retry,
+    clearExploration
+  };
+}
+
+export const exploration = createExplorationStore();

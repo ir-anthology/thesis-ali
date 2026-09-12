@@ -1,0 +1,31 @@
+- generic [ref=f36e3]:
+  - navigation [ref=f36e4]:
+    - link "IR Anthology" [ref=f36e7] [cursor=pointer]:
+      - /url: ./
+      - generic [ref=f36e8]:
+        - generic [ref=f36e9]: IR
+        - text: Anthology
+  - generic [ref=f36e10]:
+    - log "Conversation history" [ref=f36e11]:
+      - generic [ref=f36e12]:
+        - generic [ref=f36e13]:
+          - heading "Welcome to IR Anthology Chat" [level=2] [ref=f36e17]
+          - paragraph [ref=f36e18]: Ask me about authors, venues, and publications in the knowledge graph.
+        - grid "Knowledge Graph Overview" [ref=f36e22]:
+          - rowgroup [ref=f36e23]:
+            - row [ref=f36e24]:
+              - columnheader "Authors" [ref=f36e25]
+              - columnheader "Venues" [ref=f36e27]
+              - columnheader "Years" [ref=f36e29]
+              - columnheader "Publications" [ref=f36e31]
+          - rowgroup [ref=f36e33]:
+            - row [ref=f36e34]:
+              - gridcell "50" [ref=f36e35] [cursor=pointer]
+              - gridcell "12" [ref=f36e36] [cursor=pointer]
+              - gridcell "5" [ref=f36e37] [cursor=pointer]
+              - gridcell "42" [ref=f36e38] [cursor=pointer]
+    - generic [ref=f36e39]:
+      - generic [ref=f36e40]:
+        - textbox "Ask about IR publications..." [ref=f36e41]
+        - button "Send message" [disabled] [ref=f36e42]
+      - paragraph [ref=f36e46]: Press Enter to send, Shift + Enter for new line

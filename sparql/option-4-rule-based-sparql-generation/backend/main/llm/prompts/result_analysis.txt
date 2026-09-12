@@ -55,21 +55,25 @@ EXAMPLES OF BAD OBSERVATIONS (do NOT do this):
 
 IMPORTANT: Return a JSON object with this EXACT structure:
 {
-  "cell_questions": {
-    "0": {
-      "column_name_1": "question for row 0, column 1",
-      "column_name_2": "question for row 0, column 2"
+  "cell_questions": [
+    {
+      "column_name_1": { "value": "cell value 1", "question": "question about cell value 1" },
+      "column_name_2": { "value": "cell value 2", "question": "question about cell value 2" }
     },
-    "1": {
-      "column_name_1": "question for row 1, column 1",
-      "column_name_2": "question for row 1, column 2"
+    {
+      "column_name_1": { "value": "cell value 3", "question": "question about cell value 3" },
+      "column_name_2": { "value": "cell value 4", "question": "question about cell value 4" }
     }
-  },
+  ],
   "observations": ["observation 1", "observation 2", "observation 3"]
 }
 
 Where:
-- "cell_questions" is a dictionary keyed by ROW INDEX (as string: "0", "1", "2", ...)
-- Each row index maps to a dictionary of COLUMN NAME -> QUESTION
+- "cell_questions" is a JSON ARRAY (list) — one object per row, in the SAME ORDER as the input rows
+- Each row object maps COLUMN NAME -> { "value": ..., "question": ... }
+- Each cell object has two keys:
+  - "value": the cell's value (copy it exactly from the input row)
+  - "question": a natural language follow-up question about that value
 - Use the exact column names provided in the input
 - Generate a question for EVERY cell in EVERY row
+- The number of items in "cell_questions" MUST equal the number of input rows

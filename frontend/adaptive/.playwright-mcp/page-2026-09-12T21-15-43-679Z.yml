@@ -1,0 +1,51 @@
+- generic [ref=f60e3]:
+  - navigation [ref=f60e4]:
+    - generic [ref=f60e5]:
+      - link "IR Anthology" [ref=f60e7] [cursor=pointer]:
+        - /url: ./
+        - generic [ref=f60e8]:
+          - generic [ref=f60e9]: IR
+          - text: Anthology
+      - button "New Exploration" [ref=f60e51] [cursor=pointer]
+  - generic [ref=f60e10]:
+    - log "Conversation history" [ref=f60e11]:
+      - generic [ref=f60e12]:
+        - generic [ref=f60e13]:
+          - heading "Welcome to IR Anthology Chat" [level=2] [ref=f60e17]
+          - paragraph [ref=f60e18]: Ask me about authors, venues, and publications in the knowledge graph.
+        - grid "Knowledge Graph Overview" [ref=f60e33]:
+          - rowgroup [ref=f60e34]:
+            - row [ref=f60e35]:
+              - columnheader "Author" [ref=f60e36] [cursor=pointer]
+              - columnheader "Publications" [ref=f60e38] [cursor=pointer]
+              - columnheader "Venue" [ref=f60e40] [cursor=pointer]
+              - columnheader "Year" [ref=f60e42] [cursor=pointer]
+          - rowgroup [ref=f60e44]:
+            - row [ref=f60e45]:
+              - gridcell "101920" [ref=f60e46] [cursor=pointer]
+              - gridcell "78608" [ref=f60e47] [cursor=pointer]
+              - gridcell "206" [ref=f60e48] [cursor=pointer]
+              - gridcell "65" [ref=f60e49] [cursor=pointer]
+      - generic [ref=f60e57]:
+        - generic [ref=f60e58]:
+          - generic [ref=f60e59]: You
+          - generic [ref=f60e60]: 23:15
+        - paragraph [ref=f60e62]: hello
+      - generic [ref=f60e63]:
+        - generic [ref=f60e64]: IR
+        - generic [ref=f60e66]:
+          - generic [ref=f60e67]:
+            - generic [ref=f60e68]: IR Anthology
+            - generic [ref=f60e69]: 23:15
+          - generic [ref=f60e70]:
+            - paragraph [ref=f60e71]: Hello! DBLP is designed for searching computer science publications, so there is no publication query to interpret here. How can I help you search DBLP?
+            - group "Suggested follow-up questions" [ref=f60e72]:
+              - generic [ref=f60e73]:
+                - 'button "Ask: Which authors have published in a specific computer science area?" [ref=f60e74] [cursor=pointer]': Which authors have published in a specific computer science area?
+                - 'button "Ask: What are the most recent publications by a particular author?" [ref=f60e75] [cursor=pointer]': What are the most recent publications by a particular author?
+                - 'button "Ask: Which venues publish research on a topic you are interested in?" [ref=f60e76] [cursor=pointer]': Which venues publish research on a topic you are interested in?
+    - generic [ref=f60e22]:
+      - generic [ref=f60e23]:
+        - textbox "Ask about IR publications..." [ref=f60e24]
+        - button "Send message" [disabled] [ref=f60e25]
+      - paragraph [ref=f60e29]: Press Enter to send, Shift + Enter for new line

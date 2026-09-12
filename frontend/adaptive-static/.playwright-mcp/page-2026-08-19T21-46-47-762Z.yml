@@ -1,0 +1,84 @@
+- generic [ref=f3e3]:
+  - banner [ref=f3e4]:
+    - heading "Scholarly Explorer" [level=1] [ref=f3e5]
+    - button "New Exploration" [ref=f3e443] [cursor=pointer]
+  - log "Conversation history" [ref=f3e7]:
+    - generic [ref=f3e449]:
+      - generic [ref=f3e450]:
+        - generic [ref=f3e451]: You
+        - generic [ref=f3e452]: 23:46
+      - paragraph [ref=f3e454]: Who are the most prolific authors?
+    - generic [ref=f3e459]:
+      - generic [ref=f3e460]:
+        - generic [ref=f3e461]: Assistant
+        - generic [ref=f3e462]: 23:46
+      - generic [ref=f3e463]:
+        - paragraph [ref=f3e468]: Most Prolific Authors in Exploratory Search
+        - generic [ref=f3e548]:
+          - generic [ref=f3e549]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f3e550] [cursor=pointer]'
+    - generic [ref=f3e528]:
+      - generic [ref=f3e529]:
+        - generic [ref=f3e530]: You
+        - generic [ref=f3e531]: 23:46
+      - paragraph [ref=f3e533]: Only consider the last five years
+    - generic [ref=f3e538]:
+      - generic [ref=f3e539]:
+        - generic [ref=f3e540]: Assistant
+        - generic [ref=f3e541]: 23:46
+      - generic [ref=f3e542]:
+        - paragraph [ref=f3e554]: Most Prolific Authors (2020–2025)
+        - generic [ref=f3e556]:
+          - generic [ref=f3e557]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f3e558] [cursor=pointer]'
+        - generic [ref=f3e562]:
+          - generic [ref=f3e563]: Most Prolific Authors (2020–2025)
+          - grid "Most Prolific Authors (2020–2025)" [ref=f3e568]:
+            - rowgroup [ref=f3e569]:
+              - row [ref=f3e570]:
+                - columnheader "Author" [ref=f3e571] [cursor=pointer]
+                - columnheader "Publications" [ref=f3e573] [cursor=pointer]
+                - columnheader "Venues" [ref=f3e575] [cursor=pointer]
+                - columnheader "Years" [ref=f3e577]
+            - rowgroup [ref=f3e579]:
+              - row [ref=f3e580]:
+                - gridcell "Marti A. Hearst" [ref=f3e581]
+                - gridcell "18" [ref=f3e582]
+                - gridcell "6" [ref=f3e583]
+                - gridcell "2020–2024" [ref=f3e584]
+              - row [ref=f3e585]:
+                - gridcell "Ryen W. White" [ref=f3e586]
+                - gridcell "16" [ref=f3e587]
+                - gridcell "5" [ref=f3e588]
+                - gridcell "2020–2024" [ref=f3e589]
+              - row [ref=f3e590]:
+                - gridcell "Gary Marchionini" [ref=f3e591]
+                - gridcell "12" [ref=f3e592]
+                - gridcell "4" [ref=f3e593]
+                - gridcell "2020–2023" [ref=f3e594]
+              - row [ref=f3e595]:
+                - gridcell "Daniel M. Russell" [ref=f3e596]
+                - gridcell "9" [ref=f3e597]
+                - gridcell "3" [ref=f3e598]
+                - gridcell "2020–2022" [ref=f3e599]
+              - row [ref=f3e600]:
+                - gridcell "Andrei Z. Broder" [ref=f3e601]
+                - gridcell "7" [ref=f3e602]
+                - gridcell "3" [ref=f3e603]
+                - gridcell "2020–2021" [ref=f3e604]
+        - generic [ref=f3e605]:
+          - generic [ref=f3e606]:
+            - generic [ref=f3e607]: AI
+            - generic [ref=f3e608]: Interpretation
+          - paragraph [ref=f3e609]: Filtering to the last five years reduces the result set. Marti A. Hearst still leads with 18 publications.
+        - group "Suggested follow-up questions" [ref=f3e610]:
+          - paragraph [ref=f3e611]: "You could explore:"
+          - generic "You could explore:" [ref=f3e612]:
+            - 'button "Ask: Which venues do these authors publish in?" [ref=f3e613] [cursor=pointer]': Which venues do these authors publish in?
+            - 'button "Ask: Show me how this changed over time" [ref=f3e614] [cursor=pointer]': Show me how this changed over time
+            - 'button "Ask: Compare the top two authors" [ref=f3e615] [cursor=pointer]': Compare the top two authors
+  - generic [ref=f3e217]:
+    - generic [ref=f3e218]:
+      - textbox "Ask about scholarly publications..." [ref=f3e219]
+      - button "Send message" [disabled] [ref=f3e220]
+    - paragraph [ref=f3e224]: Press Enter to send, Shift + Enter for new line

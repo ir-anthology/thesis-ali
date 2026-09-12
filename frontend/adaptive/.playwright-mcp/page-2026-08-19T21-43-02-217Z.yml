@@ -1,0 +1,80 @@
+- generic [ref=f3e3]:
+  - banner [ref=f3e4]:
+    - heading "Scholarly Explorer" [level=1] [ref=f3e5]
+    - button "New Exploration" [ref=f3e239] [cursor=pointer]
+  - log "Conversation history" [ref=f3e7]:
+    - generic [ref=f3e245]:
+      - generic [ref=f3e246]:
+        - generic [ref=f3e247]: You
+        - generic [ref=f3e248]: 23:42
+      - paragraph [ref=f3e250]: WHO ARE THE MOST PROLICT AUTHORS
+    - generic [ref=f3e255]:
+      - generic [ref=f3e256]:
+        - generic [ref=f3e257]: Assistant
+        - generic [ref=f3e258]: 23:42
+      - paragraph [ref=f3e264]: Unsupported Query
+    - generic [ref=f3e283]:
+      - generic [ref=f3e284]:
+        - generic [ref=f3e285]: You
+        - generic [ref=f3e286]: 23:42
+      - paragraph [ref=f3e288]: WHO ARE THE MOST PROLIFIC AUTHORS
+    - generic [ref=f3e293]:
+      - generic [ref=f3e294]:
+        - generic [ref=f3e295]: Assistant
+        - generic [ref=f3e296]: 23:42
+      - generic [ref=f3e297]:
+        - paragraph [ref=f3e302]: Most Prolific Authors in Exploratory Search
+        - generic [ref=f3e303]:
+          - generic [ref=f3e304]: Most Prolific Authors in Exploratory Search
+          - grid "Most Prolific Authors in Exploratory Search" [ref=f3e309]:
+            - rowgroup [ref=f3e310]:
+              - row [ref=f3e311]:
+                - columnheader "Author" [ref=f3e312] [cursor=pointer]
+                - columnheader [ref=f3e314] [cursor=pointer]:
+                  - generic [ref=f3e315]:
+                    - text: Publications
+                    - generic [ref=f3e357]: ↑
+                - columnheader "Venues" [ref=f3e316] [cursor=pointer]
+                - columnheader "Years" [ref=f3e318]
+            - rowgroup [ref=f3e320]:
+              - row [ref=f3e358]:
+                - gridcell "Andrei Z. Broder" [ref=f3e359]
+                - gridcell "24" [ref=f3e360]
+                - gridcell "7" [ref=f3e361]
+                - gridcell "1998–2021" [ref=f3e362]
+              - row [ref=f3e363]:
+                - gridcell "Daniel M. Russell" [ref=f3e364]
+                - gridcell "27" [ref=f3e365]
+                - gridcell "8" [ref=f3e366]
+                - gridcell "2000–2022" [ref=f3e367]
+              - row [ref=f3e331]:
+                - gridcell "Gary Marchionini" [ref=f3e332]
+                - gridcell "31" [ref=f3e333]
+                - gridcell "9" [ref=f3e334]
+                - gridcell "1997–2023" [ref=f3e335]
+              - row [ref=f3e368]:
+                - gridcell "Ryen W. White" [ref=f3e369]
+                - gridcell "38" [ref=f3e370]
+                - gridcell "10" [ref=f3e371]
+                - gridcell "2003–2024" [ref=f3e372]
+              - row [ref=f3e373]:
+                - gridcell "Marti A. Hearst" [ref=f3e374]
+                - gridcell "42" [ref=f3e375]
+                - gridcell "12" [ref=f3e376]
+                - gridcell "1995–2024" [ref=f3e377]
+        - generic [ref=f3e346]:
+          - generic [ref=f3e347]:
+            - generic [ref=f3e348]: AI
+            - generic [ref=f3e349]: Interpretation
+          - paragraph [ref=f3e350]: Marti A. Hearst leads with 42 publications spanning nearly three decades, indicating sustained research activity in exploratory search.
+        - group "Suggested follow-up questions" [ref=f3e351]:
+          - paragraph [ref=f3e352]: "You could explore:"
+          - generic "You could explore:" [ref=f3e353]:
+            - 'button "Ask: Only consider the last five years" [ref=f3e354] [cursor=pointer]': Only consider the last five years
+            - 'button "Ask: Which venues do these authors publish in?" [ref=f3e355] [cursor=pointer]': Which venues do these authors publish in?
+            - 'button "Ask: Show me how this changed over time" [ref=f3e356] [cursor=pointer]': Show me how this changed over time
+  - generic [ref=f3e217]:
+    - generic [ref=f3e218]:
+      - textbox "Ask about scholarly publications..." [ref=f3e219]
+      - button "Send message" [disabled] [ref=f3e220]
+    - paragraph [ref=f3e224]: Press Enter to send, Shift + Enter for new line

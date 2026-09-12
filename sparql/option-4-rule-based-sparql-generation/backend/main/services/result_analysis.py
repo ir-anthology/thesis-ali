@@ -75,7 +75,7 @@ class ResultAnalysisService:
         # Build row descriptions
         rows_context: list[str] = []
         for i, row in enumerate(batch_rows):
-            row_num = offset + i + 1
+            row_num = offset + i
             row_str = ", ".join(f"{k}: {row.get(k, '')}" for k in col_keys)
             rows_context.append(f"Row {row_num}: {row_str}")
 
@@ -90,66 +90,94 @@ class ResultAnalysisService:
             user_prompt=user_prompt,
         )
 
-        if data is None:
-            logger.warning("Stage 3: LLM returned None for questions")
-            # Fallback: rows without questions
-            return [
-                {k: CellValue(value=str(row.get(k, "")), question="") for k in col_keys}
-                for row in batch_rows
-            ]
+        logger.info("Stage 3: LLM response: %s", data)
 
-        logger.info("Stage 3: LLM response keys: %s", list(data.keys()))
-        return self._parse_cell_questions(data, col_keys, batch_rows)
+        # Parse whatever the LLM returned (may be None or incomplete)
+        parsed = self._parse_cell_questions(data, col_keys, batch_rows)
+        # Always fill missing questions — guarantees every cell has a question
+        return self._fill_missing_questions(parsed, col_keys)
 
     @staticmethod
     def _parse_cell_questions(
-        data: dict,
+        data: dict | None,
         col_keys: list[str],
         batch_rows: list[dict[str, object]],
     ) -> list[dict[str, CellValue]]:
-        result: list[dict[str, CellValue]] = []
+        """Parse LLM response into CellValue rows.
 
-        # Try multiple possible keys for the questions data
-        llm_rows = None
-        for key in ["cell_questions", "rows", "questions"]:
-            if key in data:
-                llm_rows = data[key]
-                logger.info("Stage 3: Found questions under key '%s'", key)
-                break
+        Expects ``cell_questions`` to be a list — one object per row, in the
+        same order as the input rows.  Falls back to empty questions when the
+        LLM response is missing or malformed.
+        """
+        # Start with empty questions for every cell
+        result: list[dict[str, CellValue]] = [
+            {k: CellValue(value=str(row.get(k, "")), question="") for k in col_keys}
+            for row in batch_rows
+        ]
 
-        if llm_rows is None:
+        if data is None:
+            logger.warning("Stage 3: LLM returned None")
+            return result
+
+        llm_rows = data.get("cell_questions")
+        logger.info(
+            "Stage 3: cell_questions type=%s, value=%s",
+            type(llm_rows),
+            llm_rows,
+        )
+        if not isinstance(llm_rows, list):
             logger.warning(
-                "Stage 3: No questions key found in LLM response: %s", list(data.keys())
+                "Stage 3: cell_questions is not a list (got %s)", type(llm_rows)
             )
-            # Fallback: rows without questions
-            return [
-                {k: CellValue(value=str(row.get(k, "")), question="") for k in col_keys}
-                for row in batch_rows
-            ]
+            return result
 
+        # Map LLM rows onto result by position
         for i, row in enumerate(batch_rows):
-            parsed: dict[str, CellValue] = {}
-            # llm_rows may be a list or a dict keyed by row index
-            if isinstance(llm_rows, dict):
-                llm_row = llm_rows.get(str(i), llm_rows.get(i, {}))
-            elif isinstance(llm_rows, list) and i < len(llm_rows):
-                llm_row = llm_rows[i]
-            else:
-                llm_row = {}
-
+            if i >= len(llm_rows):
+                break
+            llm_row = llm_rows[i]
+            if not isinstance(llm_row, dict):
+                continue
             for k in col_keys:
-                value = str(row.get(k, ""))
-                question = ""
                 cell_data = llm_row.get(k)
+                raw_value = str(row.get(k, ""))
                 if isinstance(cell_data, dict):
+                    value = str(cell_data.get("value", raw_value))
                     question = cell_data.get("question", "")
                 elif isinstance(cell_data, str):
+                    value = raw_value
                     question = cell_data
-                parsed[k] = CellValue(value=value, question=question)
-
-            result.append(parsed)
+                else:
+                    continue
+                result[i][k] = CellValue(value=value, question=question)
 
         return result
+
+    @staticmethod
+    def _fill_missing_questions(
+        rows: list[dict[str, CellValue]],
+        col_keys: list[str],
+    ) -> list[dict[str, CellValue]]:
+        """Ensure every cell has a non-empty question.
+
+        Generates a generic fallback question based on column key and cell value
+        when the LLM did not produce one.
+        """
+        for row in rows:
+            for k in col_keys:
+                cell = row[k]
+                if cell.question.strip():
+                    continue
+                value = cell.value
+                if not value:
+                    row[k] = CellValue(value=value, question=f"Tell me about this {k}")
+                    continue
+                row[k] = CellValue(
+                    value=value,
+                    question=f"Tell me about {value}",
+                )
+                logger.info("Stage 3: Filled missing question for %s='%s'", k, value)
+        return rows
 
     # ------------------------------------------------------------------
     # Observations

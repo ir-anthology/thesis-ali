@@ -1,0 +1,67 @@
+- generic [ref=f3e3]:
+  - banner [ref=f3e4]:
+    - heading "Scholarly Explorer" [level=1] [ref=f3e5]
+    - button "New Exploration" [ref=f3e443] [cursor=pointer]
+  - log "Conversation history" [ref=f3e7]:
+    - generic [ref=f3e449]:
+      - generic [ref=f3e450]:
+        - generic [ref=f3e451]: You
+        - generic [ref=f3e452]: 23:46
+      - paragraph [ref=f3e454]: Who are the most prolific authors?
+    - generic [ref=f3e459]:
+      - generic [ref=f3e460]:
+        - generic [ref=f3e461]: Assistant
+        - generic [ref=f3e462]: 23:46
+      - generic [ref=f3e463]:
+        - paragraph [ref=f3e468]: Most Prolific Authors in Exploratory Search
+        - generic [ref=f3e469]:
+          - generic [ref=f3e470]: Most Prolific Authors in Exploratory Search
+          - grid "Most Prolific Authors in Exploratory Search" [ref=f3e475]:
+            - rowgroup [ref=f3e476]:
+              - row [ref=f3e477]:
+                - columnheader "Author" [ref=f3e478] [cursor=pointer]
+                - columnheader "Publications" [ref=f3e480] [cursor=pointer]
+                - columnheader "Venues" [ref=f3e482] [cursor=pointer]
+                - columnheader "Years" [ref=f3e484]
+            - rowgroup [ref=f3e486]:
+              - row [ref=f3e487]:
+                - gridcell "Marti A. Hearst" [ref=f3e488]
+                - gridcell "42" [ref=f3e489]
+                - gridcell "12" [ref=f3e490]
+                - gridcell "1995–2024" [ref=f3e491]
+              - row [ref=f3e492]:
+                - gridcell "Ryen W. White" [ref=f3e493]
+                - gridcell "38" [ref=f3e494]
+                - gridcell "10" [ref=f3e495]
+                - gridcell "2003–2024" [ref=f3e496]
+              - row [ref=f3e497]:
+                - gridcell "Gary Marchionini" [ref=f3e498]
+                - gridcell "31" [ref=f3e499]
+                - gridcell "9" [ref=f3e500]
+                - gridcell "1997–2023" [ref=f3e501]
+              - row [ref=f3e502]:
+                - gridcell "Daniel M. Russell" [ref=f3e503]
+                - gridcell "27" [ref=f3e504]
+                - gridcell "8" [ref=f3e505]
+                - gridcell "2000–2022" [ref=f3e506]
+              - row [ref=f3e507]:
+                - gridcell "Andrei Z. Broder" [ref=f3e508]
+                - gridcell "24" [ref=f3e509]
+                - gridcell "7" [ref=f3e510]
+                - gridcell "1998–2021" [ref=f3e511]
+        - generic [ref=f3e512]:
+          - generic [ref=f3e513]:
+            - generic [ref=f3e514]: AI
+            - generic [ref=f3e515]: Interpretation
+          - paragraph [ref=f3e516]: Marti A. Hearst leads with 42 publications spanning nearly three decades, indicating sustained research activity in exploratory search.
+        - group "Suggested follow-up questions" [ref=f3e517]:
+          - paragraph [ref=f3e518]: "You could explore:"
+          - generic "You could explore:" [ref=f3e519]:
+            - 'button "Ask: Only consider the last five years" [ref=f3e520] [cursor=pointer]': Only consider the last five years
+            - 'button "Ask: Which venues do these authors publish in?" [ref=f3e521] [cursor=pointer]': Which venues do these authors publish in?
+            - 'button "Ask: Show me how this changed over time" [ref=f3e522] [cursor=pointer]': Show me how this changed over time
+  - generic [ref=f3e217]:
+    - generic [ref=f3e218]:
+      - textbox "Ask about scholarly publications..." [ref=f3e219]
+      - button "Send message" [disabled] [ref=f3e220]
+    - paragraph [ref=f3e224]: Press Enter to send, Shift + Enter for new line

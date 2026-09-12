@@ -1,0 +1,51 @@
+- generic [ref=f69e3]:
+  - navigation [ref=f69e4]:
+    - generic [ref=f69e5]:
+      - link "IR Anthology" [ref=f69e7] [cursor=pointer]:
+        - /url: ./
+        - generic [ref=f69e8]:
+          - generic [ref=f69e9]: IR
+          - text: Anthology
+      - button "New Exploration" [ref=f69e48] [cursor=pointer]
+  - generic [ref=f69e10]:
+    - log "Conversation history" [ref=f69e11]:
+      - generic [ref=f69e12]:
+        - generic [ref=f69e13]:
+          - heading "Welcome to IR Anthology Chat" [level=2] [ref=f69e14]
+          - paragraph [ref=f69e15]: Ask me about authors, venues, and publications in the knowledge graph.
+        - grid "Knowledge Graph Overview" [ref=f69e30]:
+          - rowgroup [ref=f69e31]:
+            - row [ref=f69e32]:
+              - columnheader "Author" [ref=f69e33] [cursor=pointer]
+              - columnheader "Publications" [ref=f69e35] [cursor=pointer]
+              - columnheader "Venue" [ref=f69e37] [cursor=pointer]
+              - columnheader "Year" [ref=f69e39] [cursor=pointer]
+          - rowgroup [ref=f69e41]:
+            - row [ref=f69e42]:
+              - gridcell "101920" [ref=f69e43] [cursor=pointer]
+              - gridcell "78608" [ref=f69e44] [cursor=pointer]
+              - gridcell "206" [ref=f69e45] [cursor=pointer]
+              - gridcell "65" [ref=f69e46] [cursor=pointer]
+      - generic [ref=f69e54]:
+        - generic [ref=f69e55]:
+          - generic [ref=f69e56]: You
+          - generic [ref=f69e57]: 23:27
+        - paragraph [ref=f69e59]: hello
+      - generic [ref=f69e60]:
+        - generic [ref=f69e61]: IR
+        - generic [ref=f69e63]:
+          - generic [ref=f69e64]:
+            - generic [ref=f69e65]: IR Anthology
+            - generic [ref=f69e66]: 23:27
+          - generic [ref=f69e67]:
+            - paragraph [ref=f69e68]: Hello! DBLP is designed for searching computer science publications, authors, and venues. Please provide a publication-related question, such as asking for papers by an author or from a conference.
+            - group "Suggested follow-up questions" [ref=f69e69]:
+              - generic [ref=f69e70]:
+                - 'button "Ask: Which publications has a specific author written?" [ref=f69e71] [cursor=pointer]': Which publications has a specific author written?
+                - 'button "Ask: What papers were published at a specific conference or journal?" [ref=f69e72] [cursor=pointer]': What papers were published at a specific conference or journal?
+                - 'button "Ask: Who are the co-authors of a particular researcher?" [ref=f69e73] [cursor=pointer]': Who are the co-authors of a particular researcher?
+    - generic [ref=f69e19]:
+      - generic [ref=f69e20]:
+        - textbox "Ask about IR publications..." [ref=f69e21]
+        - button "Send message" [disabled] [ref=f69e22]
+      - paragraph [ref=f69e26]: Press Enter to send, Shift + Enter for new line

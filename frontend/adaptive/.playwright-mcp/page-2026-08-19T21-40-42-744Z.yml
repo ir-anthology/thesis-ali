@@ -1,0 +1,115 @@
+- generic [ref=f2e3]:
+  - banner [ref=f2e4]:
+    - heading "Scholarly Explorer" [level=1] [ref=f2e5]
+    - button "New Exploration" [ref=f2e29] [cursor=pointer]
+  - log "Conversation history" [ref=f2e6]:
+    - generic [ref=f2e35]:
+      - generic [ref=f2e36]:
+        - generic [ref=f2e37]: You
+        - generic [ref=f2e38]: 23:40
+      - paragraph [ref=f2e40]: Who are the most prolific authors?
+    - generic [ref=f2e45]:
+      - generic [ref=f2e46]:
+        - generic [ref=f2e47]: Assistant
+        - generic [ref=f2e48]: 23:40
+      - generic [ref=f2e49]:
+        - paragraph [ref=f2e54]: Most Prolific Authors in Exploratory Search
+        - generic [ref=f2e134]:
+          - generic [ref=f2e135]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e136] [cursor=pointer]'
+    - generic [ref=f2e114]:
+      - generic [ref=f2e115]:
+        - generic [ref=f2e116]: You
+        - generic [ref=f2e117]: 23:40
+      - paragraph [ref=f2e119]: Only consider the last five years
+    - generic [ref=f2e124]:
+      - generic [ref=f2e125]:
+        - generic [ref=f2e126]: Assistant
+        - generic [ref=f2e127]: 23:40
+      - generic [ref=f2e128]:
+        - paragraph [ref=f2e140]: Most Prolific Authors (2020–2025)
+        - generic [ref=f2e142]:
+          - generic [ref=f2e143]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e144] [cursor=pointer]'
+    - generic [ref=f2e207]:
+      - generic [ref=f2e208]:
+        - generic [ref=f2e209]: You
+        - generic [ref=f2e210]: 23:40
+      - paragraph [ref=f2e212]: Which venues do these authors publish in?
+    - generic [ref=f2e217]:
+      - generic [ref=f2e218]:
+        - generic [ref=f2e219]: Assistant
+        - generic [ref=f2e220]: 23:40
+      - generic [ref=f2e221]:
+        - paragraph [ref=f2e233]: Venues for Top Authors in Exploratory Search
+        - generic [ref=f2e227]:
+          - generic [ref=f2e228]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e229] [cursor=pointer]'
+        - generic [ref=f2e234]:
+          - generic [ref=f2e235]: Venues for Top Authors in Exploratory Search
+          - grid "Venues for Top Authors in Exploratory Search" [ref=f2e240]:
+            - rowgroup [ref=f2e241]:
+              - row [ref=f2e242]:
+                - columnheader "Venue" [ref=f2e243] [cursor=pointer]
+                - columnheader "Publications" [ref=f2e245] [cursor=pointer]
+                - columnheader "Authors" [ref=f2e247] [cursor=pointer]
+                - columnheader "Years" [ref=f2e249]
+            - rowgroup [ref=f2e251]:
+              - row [ref=f2e252]:
+                - gridcell "SIGIR" [ref=f2e253]
+                - gridcell "18" [ref=f2e254]
+                - gridcell "5" [ref=f2e255]
+                - gridcell "2020–2025" [ref=f2e256]
+              - row [ref=f2e257]:
+                - gridcell "CHIIR" [ref=f2e258]
+                - gridcell "9" [ref=f2e259]
+                - gridcell "4" [ref=f2e260]
+                - gridcell "2021–2025" [ref=f2e261]
+              - row [ref=f2e262]:
+                - gridcell "CHI" [ref=f2e263]
+                - gridcell "7" [ref=f2e264]
+                - gridcell "3" [ref=f2e265]
+                - gridcell "2020–2024" [ref=f2e266]
+              - row [ref=f2e267]:
+                - gridcell "UIST" [ref=f2e268]
+                - gridcell "5" [ref=f2e269]
+                - gridcell "2" [ref=f2e270]
+                - gridcell "2020–2023" [ref=f2e271]
+              - row [ref=f2e272]:
+                - gridcell "JASIST" [ref=f2e273]
+                - gridcell "4" [ref=f2e274]
+                - gridcell "3" [ref=f2e275]
+                - gridcell "2020–2024" [ref=f2e276]
+        - generic [ref=f2e277]:
+          - generic [ref=f2e278]:
+            - generic [ref=f2e279]: AI
+            - generic [ref=f2e280]: Interpretation
+          - paragraph [ref=f2e281]: SIGIR dominates as the primary venue, accounting for 18 publications across all five authors.
+        - group "Suggested follow-up questions" [ref=f2e282]:
+          - paragraph [ref=f2e283]: "You could explore:"
+          - generic "You could explore:" [ref=f2e284]:
+            - 'button "Ask: Show me how this changed over time" [active] [ref=f2e285] [cursor=pointer]': Show me how this changed over time
+            - 'button "Ask: Compare SIGIR and CHIIR" [ref=f2e286] [cursor=pointer]': Compare SIGIR and CHIIR
+            - 'button "Ask: Why is SIGIR prominent?" [ref=f2e287] [cursor=pointer]': Why is SIGIR prominent?
+    - generic [ref=f2e293]:
+      - generic [ref=f2e294]:
+        - generic [ref=f2e295]: You
+        - generic [ref=f2e296]: 23:40
+      - paragraph [ref=f2e298]: Show me how this changed over time
+    - generic [ref=f2e303]:
+      - generic [ref=f2e304]:
+        - generic [ref=f2e305]: Assistant
+        - generic [ref=f2e306]: 23:40
+      - generic [ref=f2e307]:
+        - generic [ref=f2e308]:
+          - status "Loading" [ref=f2e309]:
+            - generic [ref=f2e310]: Loading...
+          - generic [ref=f2e311]: Thinking about the question...
+        - generic [ref=f2e313]:
+          - generic [ref=f2e314]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e315] [cursor=pointer]'
+  - generic [ref=f2e20]:
+    - generic [ref=f2e21]:
+      - textbox "Ask about scholarly publications..." [disabled] [ref=f2e22]
+      - button "Send message" [disabled] [ref=f2e23]
+    - paragraph [ref=f2e27]: Press Enter to send, Shift + Enter for new line

@@ -1,0 +1,19 @@
+- generic [ref=f74e3]:
+  - navigation [ref=f74e4]:
+    - link "IR Anthology" [ref=f74e7] [cursor=pointer]:
+      - /url: ./
+      - generic [ref=f74e8]:
+        - generic [ref=f74e9]: IR
+        - text: Anthology
+  - generic [ref=f74e10]:
+    - log "Conversation history" [ref=f74e11]:
+      - generic [ref=f74e12]:
+        - generic [ref=f74e13]:
+          - heading "Welcome to IR Anthology Chat" [level=2] [ref=f74e14]
+          - paragraph [ref=f74e15]: Ask me about authors, venues, and publications in the knowledge graph.
+        - generic [ref=f74e16]: Loading statistics...
+    - generic [ref=f74e19]:
+      - generic [ref=f74e20]:
+        - textbox "Ask about IR publications..." [ref=f74e21]
+        - button "Send message" [disabled] [ref=f74e22]
+      - paragraph [ref=f74e26]: Press Enter to send, Shift + Enter for new line

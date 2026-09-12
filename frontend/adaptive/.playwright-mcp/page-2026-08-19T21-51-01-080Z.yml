@@ -1,0 +1,18 @@
+- generic [ref=f5e3]:
+  - banner [ref=f5e4]:
+    - heading "Scholarly Explorer" [level=1] [ref=f5e5]
+  - log "Conversation history" [ref=f5e6]:
+    - generic [ref=f5e105]:
+      - heading "Welcome to Scholarly Explorer" [level=2] [ref=f5e109]
+      - paragraph [ref=f5e110]: Ask me about authors, venues, and publications in the knowledge graph.
+      - generic [ref=f5e112]:
+        - paragraph [ref=f5e113]: "Try asking:"
+        - list [ref=f5e114]:
+          - listitem [ref=f5e115]: "\"Who are the most prolific authors?\""
+          - listitem [ref=f5e116]: "\"Which venues do they publish in?\""
+          - listitem [ref=f5e117]: "\"Show me publication trends over time\""
+  - generic [ref=f5e20]:
+    - generic [ref=f5e21]:
+      - textbox "Ask about scholarly publications..." [ref=f5e22]
+      - button "Send message" [disabled] [ref=f5e23]
+    - paragraph [ref=f5e27]: Press Enter to send, Shift + Enter for new line

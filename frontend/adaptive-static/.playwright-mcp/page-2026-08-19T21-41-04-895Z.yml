@@ -1,0 +1,116 @@
+- generic [ref=f2e3]:
+  - banner [ref=f2e4]:
+    - heading "Scholarly Explorer" [level=1] [ref=f2e5]
+    - button "New Exploration" [ref=f2e29] [cursor=pointer]
+  - log "Conversation history" [ref=f2e6]:
+    - generic [ref=f2e35]:
+      - generic [ref=f2e36]:
+        - generic [ref=f2e37]: You
+        - generic [ref=f2e38]: 23:40
+      - paragraph [ref=f2e40]: Who are the most prolific authors?
+    - generic [ref=f2e45]:
+      - generic [ref=f2e46]:
+        - generic [ref=f2e47]: Assistant
+        - generic [ref=f2e48]: 23:40
+      - generic [ref=f2e49]:
+        - paragraph [ref=f2e54]: Most Prolific Authors in Exploratory Search
+        - generic [ref=f2e134]:
+          - generic [ref=f2e135]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e136] [cursor=pointer]'
+    - generic [ref=f2e114]:
+      - generic [ref=f2e115]:
+        - generic [ref=f2e116]: You
+        - generic [ref=f2e117]: 23:40
+      - paragraph [ref=f2e119]: Only consider the last five years
+    - generic [ref=f2e124]:
+      - generic [ref=f2e125]:
+        - generic [ref=f2e126]: Assistant
+        - generic [ref=f2e127]: 23:40
+      - generic [ref=f2e128]:
+        - paragraph [ref=f2e140]: Most Prolific Authors (2020–2025)
+        - generic [ref=f2e142]:
+          - generic [ref=f2e143]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e144] [cursor=pointer]'
+    - generic [ref=f2e207]:
+      - generic [ref=f2e208]:
+        - generic [ref=f2e209]: You
+        - generic [ref=f2e210]: 23:40
+      - paragraph [ref=f2e212]: Which venues do these authors publish in?
+    - generic [ref=f2e217]:
+      - generic [ref=f2e218]:
+        - generic [ref=f2e219]: Assistant
+        - generic [ref=f2e220]: 23:40
+      - generic [ref=f2e221]:
+        - paragraph [ref=f2e233]: Venues for Top Authors in Exploratory Search
+        - generic [ref=f2e227]:
+          - generic [ref=f2e228]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e229] [cursor=pointer]'
+    - generic [ref=f2e293]:
+      - generic [ref=f2e294]:
+        - generic [ref=f2e295]: You
+        - generic [ref=f2e296]: 23:40
+      - paragraph [ref=f2e298]: Show me how this changed over time
+    - generic [ref=f2e303]:
+      - generic [ref=f2e304]:
+        - generic [ref=f2e305]: Assistant
+        - generic [ref=f2e306]: 23:40
+      - generic [ref=f2e307]:
+        - paragraph [ref=f2e319]: Publication Activity Over Time
+        - generic [ref=f2e313]:
+          - generic [ref=f2e314]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e315] [cursor=pointer]'
+    - generic [ref=f2e418]:
+      - generic [ref=f2e419]:
+        - generic [ref=f2e420]: You
+        - generic [ref=f2e421]: 23:40
+      - paragraph [ref=f2e423]: Compare SIGIR and CHIIR
+    - generic [ref=f2e428]:
+      - generic [ref=f2e429]:
+        - generic [ref=f2e430]: Assistant
+        - generic [ref=f2e431]: 23:40
+      - generic [ref=f2e432]:
+        - paragraph [ref=f2e444]: SIGIR vs CHIIR
+        - generic [ref=f2e438]:
+          - generic [ref=f2e439]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e440] [cursor=pointer]'
+    - generic [ref=f2e491]:
+      - generic [ref=f2e492]:
+        - generic [ref=f2e493]: You
+        - generic [ref=f2e494]: 23:40
+      - paragraph [ref=f2e496]: Why is SIGIR prominent?
+    - generic [ref=f2e501]:
+      - generic [ref=f2e502]:
+        - generic [ref=f2e503]: Assistant
+        - generic [ref=f2e504]: 23:40
+      - generic [ref=f2e505]:
+        - paragraph [ref=f2e517]: Why SIGIR Is Prominent
+        - generic [ref=f2e511]:
+          - generic [ref=f2e512]: "year: 2020–2025"
+          - 'button "Remove filter year: 2020–2025" [ref=f2e513] [cursor=pointer]'
+        - paragraph [ref=f2e519]: Why SIGIR Is Prominent
+        - generic [ref=f2e520]:
+          - generic [ref=f2e521]:
+            - generic [ref=f2e522]: AI
+            - generic [ref=f2e523]: Interpretation
+          - paragraph [ref=f2e524]: SIGIR (ACM Special Interest Group on Information Retrieval) is the premier venue for information retrieval research. It accounts for the highest publication count in the current result set.
+        - generic [ref=f2e525]:
+          - generic [ref=f2e526]:
+            - generic [ref=f2e527]: AI
+            - generic [ref=f2e528]: Interpretation
+          - paragraph [ref=f2e529]: The venue has been active since the 1970s and consistently attracts top researchers in search, retrieval, and exploratory search specifically.
+        - generic [ref=f2e530]:
+          - generic [ref=f2e531]:
+            - generic [ref=f2e532]: AI
+            - generic [ref=f2e533]: Interpretation
+          - paragraph [ref=f2e534]: In the current filtered context (top authors, last 5 years), SIGIR represents 38% of all publications.
+        - group "Suggested follow-up questions" [ref=f2e535]:
+          - paragraph [ref=f2e536]: "You could explore:"
+          - generic "You could explore:" [ref=f2e537]:
+            - 'button "Ask: Compare SIGIR and CHIIR" [ref=f2e538] [cursor=pointer]': Compare SIGIR and CHIIR
+            - 'button "Ask: Which authors publish most at SIGIR?" [ref=f2e539] [cursor=pointer]': Which authors publish most at SIGIR?
+            - 'button "Ask: Show all venues" [ref=f2e540] [cursor=pointer]': Show all venues
+  - generic [ref=f2e20]:
+    - generic [ref=f2e21]:
+      - textbox "Ask about scholarly publications..." [active] [ref=f2e22]
+      - button "Send message" [disabled] [ref=f2e23]
+    - paragraph [ref=f2e27]: Press Enter to send, Shift + Enter for new line

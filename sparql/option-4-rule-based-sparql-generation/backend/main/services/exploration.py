@@ -132,9 +132,17 @@ class ExplorationService:
         if query_result.row_count > 0:
             logger.info("[Stage 3/4] Result Analysis")
             rows_with_questions, observations = self._result_analysis.run(context)
+            logger.info("  → rows_with_questions count: %d", len(rows_with_questions))
+            if rows_with_questions:
+                logger.info("  → First row sample: %s", rows_with_questions[0])
             context.set_result_table(columns, rows_with_questions)
             context.set_observations(observations)
             logger.info("  → Generated %d observations", len(observations))
+            logger.info("  → context.result_rows count: %d", len(context.result_rows))
+            if context.result_rows:
+                logger.info(
+                    "  → context.result_rows[0] sample: %s", context.result_rows[0]
+                )
         else:
             logger.info("[Stage 3/4] Result Analysis — skipped (0 rows)")
 
@@ -198,6 +206,15 @@ class ExplorationService:
         has_data = (
             context.query_result is not None and context.query_result.row_count > 0
         )  # type: ignore[union-attr]
+
+        logger.info("[_build_response] has_data: %s", has_data)
+        logger.info(
+            "[_build_response] context.result_rows count: %d", len(context.result_rows)
+        )
+        if context.result_rows:
+            logger.info(
+                "[_build_response] First result_row sample: %s", context.result_rows[0]
+            )
 
         return ExplorationResponse(
             interpretation=interpretation_text,

@@ -25,7 +25,7 @@ SELECT
   (COUNT(DISTINCT ?year)       AS ?Years)
 WHERE {
   ?pub a dblp:Publication .
-  OPTIONAL { ?pub dblp:authorName ?authorName . }
+  OPTIONAL { ?pub dblp:authoredBy ?authorName . }
   OPTIONAL { ?pub dblp:title ?pubTitle . }
   OPTIONAL { ?pub dblp:publishedIn ?venueTitle . }
   OPTIONAL { ?pub dblp:yearOfPublication ?year . }

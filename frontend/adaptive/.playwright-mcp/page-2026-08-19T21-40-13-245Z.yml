@@ -1,0 +1,23 @@
+- generic [ref=f2e3]:
+  - banner [ref=f2e4]:
+    - heading "Scholarly Explorer" [level=1] [ref=f2e5]
+    - button "New Exploration" [ref=f2e29] [cursor=pointer]
+  - log "Conversation history" [ref=f2e6]:
+    - generic [ref=f2e35]:
+      - generic [ref=f2e36]:
+        - generic [ref=f2e37]: You
+        - generic [ref=f2e38]: 23:40
+      - paragraph [ref=f2e40]: Who are the most prolific authors?
+    - generic [ref=f2e45]:
+      - generic [ref=f2e46]:
+        - generic [ref=f2e47]: Assistant
+        - generic [ref=f2e48]: 23:40
+      - generic [ref=f2e50]:
+        - status "Loading" [ref=f2e51]:
+          - generic [ref=f2e52]: Loading...
+        - generic [ref=f2e53]: Thinking about the question...
+  - generic [ref=f2e20]:
+    - generic [ref=f2e21]:
+      - textbox "Ask about scholarly publications..." [disabled] [ref=f2e22]
+      - button "Send message" [disabled] [ref=f2e23]
+    - paragraph [ref=f2e27]: Press Enter to send, Shift + Enter for new line

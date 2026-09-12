@@ -1,0 +1,51 @@
+- generic [ref=f67e3]:
+  - navigation [ref=f67e4]:
+    - generic [ref=f67e5]:
+      - link "IR Anthology" [ref=f67e7] [cursor=pointer]:
+        - /url: ./
+        - generic [ref=f67e8]:
+          - generic [ref=f67e9]: IR
+          - text: Anthology
+      - button "New Exploration" [ref=f67e48] [cursor=pointer]
+  - generic [ref=f67e10]:
+    - log "Conversation history" [ref=f67e11]:
+      - generic [ref=f67e12]:
+        - generic [ref=f67e13]:
+          - heading "Welcome to IR Anthology Chat" [level=2] [ref=f67e14]
+          - paragraph [ref=f67e15]: Ask me about authors, venues, and publications in the knowledge graph.
+        - grid "Knowledge Graph Overview" [ref=f67e30]:
+          - rowgroup [ref=f67e31]:
+            - row [ref=f67e32]:
+              - columnheader "Author" [ref=f67e33] [cursor=pointer]
+              - columnheader "Publications" [ref=f67e35] [cursor=pointer]
+              - columnheader "Venue" [ref=f67e37] [cursor=pointer]
+              - columnheader "Year" [ref=f67e39] [cursor=pointer]
+          - rowgroup [ref=f67e41]:
+            - row [ref=f67e42]:
+              - gridcell "101920" [ref=f67e43] [cursor=pointer]
+              - gridcell "78608" [ref=f67e44] [cursor=pointer]
+              - gridcell "206" [ref=f67e45] [cursor=pointer]
+              - gridcell "65" [ref=f67e46] [cursor=pointer]
+      - generic [ref=f67e54]:
+        - generic [ref=f67e55]:
+          - generic [ref=f67e56]: You
+          - generic [ref=f67e57]: 23:25
+        - paragraph [ref=f67e59]: hello
+      - generic [ref=f67e60]:
+        - generic [ref=f67e61]: IR
+        - generic [ref=f67e63]:
+          - generic [ref=f67e64]:
+            - generic [ref=f67e65]: IR Anthology
+            - generic [ref=f67e66]: 23:25
+          - generic [ref=f67e67]:
+            - paragraph [ref=f67e68]: Hello! I can help search DBLP for computer science publications, authors, and venues. What would you like to find?
+            - group "Suggested follow-up questions" [ref=f67e69]:
+              - generic [ref=f67e70]:
+                - 'button "Ask: Which computer science authors would you like to explore?" [ref=f67e71] [cursor=pointer]': Which computer science authors would you like to explore?
+                - 'button "Ask: Which publications or research topics are you interested in?" [ref=f67e72] [cursor=pointer]': Which publications or research topics are you interested in?
+                - 'button "Ask: Which journals or conferences would you like to search?" [ref=f67e73] [cursor=pointer]': Which journals or conferences would you like to search?
+    - generic [ref=f67e19]:
+      - generic [ref=f67e20]:
+        - textbox "Ask about IR publications..." [ref=f67e21]
+        - button "Send message" [disabled] [ref=f67e22]
+      - paragraph [ref=f67e26]: Press Enter to send, Shift + Enter for new line
