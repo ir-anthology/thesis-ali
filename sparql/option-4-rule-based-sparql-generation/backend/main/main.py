@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.main.api.exploration import router as exploration_router
 from backend.main.api.health import router as health_router
+from backend.main.api.statistics import router as statistics_router
 from backend.main.config import API_HOST, API_PORT
 
 RELOAD = os.getenv("RELOAD", "false").lower() == "true"
@@ -37,6 +38,7 @@ app.add_middleware(
 
 app.include_router(exploration_router)
 app.include_router(health_router)
+app.include_router(statistics_router)
 
 
 def run() -> None:

@@ -46,3 +46,10 @@ class ExplorationResponse(BaseModel):
         default=None, description="Follow-up suggestions"
     )
     sparql_query: str | None = Field(default=None, description="SPARQL query used")
+
+
+class StatisticsResponse(BaseModel):
+    """Response for the /api/statistics endpoint."""
+
+    columns: list[ResultColumn] = Field(description="Column definitions")
+    rows: list[dict[str, CellValue]] = Field(description="Data rows")
