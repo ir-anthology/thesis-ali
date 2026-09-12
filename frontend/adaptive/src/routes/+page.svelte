@@ -63,7 +63,6 @@
     width: 100%;
     margin: 0 auto;
     overflow: hidden;
-    background-color: var(--bg-primary);
     position: relative;
     z-index: 1;
   }
