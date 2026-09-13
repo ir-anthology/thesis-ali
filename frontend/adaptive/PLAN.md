@@ -25,7 +25,7 @@ Build a SvelteKit frontend in `frontend/adaptive/` that implements an LLM-assist
 2. **Create `src/app.css`** with design tokens (custom properties):
 
    ```css
-   @import 'tailwindcss';
+   @import "tailwindcss";
 
    :root {
      /* Surfaces */
@@ -34,10 +34,10 @@ Build a SvelteKit frontend in `frontend/adaptive/` that implements an LLM-assist
      --bg-tertiary: #e9ecef;
      --bg-elevated: #ffffff;
 
-      /* Text */
-      --text-primary: #212529;
-      --text-secondary: #6c757d;
-      --text-muted: #6c757d; /* Changed from #adb5bd for WCAG AA (≥4.5:1) */
+     /* Text */
+     --text-primary: #212529;
+     --text-secondary: #6c757d;
+     --text-muted: #6c757d; /* Changed from #adb5bd for WCAG AA (≥4.5:1) */
 
      /* Accent */
      --accent: #0d6efd;
@@ -117,9 +117,14 @@ Build a SvelteKit frontend in `frontend/adaptive/` that implements an LLM-assist
 ### 1. `src/lib/types/exploration.ts` — Core type definitions
 
 ```typescript
-export type ResultType = 'facet_table' | 'entity_list' | 'comparison' | 'timeline' | 'summary';
-export type MessageRole = 'user' | 'assistant';
-export type ResponseStatus = 'answerable' | 'unsupported' | 'error';
+export type ResultType =
+  | "facet_table"
+  | "entity_list"
+  | "comparison"
+  | "timeline"
+  | "summary";
+export type MessageRole = "user" | "assistant";
+export type ResponseStatus = "answerable" | "unsupported" | "error";
 
 export interface ConversationTurn {
   id: string;
@@ -133,7 +138,7 @@ export interface ConversationTurn {
 export interface ResultColumn {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'badge' | 'link';
+  type: "text" | "number" | "badge" | "link";
   sortable?: boolean;
 }
 
@@ -151,7 +156,7 @@ export interface ResultState {
 export interface Observation {
   id: string;
   text: string;
-  source: 'llm';
+  source: "llm";
 }
 
 export interface FollowUpQuestion {
@@ -411,9 +416,9 @@ import type {
   ConversationTurn,
   ResultState,
   Observation,
-  FollowUpQuestion
-} from '$lib/types/exploration';
-import { mockResponses } from '$lib/data/mock-responses';
+  FollowUpQuestion,
+} from "$lib/types/exploration";
+import { mockResponses } from "$lib/data/mock-responses";
 
 function createExplorationStore() {
   // State
@@ -437,13 +442,18 @@ function createExplorationStore() {
   function findMockResponse(message: string): ExplorationResponse | null {
     // Simple keyword matching for mock scenarios
     const lower = message.toLowerCase();
-    if (lower.includes('prolific') || lower.includes('most authors')) return mockResponses['prolific-authors'];
-    if (lower.includes('last five') || lower.includes('last 5')) return mockResponses['filtered-years'];
-    if (lower.includes('venue') || lower.includes('publish in')) return mockResponses['venues'];
-    if (lower.includes('changed over time') || lower.includes('how has')) return mockResponses['timeline'];
-    if (lower.includes('compare')) return mockResponses['comparison'];
-    if (lower.includes('why') && lower.includes('sigir')) return mockResponses['why-sigir'];
-    return mockResponses['unsupported'];
+    if (lower.includes("prolific") || lower.includes("most authors"))
+      return mockResponses["prolific-authors"];
+    if (lower.includes("last five") || lower.includes("last 5"))
+      return mockResponses["filtered-years"];
+    if (lower.includes("venue") || lower.includes("publish in"))
+      return mockResponses["venues"];
+    if (lower.includes("changed over time") || lower.includes("how has"))
+      return mockResponses["timeline"];
+    if (lower.includes("compare")) return mockResponses["comparison"];
+    if (lower.includes("why") && lower.includes("sigir"))
+      return mockResponses["why-sigir"];
+    return mockResponses["unsupported"];
   }
 
   // Send message
@@ -452,49 +462,69 @@ function createExplorationStore() {
 
     const userTurn: ConversationTurn = {
       id: generateId(),
-      role: 'user',
+      role: "user",
       content: content.trim(),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
     conversation = [...conversation, userTurn];
 
     const assistantTurn: ConversationTurn = {
       id: generateId(),
-      role: 'assistant',
-      content: '',
+      role: "assistant",
+      content: "",
       timestamp: new Date(),
-      loading: true
+      loading: true,
     };
     conversation = [...conversation, assistantTurn];
     loading = true;
     error = null;
 
     // Simulate LLM delay
-    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700));
+    await new Promise((resolve) =>
+      setTimeout(resolve, 800 + Math.random() * 700),
+    );
 
     const response = findMockResponse(content);
 
     if (response) {
-      conversation = conversation.map(t =>
+      conversation = conversation.map((t) =>
         t.id === assistantTurn.id
-          ? { ...t, content: response.result.title || 'Here are the results:', loading: false }
-          : t
+          ? {
+              ...t,
+              content: response.result.title || "Here are the results:",
+              loading: false,
+            }
+          : t,
       );
 
-      resultsByTurn = new Map(resultsByTurn).set(assistantTurn.id, response.result);
-      observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.interpretation.observations);
-      suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.interpretation.suggestions);
+      resultsByTurn = new Map(resultsByTurn).set(
+        assistantTurn.id,
+        response.result,
+      );
+      observationsByTurn = new Map(observationsByTurn).set(
+        assistantTurn.id,
+        response.interpretation.observations,
+      );
+      suggestionsByTurn = new Map(suggestionsByTurn).set(
+        assistantTurn.id,
+        response.interpretation.suggestions,
+      );
 
       result = response.result;
       observations = response.interpretation.observations;
       suggestions = response.interpretation.suggestions;
     } else {
-      conversation = conversation.map(t =>
+      conversation = conversation.map((t) =>
         t.id === assistantTurn.id
-          ? { ...t, content: 'Sorry, I encountered an error. Please try again.', loading: false, error: true }
-          : t
+          ? {
+              ...t,
+              content: "Sorry, I encountered an error. Please try again.",
+              loading: false,
+              error: true,
+            }
+          : t,
       );
-      error = 'Failed to get response';
+      error = "Failed to get response";
     }
 
     loading = false;
@@ -507,10 +537,14 @@ function createExplorationStore() {
 
   // Retry
   function retry(): void {
-    const lastUserTurn = [...conversation].reverse().find(t => t.role === 'user');
+    const lastUserTurn = [...conversation]
+      .reverse()
+      .find((t) => t.role === "user");
     if (lastUserTurn) {
       // Remove last assistant turn
-      conversation = conversation.filter(t => !t.loading && !(t.role === 'assistant' && t.error));
+      conversation = conversation.filter(
+        (t) => !t.loading && !(t.role === "assistant" && t.error),
+      );
       sendMessage(lastUserTurn.content);
     }
   }
@@ -537,7 +571,7 @@ function createExplorationStore() {
       suggestions,
       resultsByTurn: Object.fromEntries(resultsByTurn),
       observationsByTurn: Object.fromEntries(observationsByTurn),
-      suggestionsByTurn: Object.fromEntries(suggestionsByTurn)
+      suggestionsByTurn: Object.fromEntries(suggestionsByTurn),
     });
   }
 
@@ -550,7 +584,9 @@ function createExplorationStore() {
     observations = saved.observations;
     suggestions = saved.suggestions;
     resultsByTurn = new Map(Object.entries(saved.resultsByTurn || {}));
-    observationsByTurn = new Map(Object.entries(saved.observationsByTurn || {}));
+    observationsByTurn = new Map(
+      Object.entries(saved.observationsByTurn || {}),
+    );
     suggestionsByTurn = new Map(Object.entries(saved.suggestionsByTurn || {}));
     loading = false;
     error = null;
@@ -559,21 +595,39 @@ function createExplorationStore() {
   }
 
   return {
-    get conversation() { return conversation; },
-    get result() { return result; },
-    get observations() { return observations; },
-    get suggestions() { return suggestions; },
-    get loading() { return loading; },
-    get error() { return error; },
-    get resultsByTurn() { return resultsByTurn; },
-    get observationsByTurn() { return observationsByTurn; },
-    get suggestionsByTurn() { return suggestionsByTurn; },
+    get conversation() {
+      return conversation;
+    },
+    get result() {
+      return result;
+    },
+    get observations() {
+      return observations;
+    },
+    get suggestions() {
+      return suggestions;
+    },
+    get loading() {
+      return loading;
+    },
+    get error() {
+      return error;
+    },
+    get resultsByTurn() {
+      return resultsByTurn;
+    },
+    get observationsByTurn() {
+      return observationsByTurn;
+    },
+    get suggestionsByTurn() {
+      return suggestionsByTurn;
+    },
     sendMessage,
     selectSuggestion,
     retry,
     clearExploration,
     saveState,
-    loadState
+    loadState,
   };
 }
 
@@ -2176,10 +2230,10 @@ import type {
   ConversationTurn,
   ResultState,
   Observation,
-  FollowUpQuestion
-} from '$lib/types/exploration';
+  FollowUpQuestion,
+} from "$lib/types/exploration";
 
-const STORAGE_KEY = 'scholarly-explorer-state';
+const STORAGE_KEY = "scholarly-explorer-state";
 
 export interface PersistedState {
   conversation: ConversationTurn[];
@@ -2193,26 +2247,28 @@ export interface PersistedState {
 
 interface SerializedConversationTurn {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   timestamp: string;
   loading?: boolean;
   error?: boolean;
 }
 
-export function serializeConversation(turns: ConversationTurn[]): SerializedConversationTurn[] {
+export function serializeConversation(
+  turns: ConversationTurn[],
+): SerializedConversationTurn[] {
   return turns.map((turn) => ({
     id: turn.id,
     role: turn.role,
     content: turn.content,
     timestamp: turn.timestamp.toISOString(),
     loading: turn.loading,
-    error: turn.error
+    error: turn.error,
   }));
 }
 
 export function deserializeConversation(
-  turns: SerializedConversationTurn[]
+  turns: SerializedConversationTurn[],
 ): ConversationTurn[] {
   return turns.map((turn) => ({
     id: turn.id,
@@ -2220,7 +2276,7 @@ export function deserializeConversation(
     content: turn.content,
     timestamp: new Date(turn.timestamp),
     loading: turn.loading,
-    error: turn.error
+    error: turn.error,
   }));
 }
 
@@ -2241,11 +2297,11 @@ export function saveToSessionStorage(state: {
       suggestions: state.suggestions,
       resultsByTurn: state.resultsByTurn,
       observationsByTurn: state.observationsByTurn,
-      suggestionsByTurn: state.suggestionsByTurn
+      suggestionsByTurn: state.suggestionsByTurn,
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
   } catch {
-    console.warn('Failed to save state to sessionStorage');
+    console.warn("Failed to save state to sessionStorage");
   }
 }
 
@@ -2262,10 +2318,10 @@ export function loadFromSessionStorage(): PersistedState | null {
       suggestions: parsed.suggestions || [],
       resultsByTurn: parsed.resultsByTurn || {},
       observationsByTurn: parsed.observationsByTurn || {},
-      suggestionsByTurn: parsed.suggestionsByTurn || {}
+      suggestionsByTurn: parsed.suggestionsByTurn || {},
     };
   } catch {
-    console.warn('Failed to load state from sessionStorage');
+    console.warn("Failed to load state from sessionStorage");
     return null;
   }
 }
@@ -2274,7 +2330,7 @@ export function clearSessionStorage(): void {
   try {
     sessionStorage.removeItem(STORAGE_KEY);
   } catch {
-    console.warn('Failed to clear sessionStorage');
+    console.warn("Failed to clear sessionStorage");
   }
 }
 
@@ -2285,7 +2341,7 @@ export function decodeStateFromUrl(searchParams: URLSearchParams): {
     q?: string;
   } = {};
 
-  const q = searchParams.get('q');
+  const q = searchParams.get("q");
   if (q) {
     result.q = q;
   }
@@ -2351,28 +2407,28 @@ frontend/adaptive/
 
 ## Implementation Order
 
-| Step | Task | Dependencies | Est. Effort |
-|------|------|-------------|-------------|
-| 1 | Scaffold SvelteKit project | None | 30 min |
-| 2 | Create `app.css` with design tokens | Step 1 | 30 min |
-| 3 | Create `exploration.ts` type definitions | Step 1 | 45 min |
-| 4 | Create mock data files | Step 3 | 1 hr |
-| 5 | Create `exploration.svelte.ts` store | Steps 3, 4 | 1.5 hr |
-| 6 | Create Shared components (Badge, Spinner, EmptyState, ErrorState) | Step 2 | 1 hr |
-| 7 | Create PromptInput component | Step 6 | 30 min |
-| 8 | Create UserMessage component | Step 6 | 30 min |
-| 9 | Create FacetTable component | Step 6 | 1 hr |
-| 10 | Create ExplorationRenderer + remaining result views | Steps 6, 9 | 1.5 hr |
-| 11 | Create ObservationCard + SuggestionChips | Step 6 | 45 min |
-| 12 | Create AssistantMessage component | Steps 8, 10, 11 | 1 hr |
-| 13 | Create ConversationView | Steps 8, 12 | 45 min |
-| 14 | Create persistence utility | Step 3 | 45 min |
-| 15 | Wire up `+page.svelte` | Steps 5, 7, 13, 14 | 45 min |
-| 17 | Add direct manipulation interactions | Step 16 | 1.5 hr |
-| 18 | Visual polish & responsive design | Step 16 | 1 hr |
-| 19 | Keyboard accessibility | Step 17 | 1 hr |
-| 20 | URL/session persistence | Step 16 | 1 hr |
-| 21 | Final testing & bug fixes | All | 1 hr |
+| Step | Task                                                              | Dependencies       | Est. Effort |
+| ---- | ----------------------------------------------------------------- | ------------------ | ----------- |
+| 1    | Scaffold SvelteKit project                                        | None               | 30 min      |
+| 2    | Create `app.css` with design tokens                               | Step 1             | 30 min      |
+| 3    | Create `exploration.ts` type definitions                          | Step 1             | 45 min      |
+| 4    | Create mock data files                                            | Step 3             | 1 hr        |
+| 5    | Create `exploration.svelte.ts` store                              | Steps 3, 4         | 1.5 hr      |
+| 6    | Create Shared components (Badge, Spinner, EmptyState, ErrorState) | Step 2             | 1 hr        |
+| 7    | Create PromptInput component                                      | Step 6             | 30 min      |
+| 8    | Create UserMessage component                                      | Step 6             | 30 min      |
+| 9    | Create FacetTable component                                       | Step 6             | 1 hr        |
+| 10   | Create ExplorationRenderer + remaining result views               | Steps 6, 9         | 1.5 hr      |
+| 11   | Create ObservationCard + SuggestionChips                          | Step 6             | 45 min      |
+| 12   | Create AssistantMessage component                                 | Steps 8, 10, 11    | 1 hr        |
+| 13   | Create ConversationView                                           | Steps 8, 12        | 45 min      |
+| 14   | Create persistence utility                                        | Step 3             | 45 min      |
+| 15   | Wire up `+page.svelte`                                            | Steps 5, 7, 13, 14 | 45 min      |
+| 17   | Add direct manipulation interactions                              | Step 16            | 1.5 hr      |
+| 18   | Visual polish & responsive design                                 | Step 16            | 1 hr        |
+| 19   | Keyboard accessibility                                            | Step 17            | 1 hr        |
+| 20   | URL/session persistence                                           | Step 16            | 1 hr        |
+| 21   | Final testing & bug fixes                                         | All                | 1 hr        |
 
 **Total estimated effort: ~18 hours**
 
@@ -2385,6 +2441,7 @@ frontend/adaptive/
 **Problem:** The original plan stored a single `result`, `observations`, and `suggestions` that got overwritten on each new message. This caused previous responses to lose their data when a new message was sent.
 
 **Solution:** Added per-turn storage using Maps keyed by conversation turn ID:
+
 - `resultsByTurn: Map<string, ResultState>`
 - `observationsByTurn: Map<string, Observation[]>`
 - `suggestionsByTurn: Map<string, FollowUpQuestion[]>`
