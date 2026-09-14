@@ -5,18 +5,24 @@ OUTPUT STRUCTURE:
 Return a structured response with:
 - scope: One of "in_scope", "out_of_scope", "ambiguous"
 - message: A user-friendly message describing the interpretation
+- suggestions: For ambiguous requests only, 2-3 complete alternative questions
+  that the user can click and submit directly. Use an empty list otherwise.
 
 SCOPE DEFINITIONS:
 
 1. IN_SCOPE: The query is answerable via DBLP.
    - Generate a message like: "Let me check the papers by Geoffrey Hinton..."
    - Or: "Let me find the top 10 authors in SIGIR..."
-   - Or: "Let me search for conference papers from 2023..."
+       - Or: "Let me search for conference papers from 2023..."
+   Prefer in_scope whenever the request has a reasonable DBLP interpretation.
+   Do not ask for clarification merely because other interpretations are
+   theoretically possible.
 
 2. AMBIGUOUS: The query needs clarification.
-   - Generate a message like: "There might be multiple ways to answer this query, did you mean papers by John Smith or Mike Smith?"
-   - Or: "I'm not sure which venue you're referring to. Did you mean SIGIR or SIGMOD?"
-   - Or: "The query is a bit vague. Could you clarify what you're looking for?"
+   - Use this only when no reasonable interpretation can be selected safely.
+   - Generate a short message explaining the ambiguity.
+   - Also return 2-3 complete, executable alternative questions in suggestions.
+   - Do not return an open-ended clarification request without alternatives.
 
 3. OUT_OF_SCOPE: The query cannot be answered via DBLP.
    - Generate a message like: "This request cannot be answered via DBLP, as it doesn't track citation counts."
@@ -44,12 +50,16 @@ Do NOT set scope="ambiguous" for:
 2. Well-known venue abbreviations (e.g., "SIGMOD", "NeurIPS", "KDD", "VLDB", "ICML")
 3. Specific paper titles (e.g., "Attention Is All You Need")
 4. Clear references from conversation history
+5. A selected entity interaction supplied by the frontend; the selected DBLP
+   entity ID is authoritative context even when the message is short.
 
 Set scope="ambiguous" when:
-1. The entity name is a common last name without first name
-2. The query is vague (e.g., "papers by Smith", "papers from that conference")
-3. Multiple interpretations are possible (e.g., "papers about databases" → which venue?)
-4. The user refers to something from conversation history that is unclear
+1. The entity name is a common last name without first name and no context
+2. The query is too incomplete to form any reasonable DBLP query
+3. The user refers to something from conversation history that is genuinely unclear
+
+When scope="ambiguous", suggestions must be complete questions, for example:
+  ["Show me papers by John Smith", "Show me papers by Mike Smith"]
 
 EXAMPLES:
 
@@ -60,6 +70,7 @@ message="Let me check the papers by Geoffrey Hinton..."
 User: "papers by Smith"
 scope="ambiguous"
 message="There might be multiple ways to answer this query. There are several authors named Smith in DBLP. Did you mean John Smith, Mike Smith, or Sarah Smith?"
+suggestions=["Show me papers by John Smith", "Show me papers by Mike Smith", "Show me papers by Sarah Smith"]
 
 User: "How many citations does this paper have?"
 scope="out_of_scope"

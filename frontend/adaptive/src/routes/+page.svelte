@@ -38,10 +38,12 @@
       activePath={exploration.getActivePath()}
     />
 
-    <PromptInput
-      onSend={(msg) => exploration.sendMessage(msg)}
-      disabled={exploration.loading}
-    />
+    <div class="input-container">
+      <PromptInput
+        onSend={(msg) => exploration.sendMessage(msg)}
+        disabled={exploration.loading}
+      />
+    </div>
   </div>
 </div>
 
@@ -59,12 +61,16 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    max-width: 900px;
     width: 100%;
-    margin: 0 auto;
     overflow: hidden;
     position: relative;
     z-index: 1;
+  }
+
+  .input-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
   }
 
   .new-explo-btn {

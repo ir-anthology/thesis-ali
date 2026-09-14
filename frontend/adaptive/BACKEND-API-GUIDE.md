@@ -232,9 +232,17 @@ The response is a flat object with optional fields. The UI renders only what's p
 ```json
 {
   "interpretation": "Could you clarify whether you are looking for authors, venues, or publications?",
-  "suggestions": ["Who are the most prolific authors?", "What about citation counts?", "Tell me about something"]
+  "suggestions": ["Who are the most prolific authors?", "Which venues have the most publications?", "Show me recent publications"]
 }
 ```
+
+For an ambiguous request, `suggestions` contains complete alternative questions
+that the frontend renders as clickable options. The alternatives are returned by
+the existing interpretation step; no separate clarification request is needed.
+
+When a request originates from a result-table cell, the frontend may include an
+`interaction` containing the selected DBLP entity IRI. That selection is
+authoritative context and must not be treated as ambiguous.
 
 ### Key Rules
 

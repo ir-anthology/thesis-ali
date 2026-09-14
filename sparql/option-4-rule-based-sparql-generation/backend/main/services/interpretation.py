@@ -43,6 +43,19 @@ class InterpretationService:
                 message="The query could not be understood. Please try rephrasing your question.",
             )
 
+        # A validated entity interaction is an explicit selection from the UI.
+        # It must not be downgraded to a clarification request by the model.
+        if context.interaction and result.scope == "ambiguous":
+            logger.info("Selected entity interaction overrides ambiguous scope")
+            return result.model_copy(
+                update={
+                    "scope": "in_scope",
+                    "message": result.message
+                    or "Let me look up information about the selected entity.",
+                    "suggestions": [],
+                }
+            )
+
         logger.info("Interpretation scope=%s", result.scope)
         return result
 

@@ -75,59 +75,61 @@
   aria-live="polite"
   aria-relevant="additions"
 >
-  <div class="welcome-section" class:centered={conversation.length === 0} class:compact={conversation.length > 0}>
-    <EmptyState
-      title="Welcome to IR Anthology Chat"
-      description="Ask me about authors, venues, and publications in the knowledge graph."
-    >
-      {#if conversation.length === 0}
-        {#snippet icon()}
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-        {/snippet}
+  <div class="conversation-content">
+    <div class="welcome-section" class:centered={conversation.length === 0} class:compact={conversation.length > 0}>
+      <EmptyState
+        title="Welcome to IR Anthology Chat"
+        description="Ask me about authors, venues, and publications in the knowledge graph."
+      >
+        {#if conversation.length === 0}
+          {#snippet icon()}
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          {/snippet}
+        {/if}
+      </EmptyState>
+      {#if statsLoading}
+        <div class="stats-loading">
+          <div class="spinner"></div>
+          <span>Loading statistics...</span>
+        </div>
+      {:else if statsError}
+        <div class="stats-error">
+          <span>{statsError}</span>
+        </div>
+      {:else if statistics}
+        <div class="overview-wrapper" id="stats-table" data-meta="stats-table">
+          <FacetTable
+            columns={statistics.columns}
+            rows={statistics.rows}
+            title="Knowledge Graph Overview"
+            onCellClick={handleOverviewClick}
+            tableId="stats-facet-table"
+            dataMeta="statistics"
+          />
+        </div>
       {/if}
-    </EmptyState>
-    {#if statsLoading}
-      <div class="stats-loading">
-        <div class="spinner"></div>
-        <span>Loading statistics...</span>
-      </div>
-    {:else if statsError}
-      <div class="stats-error">
-        <span>{statsError}</span>
-      </div>
-    {:else if statistics}
-      <div class="overview-wrapper" id="stats-table" data-meta="stats-table">
-        <FacetTable
-          columns={statistics.columns}
-          rows={statistics.rows}
-          title="Knowledge Graph Overview"
-          onCellClick={handleOverviewClick}
-          tableId="stats-facet-table"
-          dataMeta="statistics"
-        />
-      </div>
-    {/if}
-  </div>
+    </div>
 
-  {#each activePath as turn (turn.id)}
-    {#if turn.role === 'user'}
-      <UserMessage message={turn} />
-    {:else}
-      <AssistantMessage
-        message={turn}
-        interpretation={interpretationByTurn.get(turn.id)}
-        columns={columnsByTurn.get(turn.id)}
-        rows={rowsByTurn.get(turn.id)}
-        observations={observationsByTurn.get(turn.id)}
-        suggestions={suggestionsByTurn.get(turn.id)}
-        sparqlQuery={sparqlByTurn.get(turn.id)}
-        onSelectSuggestion={(s) => onSelectSuggestion(s, turn.id)}
-        onCellClick={(q, interaction) => onSelectSuggestion(q, turn.id, interaction)}
-      />
-    {/if}
-  {/each}
+    {#each activePath as turn (turn.id)}
+      {#if turn.role === 'user'}
+        <UserMessage message={turn} />
+      {:else}
+        <AssistantMessage
+          message={turn}
+          interpretation={interpretationByTurn.get(turn.id)}
+          columns={columnsByTurn.get(turn.id)}
+          rows={rowsByTurn.get(turn.id)}
+          observations={observationsByTurn.get(turn.id)}
+          suggestions={suggestionsByTurn.get(turn.id)}
+          sparqlQuery={sparqlByTurn.get(turn.id)}
+          onSelectSuggestion={(s) => onSelectSuggestion(s, turn.id)}
+          onCellClick={(q, interaction) => onSelectSuggestion(q, turn.id, interaction)}
+        />
+      {/if}
+    {/each}
+  </div>
 </div>
 
 <style>
@@ -139,6 +141,12 @@
     display: flex;
     flex-direction: column;
     transition: padding 0.3s ease;
+  }
+
+  .conversation-content {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
   }
 
   .conversation-container.has-conversation {

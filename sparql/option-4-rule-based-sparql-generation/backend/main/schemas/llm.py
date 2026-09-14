@@ -22,6 +22,13 @@ class Interpretation(BaseModel):
         description="User-friendly message describing the interpretation"
     )
 
+    suggestions: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Complete alternative questions to offer when the request is ambiguous"
+        ),
+    )
+
 
 class SPARQLGeneration(BaseModel):
     """Stage 2 output — a generated SPARQL query."""

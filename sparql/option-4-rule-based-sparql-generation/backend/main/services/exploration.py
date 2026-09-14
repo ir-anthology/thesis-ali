@@ -190,7 +190,7 @@ class ExplorationService:
         logger.info("PIPELINE COMPLETE (ambiguous)")
         return ExplorationResponse(
             interpretation=interpretation_text,
-            suggestions=None,
+            suggestions=interp.suggestions or None,
         )
 
     # ------------------------------------------------------------------

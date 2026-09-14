@@ -107,6 +107,10 @@ def test_exploration_endpoint_ambiguous(client):
     data = response.json()
     assert data["interpretation"] is not None
     assert "Smith" in data["interpretation"]
+    assert data["suggestions"] == [
+        "Show me papers by John Smith",
+        "Show me papers by Mike Smith",
+    ]
 
 
 def test_exploration_endpoint_error(client):
