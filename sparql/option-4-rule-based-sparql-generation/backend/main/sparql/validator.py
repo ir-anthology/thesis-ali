@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 _schema = DBLPSchemaProvider()
 
+_CLASS_REFERENCE_RE = re.compile(
+    r"(?P<type>\ba\b|rdf:type)\s+dblp:(?P<class>\w+)",
+    re.IGNORECASE,
+)
+
 
 class ValidationResult(BaseModel):
     """Result of validating a SPARQL query."""
@@ -86,7 +91,15 @@ class SPARQLValidator:
         where = _extract_where_clause(sparql)
         if not where:
             return errors
-        for pred in re.findall(r"dblp:(\w+)", where):
+
+        # Classes are objects of `a`/`rdf:type`, not predicates. Mask only
+        # those occurrences so the same name is still rejected if it appears
+        # in predicate position.
+        where_without_class_references = _CLASS_REFERENCE_RE.sub(
+            lambda match: f"{match.group('type')} __DBLP_CLASS__",
+            where,
+        )
+        for pred in re.findall(r"dblp:(\w+)", where_without_class_references):
             if pred not in known:
                 errors.append(f"Unknown predicate: dblp:{pred}")
         return errors
@@ -98,7 +111,8 @@ class SPARQLValidator:
         where = _extract_where_clause(sparql)
         if not where:
             return errors
-        for cls in re.findall(r"\ba\s+dblp:(\w+)", where):
+        for match in _CLASS_REFERENCE_RE.finditer(where):
+            cls = match.group("class")
             if cls not in known:
                 errors.append(f"Unknown class: dblp:{cls}")
         return errors

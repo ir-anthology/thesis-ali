@@ -20,6 +20,53 @@ SELECT ?pub ?title WHERE {
     assert len(result.errors) == 0
 
 
+def test_known_class_with_a_is_not_treated_as_predicate(validator):
+    sparql = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT ?pub WHERE {
+  ?pub a dblp:Publication .
+}"""
+    result = validator.validate(sparql)
+    assert result.valid is True
+    assert result.errors == []
+
+
+def test_known_class_with_rdf_type_is_not_treated_as_predicate(validator):
+    sparql = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT ?pub WHERE {
+  ?pub rdf:type dblp:Publication .
+}"""
+    result = validator.validate(sparql)
+    assert result.valid is True
+    assert result.errors == []
+
+
+def test_class_name_in_predicate_position_is_rejected(validator):
+    sparql = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT ?pub WHERE {
+  ?pub dblp:Publication ?value .
+}"""
+    result = validator.validate(sparql)
+    assert result.valid is False
+    assert "Unknown predicate: dblp:Publication" in result.errors
+
+
+def test_jasist_query_with_known_classes_is_valid(validator):
+    sparql = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT DISTINCT ?publication_id ?title WHERE {
+  ?publication_id a dblp:Publication ;
+    dblp:title ?title ;
+    dblp:publishedInStream ?venue_id .
+  ?venue_id a dblp:Journal ;
+    dblp:primaryStreamTitle ?venue_name .
+  FILTER(CONTAINS(LCASE(STR(?venue_name)), "jasist"))
+}
+LIMIT 15"""
+    result = validator.validate(sparql)
+    assert result.valid is True
+    assert result.errors == []
+
+
 def test_empty_query(validator):
     result = validator.validate("")
     assert result.valid is False
