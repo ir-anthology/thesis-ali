@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultColumn, ResultRow } from '$lib/types/exploration';
+  import type { ConversationTurn, EntityInteraction, ResultColumn, ResultRow } from '$lib/types/exploration';
   import Spinner from '$lib/components/Shared/Spinner.svelte';
   import ResultBox from '$lib/components/Results/ResultBox.svelte';
   import ObservationCard from '$lib/components/Insights/ObservationCard.svelte';
@@ -24,7 +24,7 @@
     suggestions?: string[];
     sparqlQuery?: string;
     onSelectSuggestion: (suggestion: string) => void;
-    onCellClick?: (question: string) => void;
+    onCellClick?: (question: string, interaction?: EntityInteraction) => void;
   } = $props();
 
   function formatTime(date: Date): string {

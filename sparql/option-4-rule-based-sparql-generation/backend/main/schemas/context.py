@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from .requests import HistoryTurn
+from .requests import EntityInteraction, HistoryTurn
 from .responses import ResultColumn, CellValue
 from .llm import Interpretation
 
@@ -34,6 +34,7 @@ class ExplorationContext(BaseModel):
     # C0 — inputs
     user_message: str
     history: list[HistoryTurn] = Field(default_factory=list)
+    interaction: EntityInteraction | None = None
 
     # DBLP schema (set once)
     dblp_schema: str | None = None

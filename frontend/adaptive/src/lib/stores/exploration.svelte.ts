@@ -15,7 +15,8 @@ import type {
   ResultColumn,
   ResultRow,
   ExplorationResponse,
-  HistoryTurn
+  HistoryTurn,
+  EntityInteraction
 } from '$lib/types/exploration';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
@@ -68,7 +69,11 @@ function createExplorationStore() {
     });
   }
 
-  async function sendMessage(content: string, fromTurnId?: string | null): Promise<void> {
+  async function sendMessage(
+    content: string,
+    fromTurnId?: string | null,
+    interaction?: EntityInteraction
+  ): Promise<void> {
     if (!content.trim() || loading) return;
 
     const parentId = fromTurnId !== undefined ? fromTurnId : headTurnId;
@@ -108,7 +113,7 @@ function createExplorationStore() {
       const res = await fetch(`${API_BASE}/api/exploration`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content, history })
+        body: JSON.stringify({ message: content, history, interaction })
       });
 
       if (!res.ok) {
@@ -161,8 +166,12 @@ function createExplorationStore() {
     loading = false;
   }
 
-  function selectSuggestion(suggestion: string, fromTurnId?: string | null): void {
-    sendMessage(suggestion, fromTurnId);
+  function selectSuggestion(
+    suggestion: string,
+    fromTurnId?: string | null,
+    interaction?: EntityInteraction
+  ): void {
+    sendMessage(suggestion, fromTurnId, interaction);
   }
 
   function retry(): void {

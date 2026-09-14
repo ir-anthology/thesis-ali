@@ -4,9 +4,27 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .responses import CellValue, ResultColumn
+
+
+class EntityInteraction(BaseModel):
+    """Entity selected from a frontend result cell."""
+
+    entity_id: str = Field(description="Absolute DBLP entity IRI")
+    entity_type: Literal["author", "venue", "publication", "entity"] | None = Field(
+        default=None, description="Optional DBLP entity type"
+    )
+
+    @field_validator("entity_id")
+    @classmethod
+    def validate_entity_id(cls, value: str) -> str:
+        if not value.startswith("https://dblp.org/") or any(
+            character.isspace() for character in value
+        ):
+            raise ValueError("entity_id must be an absolute DBLP IRI")
+        return value
 
 
 class HistoryTurn(BaseModel):
@@ -37,4 +55,7 @@ class ChatRequest(BaseModel):
     message: str = Field(description="User's natural language query")
     history: list[HistoryTurn] = Field(
         default_factory=list, description="Conversation history"
+    )
+    interaction: EntityInteraction | None = Field(
+        default=None, description="Optional entity selected from a result cell"
     )

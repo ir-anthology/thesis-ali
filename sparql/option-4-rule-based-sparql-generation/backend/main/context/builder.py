@@ -21,6 +21,7 @@ class ContextBuilder:
         ctx = ExplorationContext(
             user_message=request.message,
             history=request.history,
+            interaction=request.interaction,
         )
         ctx.set_schema(self._schema.get_schema())
         return ctx

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ResultColumn, ResultRow } from '$lib/types/exploration';
+  import type { CellMetadata, EntityInteraction, ResultColumn, ResultRow } from '$lib/types/exploration';
 
   let {
     columns,
@@ -12,10 +12,39 @@
     columns: ResultColumn[];
     rows: ResultRow[];
     title?: string;
-    onCellClick?: (question: string) => void;
+    onCellClick?: (question: string, interaction?: EntityInteraction) => void;
     tableId?: string;
     dataMeta?: string;
   } = $props();
+
+  let visibleColumns = $derived(columns.filter((column) => column.role !== 'metadata'));
+
+  function getEntityMetadata(row: ResultRow, cellKey: string): CellMetadata | undefined {
+    const direct = row[cellKey]?.metadata;
+    if (direct?.entity_id) return direct;
+
+    const candidates = [`${cellKey}_id`, `${cellKey}_uri`];
+    if (cellKey.endsWith('_name')) {
+      const prefix = cellKey.slice(0, -'_name'.length);
+      candidates.push(`${prefix}_id`, `${prefix}_uri`);
+    }
+    if (cellKey === 'title' || cellKey === 'name') {
+      candidates.push('pub_id', 'publication_id', 'pub_uri', 'publication_uri');
+    }
+    for (const key of candidates) {
+      const metadata = row[key]?.metadata;
+      if (metadata?.entity_id) return metadata;
+    }
+
+    const metadataColumns = columns.filter((column) => column.role === 'metadata');
+    if (metadataColumns.length !== 1) return undefined;
+    for (const column of columns) {
+      if (column.role !== 'metadata') continue;
+      const metadata = row[column.key]?.metadata;
+      if (metadata?.entity_id) return metadata;
+    }
+    return undefined;
+  }
 
   let sortField = $state<string | null>(null);
   let sortDirection = $state<'asc' | 'desc'>('asc');
@@ -34,10 +63,14 @@
     }
   }
 
-  function handleCellClick(question: string, columnKey: string, rowIndex: number): void {
+  function handleCellClick(question: string, columnKey: string, row: ResultRow, rowIndex: number): void {
     focusedCellKey = columnKey;
     focusedCellRow = rowIndex;
-    onCellClick?.(question);
+    const metadata = getEntityMetadata(row, columnKey);
+    const interaction = metadata?.entity_id
+      ? { entity_id: metadata.entity_id, entity_type: metadata.entity_type }
+      : undefined;
+    onCellClick?.(question, interaction);
   }
 
   function handleKeydown(event: KeyboardEvent, rowIndex: number): void {
@@ -79,6 +112,7 @@
 
   let sortedRows = $derived.by(() => {
     if (!sortField) return rows;
+    if (!visibleColumns.some((column) => column.key === sortField)) return rows;
     return [...rows].sort((a, b) => {
       const aVal = a[sortField!].value;
       const bVal = b[sortField!].value;
@@ -96,7 +130,7 @@
     <table bind:this={tableElement} role="grid" aria-label={title || 'Data table'}>
       <thead>
         <tr>
-          {#each columns as column}
+          {#each visibleColumns as column}
             <th
               role="columnheader"
               class:sortable={column.sortable}
@@ -122,14 +156,16 @@
             onfocus={() => focusedRowIndex = i}
             class:focused={focusedRowIndex === i}
           >
-            {#each columns as column, j (j)}
+            {#each visibleColumns as column, j (j)}
               {@const cell = row[column.key]}
               <td
                 role="gridcell"
                 class:clickable={!!onCellClick && !!cell.question}
                 class:focused={focusedCellKey === column.key && focusedCellRow === i}
                 title={cell.question || undefined}
-                onclick={cell.question ? () => handleCellClick(cell.question, column.key, i) : undefined}
+                data-entity-id={getEntityMetadata(row, column.key)?.entity_id}
+                data-entity-type={getEntityMetadata(row, column.key)?.entity_type}
+                onclick={cell.question ? () => handleCellClick(cell.question, column.key, row, i) : undefined}
               >
                 {#if column.type === 'badge'}
                   <span class="cell-badge">{cell.value}</span>

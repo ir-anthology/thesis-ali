@@ -78,10 +78,22 @@ class SPARQLGenerationService:
                 history_lines.append(f"{turn.role}: {turn.content}")
             parts.append(f"\nRECENT CONVERSATION:\n{chr(10).join(history_lines)}")
 
+        if context.interaction:
+            parts.append(
+                "\nSELECTED ENTITY CONTEXT:\n"
+                f"entity_id: {context.interaction.entity_id}\n"
+                f"entity_type: {context.interaction.entity_type or 'entity'}\n"
+                "Use this DBLP IRI directly in the generated triple patterns. "
+                "Do not resolve it from a name, add a name-based FILTER, or replace it with a literal."
+            )
+
         parts.append(f"\nQUESTION:\n{context.user_message}")
-        parts.append(
-            "\nGenerate a SPARQL query for this question using entity names (not URIs)."
-        )
+        if context.interaction:
+            parts.append("\nGenerate the query using the selected entity IRI directly.")
+        else:
+            parts.append(
+                "\nGenerate a SPARQL query for this question using entity names (not URIs)."
+            )
 
         return "\n".join(parts)
 

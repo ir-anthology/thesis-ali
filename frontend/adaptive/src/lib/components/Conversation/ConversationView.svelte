@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConversationTurn, ResultColumn, ResultRow, StatisticsResponse } from '$lib/types/exploration';
+  import type { ConversationTurn, EntityInteraction, ResultColumn, ResultRow, StatisticsResponse } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
@@ -25,7 +25,7 @@
     observationsByTurn: Map<string, string[]>;
     suggestionsByTurn: Map<string, string[]>;
     sparqlByTurn: Map<string, string>;
-    onSelectSuggestion: (suggestion: string, fromTurnId?: string | null) => void;
+    onSelectSuggestion: (suggestion: string, fromTurnId?: string | null, interaction?: EntityInteraction) => void;
     activePath: ConversationTurn[];
   } = $props();
 
@@ -54,8 +54,8 @@
     fetchStatistics();
   });
 
-  function handleOverviewClick(question: string): void {
-    onSelectSuggestion(question, null);
+  function handleOverviewClick(question: string, interaction?: EntityInteraction): void {
+    onSelectSuggestion(question, null, interaction);
   }
 
   $effect(() => {
@@ -124,7 +124,7 @@
         suggestions={suggestionsByTurn.get(turn.id)}
         sparqlQuery={sparqlByTurn.get(turn.id)}
         onSelectSuggestion={(s) => onSelectSuggestion(s, turn.id)}
-        onCellClick={(q) => onSelectSuggestion(q, turn.id)}
+        onCellClick={(q, interaction) => onSelectSuggestion(q, turn.id, interaction)}
       />
     {/if}
   {/each}

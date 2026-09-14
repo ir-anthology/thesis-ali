@@ -147,6 +147,7 @@ The response is a flat object. All fields are optional except the backend should
 | `label` | string | Display label |
 | `type` | string | `"text"`, `"number"`, `"badge"`, or `"link"` |
 | `sortable` | boolean | Whether users can sort by this column |
+| `role` | `"display"` \| `"metadata"` | Whether the column is visible or hidden metadata; defaults to `"display"` |
 
 ### CellValue
 
@@ -156,6 +157,26 @@ Each cell in a row is a `CellValue` object with a display value and a clickable 
 |-------|------|-------------|
 | `value` | string \| number | The display value for the cell |
 | `question` | string | The question sent as a user message when the cell is clicked. If empty/null, no tooltip or click handler. |
+| `metadata` | object | Optional hidden entity metadata used for direct-ID drill-down |
+
+Metadata objects may contain `entity_id` and `entity_type` (`author`, `venue`, `publication`, or `entity`). Metadata columns are retained in API rows but are not rendered by the frontend.
+
+### Entity interaction
+
+Cell clicks may include an optional structured interaction in the request:
+
+```json
+{
+  "message": "Tell me about this author",
+  "history": [],
+  "interaction": {
+    "entity_id": "https://dblp.org/pid/10/3248",
+    "entity_type": "author"
+  }
+}
+```
+
+When present, the backend uses the DBLP entity IRI directly instead of resolving the entity from its display name.
 
 ### ResultRow
 

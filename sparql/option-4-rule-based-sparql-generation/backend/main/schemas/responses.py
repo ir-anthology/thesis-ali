@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ResultColumn(BaseModel):
@@ -16,6 +16,18 @@ class ResultColumn(BaseModel):
         default="text", description="Column type"
     )
     sortable: bool = Field(default=False, description="Whether column is sortable")
+    role: Literal["display", "metadata"] = Field(
+        default="display", description="Whether the column is visible or metadata"
+    )
+
+
+class CellMetadata(BaseModel):
+    """Optional entity metadata attached to a displayed cell."""
+
+    model_config = ConfigDict(extra="allow")
+
+    entity_id: str | None = None
+    entity_type: Literal["author", "venue", "publication", "entity"] | None = None
 
 
 class CellValue(BaseModel):
@@ -24,6 +36,9 @@ class CellValue(BaseModel):
     value: str | int | float = Field(description="Cell value")
     question: str = Field(
         default="", description="Natural language question about this value"
+    )
+    metadata: CellMetadata | None = Field(
+        default=None, description="Hidden entity metadata for drill-down"
     )
 
 

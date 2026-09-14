@@ -50,7 +50,9 @@ KEY PREDICATES:
 - dblp:primaryDocumentPage: URL to publication page
 
 ENTITY LOOKUP PATTERNS:
-Use entity NAMES in string literals, NOT URIs. Example patterns:
+Use entity NAMES in string literals, NOT URIs for ordinary user questions. When a
+SELECTED ENTITY CONTEXT is supplied, use that DBLP IRI directly and do not resolve
+it by name or add a name-based FILTER. Example patterns:
 
 For authors:
   DBLP may store full names with middle initials (e.g., "Geoffrey E. Hinton" instead of "Geoffrey Hinton").
@@ -101,18 +103,21 @@ PUBLICATION TYPE FILTERING:
 
 RULES:
 1. Use ONLY predicates from the schema provided above
-2. Use entity NAMES in string literals (e.g., "Geoffrey Hinton"), NOT URIs
-3. Always include mandatory prefixes at the top
-4. Use SELECT for queries that return results
-5. Use FILTER for date/string filtering
-6. Use COUNT/GROUP BY for aggregation queries
-7. For year comparisons, use: "2023"^^xsd:gYear
-8. Use OPTIONAL for optional fields
-9. Use DISTINCT to avoid duplicate results when needed
-10. Do NOT invent predicates or classes not listed above
-11. Resolve entities using conversation history context when available
-12. CRITICAL: For venue lookups, DBLP stores FULL venue names. NEVER use exact match like dblp:primaryStreamTitle "SIGIR". ALWAYS use FILTER(CONTAINS(?venueTitle, "SIGIR")) pattern instead.
-13. CRITICAL: For author lookups, DBLP may store full names with middle initials. Use FILTER(CONTAINS(...)) for partial matches.
+2. Use entity NAMES in string literals (e.g., "Geoffrey Hinton"), NOT URIs unless
+   a selected entity IRI is supplied in the request context
+3. Use stable aliases: *_name/title/count/year for display columns and *_id or
+   *_uri for hidden entity metadata columns
+4. Always include mandatory prefixes at the top
+5. Use SELECT for queries that return results
+6. Use FILTER for date/string filtering
+7. Use COUNT/GROUP BY for aggregation queries
+8. For year comparisons, use: "2023"^^xsd:gYear
+9. Use OPTIONAL for optional fields
+10. Use DISTINCT to avoid duplicate results when needed
+11. Do NOT invent predicates or classes not listed above
+12. Resolve entities using conversation history context when available, unless a selected entity IRI is supplied
+13. CRITICAL: For venue lookups, DBLP stores FULL venue names. NEVER use exact match like dblp:primaryStreamTitle "SIGIR". ALWAYS use FILTER(CONTAINS(?venueTitle, "SIGIR")) pattern instead.
+14. CRITICAL: For author lookups, DBLP may store full names with middle initials. Use FILTER(CONTAINS(...)) for partial matches unless a selected entity IRI is supplied.
 14. Use dblp:primaryCreatorName for author lookup (current display name)
 15. Use dblp:primaryStreamTitle for venue lookup (display title)
 16. DEFAULT LIMIT: Always add LIMIT 15 to the query unless the user specifies a different number.

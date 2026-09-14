@@ -31,11 +31,21 @@ export interface ResultColumn {
   label: string;
   type: 'text' | 'number' | 'badge' | 'link';
   sortable?: boolean;
+  role?: 'display' | 'metadata';
+}
+
+export type EntityType = 'author' | 'venue' | 'publication' | 'entity';
+
+export interface CellMetadata {
+  entity_id?: string;
+  entity_type?: EntityType;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface CellValue {
   value: string | number;
   question: string;
+  metadata?: CellMetadata;
 }
 
 export interface ResultRow {
@@ -60,6 +70,11 @@ export interface ExplorationResponse {
   observations?: string[];
   suggestions?: string[];
   sparql_query?: string;
+}
+
+export interface EntityInteraction {
+  entity_id: string;
+  entity_type?: EntityType;
 }
 
 export interface StatisticsResponse {

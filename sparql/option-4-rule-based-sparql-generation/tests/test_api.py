@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from backend.main.main import app
 from backend.main.schemas.responses import ExplorationResponse, ResultColumn, CellValue
+from backend.main.schemas.requests import ChatRequest
 
 
 @pytest.fixture
@@ -162,3 +163,24 @@ def test_exploration_endpoint_with_history(client):
     assert response.status_code == 200
     data = response.json()
     assert data["interpretation"] == "Let me find papers by Geoffrey Hinton from 2023"
+
+
+def test_chat_request_accepts_direct_entity_interaction():
+    request = ChatRequest(
+        message="Show this author's publications",
+        interaction={
+            "entity_id": "https://dblp.org/pid/10/3248",
+            "entity_type": "author",
+        },
+    )
+
+    assert request.interaction is not None
+    assert request.interaction.entity_id.endswith("10/3248")
+
+
+def test_chat_request_rejects_non_dblp_entity_id():
+    with pytest.raises(ValueError):
+        ChatRequest(
+            message="Show this entity",
+            interaction={"entity_id": "https://example.com/entity"},
+        )

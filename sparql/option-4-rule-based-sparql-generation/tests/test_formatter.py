@@ -14,6 +14,29 @@ def test_format_result_columns():
     assert columns[0].label == "Author"
     assert columns[1].key == "pub_count"
     assert columns[1].label == "Pub Count"
+    assert columns[0].role == "display"
+    assert columns[1].role == "display"
+
+
+def test_format_metadata_columns_and_cell_metadata():
+    qr = QueryResult(
+        columns=["author_id", "author_name", "publications"],
+        rows=[
+            {
+                "author_id": "https://dblp.org/pid/10/3248",
+                "author_name": "Geoffrey Hinton",
+                "publications": "42",
+            }
+        ],
+        row_count=1,
+    )
+
+    columns = format_result_columns(qr)
+    rows = format_result_rows(qr)
+
+    assert {column.key for column in columns if column.role == "metadata"} == {"author_id"}
+    assert rows[0]["author_id"].metadata.entity_id == "https://dblp.org/pid/10/3248"
+    assert rows[0]["author_name"].metadata.entity_type == "author"
 
 
 def test_format_result_rows():

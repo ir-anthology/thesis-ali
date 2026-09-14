@@ -60,5 +60,12 @@ class InterpretationService:
                 history_lines.append(f"{turn.role}: {turn.content}")
             parts.append(f"\nCONVERSATION HISTORY:\n{chr(10).join(history_lines)}")
 
+        if context.interaction:
+            parts.append(
+                "\nSELECTED ENTITY:\n"
+                f"Use entity ID {context.interaction.entity_id} directly. "
+                "Do not resolve this entity by name."
+            )
+
         parts.append(f"\nQuestion: {context.user_message}")
         return "\n".join(parts)

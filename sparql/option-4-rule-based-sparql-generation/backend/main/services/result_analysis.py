@@ -50,7 +50,7 @@ class ResultAnalysisService:
     def _generate_questions(
         self, context: ExplorationContext
     ) -> list[dict[str, CellValue]]:
-        columns = context.result_columns
+        columns = [column for column in context.result_columns if column.role == "display"]
         raw_rows = context.query_result.rows  # type: ignore[union-attr]
         all_rows: list[dict[str, CellValue]] = []
 
@@ -59,7 +59,29 @@ class ResultAnalysisService:
             batch_result = self._generate_questions_batch(
                 context, columns, batch, batch_start
             )
-            all_rows.extend(batch_result)
+            for row_index, (analysed, raw_row) in enumerate(zip(batch_result, batch)):
+                original_index = batch_start + row_index
+                original_row = context.result_rows[original_index] if original_index < len(context.result_rows) else {}
+                for column in columns:
+                    if column.key in original_row and original_row[column.key].metadata:
+                        analysed[column.key] = analysed[column.key].model_copy(
+                            update={"metadata": original_row[column.key].metadata}
+                        )
+                for column in context.result_columns:
+                    if column.key not in original_row:
+                        continue
+                    original_cell = original_row[column.key]
+                    if column.role == "metadata":
+                        analysed[column.key] = CellValue(
+                            value=str(raw_row.get(column.key, "")),
+                            question="",
+                            metadata=original_cell.metadata,
+                        )
+                    elif original_cell.metadata and column.key in analysed:
+                        analysed[column.key] = analysed[column.key].model_copy(
+                            update={"metadata": original_cell.metadata}
+                        )
+                all_rows.append(analysed)
 
         return all_rows
 
@@ -188,7 +210,7 @@ class ResultAnalysisService:
         context: ExplorationContext,
         rows_with_questions: list[dict[str, CellValue]],
     ) -> list[str]:
-        columns = context.result_columns
+        columns = [column for column in context.result_columns if column.role == "display"]
         # Use first 20 rows for observation generation
         sample_rows = rows_with_questions[:20]
 
