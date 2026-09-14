@@ -45,19 +45,19 @@ def _build_response(raw_row: dict[str, object]) -> StatisticsResponse:
     row: dict[str, CellValue] = {
         "author": CellValue(
             value=int(raw_row.get("Authors", 0)),
-            question="List top 10 Authors based on Publications count.",
+            question="Who are the 10 most prolific authors by publication count?",
         ),
         "publications": CellValue(
             value=int(raw_row.get("Publications", 0)),
-            question="List top 10 Publications published in 2025.",
+            question="What are the 10 most recent publications?",
         ),
         "venue": CellValue(
             value=int(raw_row.get("Venues", 0)),
-            question="List top 10 venues based on Publications count.",
+            question="Which 10 venues have the most publications?",
         ),
         "year": CellValue(
             value=int(raw_row.get("Years", 0)),
-            question="List top 10 Year based on Publications count.",
+            question="Which 10 years had the highest publication counts?",
         ),
     }
     return StatisticsResponse(columns=COLUMNS, rows=[row])
