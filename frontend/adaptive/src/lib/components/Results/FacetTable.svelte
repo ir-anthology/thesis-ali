@@ -7,7 +7,8 @@
     title,
     onCellClick,
     tableId,
-    dataMeta
+    dataMeta,
+    wide = false
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
@@ -15,6 +16,7 @@
     onCellClick?: (question: string, interaction?: EntityInteraction) => void;
     tableId?: string;
     dataMeta?: string;
+    wide?: boolean;
   } = $props();
 
   let visibleColumns = $derived(columns.filter((column) => column.role !== 'metadata'));
@@ -125,7 +127,7 @@
   });
 </script>
 
-<div class="table-container" id={tableId} data-meta={dataMeta}>
+<div class="table-container" class:wide-table={wide} id={tableId} data-meta={dataMeta}>
   <div class="table-wrapper">
     <table bind:this={tableElement} role="grid" aria-label={title || 'Data table'}>
       <thead>
@@ -191,6 +193,21 @@
   .table-wrapper {
     overflow-x: auto;
     background-color: var(--bg-primary);
+  }
+
+  .wide-table .table-wrapper {
+    max-width: calc(100vw - 2rem);
+  }
+
+  .wide-table table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    .wide-table .table-wrapper {
+      max-width: calc(100vw - 1.5rem);
+    }
   }
 
   table {

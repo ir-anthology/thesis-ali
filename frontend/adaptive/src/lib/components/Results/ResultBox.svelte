@@ -18,7 +18,7 @@
   let showSparql = $state(false);
 </script>
 
-<div class="result-box">
+<div class="result-box" class:table-view={!showSparql}>
   {#if sparqlQuery}
     <div class="result-tabs" role="tablist" aria-label="Result view">
       <button
@@ -48,7 +48,7 @@
     </div>
   {:else}
     <div role="tabpanel">
-      <FacetTable {columns} {rows} {onCellClick} />
+      <FacetTable {columns} {rows} {onCellClick} wide={true} />
     </div>
   {/if}
 </div>
@@ -59,6 +59,19 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     overflow: hidden;
+  }
+
+  .table-view {
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (max-width: 640px) {
+    .table-view {
+      max-width: calc(100vw - 1.5rem);
+    }
   }
 
   .result-tabs {
