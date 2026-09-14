@@ -61,7 +61,9 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: 80%;
+    max-width: none;
+    margin: 0 auto;
     overflow: hidden;
     position: relative;
     z-index: 1;
@@ -69,8 +71,16 @@
 
   .input-container {
     width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
+  }
+
+  @media (max-width: 640px) {
+    .chat-container {
+      width: 100%;
+    }
+
+    .input-container {
+      padding: 0 0.75rem;
+    }
   }
 
   .new-explo-btn {

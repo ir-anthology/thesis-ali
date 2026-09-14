@@ -108,6 +108,8 @@
   }
 
   .content {
+    flex: 1;
+    min-width: 0;
     max-width: 100%;
     padding: 0.625rem 0.875rem;
     background-color: var(--assistant-bubble);

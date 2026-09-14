@@ -48,6 +48,13 @@
     white-space: nowrap;
   }
 
+  @media (max-width: 640px) {
+    .suggestion-chip {
+      white-space: normal;
+      text-align: left;
+    }
+  }
+
   .suggestion-chip:hover {
     background-color: var(--accent-light);
     border-color: var(--accent);

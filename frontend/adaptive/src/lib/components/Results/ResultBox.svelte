@@ -48,7 +48,7 @@
     </div>
   {:else}
     <div role="tabpanel">
-      <FacetTable {columns} {rows} {onCellClick} wide={true} />
+      <FacetTable {columns} {rows} {onCellClick} fitContent={true} />
     </div>
   {/if}
 </div>
@@ -62,16 +62,8 @@
   }
 
   .table-view {
-    width: max-content;
-    max-width: calc(100vw - 2rem);
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  @media (max-width: 640px) {
-    .table-view {
-      max-width: calc(100vw - 1.5rem);
-    }
+    width: fit-content;
+    max-width: 100%;
   }
 
   .result-tabs {

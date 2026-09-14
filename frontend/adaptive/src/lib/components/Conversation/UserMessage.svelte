@@ -48,7 +48,10 @@
   }
 
   .content {
-    max-width: 100%;
+    flex: 0 1 auto;
+    min-width: 0;
+    width: fit-content;
+    max-width: calc(100% - 28px - 0.625rem);
     padding: 0.625rem 0.875rem;
     background-color: var(--user-bubble);
     border-radius: 12px 12px 2px 12px;

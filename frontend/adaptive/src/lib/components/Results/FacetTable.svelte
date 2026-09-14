@@ -8,7 +8,7 @@
     onCellClick,
     tableId,
     dataMeta,
-    wide = false
+    fitContent = false
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
@@ -16,7 +16,7 @@
     onCellClick?: (question: string, interaction?: EntityInteraction) => void;
     tableId?: string;
     dataMeta?: string;
-    wide?: boolean;
+    fitContent?: boolean;
   } = $props();
 
   let visibleColumns = $derived(columns.filter((column) => column.role !== 'metadata'));
@@ -127,7 +127,7 @@
   });
 </script>
 
-<div class="table-container" class:wide-table={wide} id={tableId} data-meta={dataMeta}>
+<div class="table-container" class:fit-content-table={fitContent} id={tableId} data-meta={dataMeta}>
   <div class="table-wrapper">
     <table bind:this={tableElement} role="grid" aria-label={title || 'Data table'}>
       <thead>
@@ -191,23 +191,18 @@
   }
 
   .table-wrapper {
+    max-width: 100%;
     overflow-x: auto;
     background-color: var(--bg-primary);
   }
 
-  .wide-table .table-wrapper {
-    max-width: calc(100vw - 2rem);
+  .fit-content-table .table-wrapper {
+    width: fit-content;
   }
 
-  .wide-table table {
+  .fit-content-table table {
     width: max-content;
-    min-width: 100%;
-  }
-
-  @media (max-width: 640px) {
-    .wide-table .table-wrapper {
-      max-width: calc(100vw - 1.5rem);
-    }
+    min-width: 0;
   }
 
   table {
