@@ -112,16 +112,35 @@
     }
   }
 
+  function toNumericValue(value: string | number): number | null {
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : null;
+    }
+
+    if (!value.trim()) return null;
+
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : null;
+  }
+
+  function compareValues(a: string | number, b: string | number): number {
+    const aNumber = toNumericValue(a);
+    const bNumber = toNumericValue(b);
+
+    if (aNumber !== null && bNumber !== null) {
+      return aNumber - bNumber;
+    }
+
+    return String(a).localeCompare(String(b));
+  }
+
   let sortedRows = $derived.by(() => {
     if (!sortField) return rows;
     if (!visibleColumns.some((column) => column.key === sortField)) return rows;
     return [...rows].sort((a, b) => {
       const aVal = a[sortField!].value;
       const bVal = b[sortField!].value;
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-      const cmp = String(aVal).localeCompare(String(bVal));
+      const cmp = compareValues(aVal, bVal);
       return sortDirection === 'asc' ? cmp : -cmp;
     });
   });
