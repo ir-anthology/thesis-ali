@@ -6,8 +6,29 @@ from backend.main.schemas.context import QueryResult
 from backend.main.schemas.responses import CellMetadata, ResultColumn, CellValue
 
 
-def _is_metadata_column(column: str, query_result: QueryResult) -> bool:
-    """Identify raw entity identifiers while preserving legacy query aliases."""
+_EXTERNAL_IDENTIFIER_CANDIDATES: dict[str, tuple[str, ...]] = {
+    "orcid": ("author_name", "author", "creator_name", "creator"),
+    "doi": (
+        "title",
+        "publication_title",
+        "publication",
+        "pub",
+        "paper",
+        "article",
+    ),
+    "issn": (
+        "venue_name",
+        "venue",
+        "stream_name",
+        "stream",
+        "journal",
+        "conference",
+    ),
+}
+
+
+def _is_uri_column(column: str, query_result: QueryResult) -> bool:
+    """Identify raw entity URI columns."""
     key = column.lower()
     if key in {"id", "uri"}:
         return True
@@ -44,17 +65,42 @@ def _metadata_source(column: str, columns: list[str]) -> str | None:
     return None
 
 
+def _related_column(
+    identifier_column: str,
+    columns: list[ResultColumn],
+) -> str | None:
+    """Find the visible display column related to an external identifier."""
+    candidates = _EXTERNAL_IDENTIFIER_CANDIDATES.get(identifier_column.lower())
+    if candidates is None:
+        return None
+
+    visible_by_key = {
+        column.key.lower(): column.key
+        for column in columns
+        if column.visible
+    }
+    for candidate in candidates:
+        if candidate in visible_by_key:
+            return visible_by_key[candidate]
+    return None
+
+
 def format_result_columns(query_result: QueryResult) -> list[ResultColumn]:
     """Create frontend column definitions from a QueryResult."""
-    return [
+    columns = [
         ResultColumn(
             key=col,
             label=col.replace("_", " ").title(),
-            role="metadata" if _is_metadata_column(col, query_result) else "display",
-            sortable=not _is_metadata_column(col, query_result),
+            sortable=not _is_uri_column(col, query_result),
+            visible=not _is_uri_column(col, query_result),
+            external_link=col.lower() in {"orcid", "doi", "issn"},
         )
         for col in query_result.columns
     ]
+    for column in columns:
+        if column.external_link:
+            column.related_column = _related_column(column.key, columns)
+    return columns
 
 
 def format_result_rows(
@@ -69,7 +115,7 @@ def format_result_rows(
     metadata_columns = {
         column.key: column
         for column in columns
-        if column.role == "metadata"
+        if not column.visible
     }
     for raw_row in query_result.rows:
         row: dict[str, CellValue] = {}
@@ -84,7 +130,7 @@ def format_result_rows(
             row[col] = CellValue(value=value, question="", metadata=metadata)
 
         for column in columns:
-            if column.role != "display":
+            if not column.visible:
                 continue
             source = _metadata_source(column.key, query_result.columns)
             if source and source in row and row[source].metadata:

@@ -5,15 +5,18 @@ export const mockResponses: Record<string, ExplorationResponse> = {
     interpretation:
       "Here is the table that shows the most prolific authors based on publication count.",
     columns: [
-      { key: "author", label: "Author", type: "text", sortable: true },
+      { key: "author", label: "Author", type: "text", sortable: true, visible: true, external_link: false, related_column: null },
       {
         key: "publications",
         label: "Publications",
         type: "number",
         sortable: true,
+        visible: true,
+        external_link: false,
+        related_column: null,
       },
-      { key: "venues", label: "Venues", type: "number", sortable: true },
-      { key: "years", label: "Years", type: "text" },
+      { key: "venues", label: "Venues", type: "number", sortable: true, visible: true, external_link: false, related_column: null },
+      { key: "years", label: "Years", type: "text", sortable: false, visible: true, external_link: false, related_column: null },
     ],
     rows: [
       {

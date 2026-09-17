@@ -18,6 +18,7 @@ from backend.main.services.sparql_generation import SPARQLGenerationService
 from backend.main.services.result_analysis import ResultAnalysisService
 from backend.main.services.suggestions import SuggestionService
 from backend.main.sparql.client import SPARQLClient, SPARQLError
+from backend.main.sparql.external_identifiers import extend_with_external_identifier
 from backend.main.sparql.formatter import format_result_columns, format_result_rows
 from backend.main.sparql.validator import SPARQLValidator
 
@@ -90,12 +91,15 @@ class ExplorationService:
                 suggestions=suggestions or None,
             )
 
-        context.set_sparql(sparql_gen.query)
+        extended_query = extend_with_external_identifier(sparql_gen.query)
+        context.set_sparql(extended_query)
         logger.info("  → SPARQL generated (%d chars)", len(sparql_gen.query))
+        if extended_query != sparql_gen.query:
+            logger.info("  → External identifier projection added")
 
         # Validate
         logger.info("[Stage 2/4] SPARQL Validation")
-        validation = self._sparql_validator.validate(sparql_gen.query)
+        validation = self._sparql_validator.validate(extended_query)
         if not validation.valid:
             logger.warning("  → Validation FAILED: %s", validation.errors)
             suggestions = self._suggestions.run(context)
@@ -103,7 +107,7 @@ class ExplorationService:
                 interpretation=(
                     f"Generated query is invalid: {'; '.join(validation.errors)}"
                 ),
-                sparql_query=sparql_gen.query,
+                sparql_query=extended_query,
                 suggestions=suggestions or None,
             )
         logger.info("  → Validation PASSED")
@@ -111,13 +115,13 @@ class ExplorationService:
         # Execute
         logger.info("[Stage 2/4] SPARQL Execution")
         try:
-            query_result = self._sparql_client.execute(sparql_gen.query)
+            query_result = self._sparql_client.execute(extended_query)
         except SPARQLError as exc:
             logger.error("  → Execution FAILED: %s", exc)
             suggestions = self._suggestions.run(context)
             return ExplorationResponse(
                 interpretation=f"Query execution failed: {exc}",
-                sparql_query=sparql_gen.query,
+                sparql_query=extended_query,
                 suggestions=suggestions or None,
             )
 

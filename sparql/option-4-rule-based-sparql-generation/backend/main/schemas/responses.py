@@ -16,8 +16,14 @@ class ResultColumn(BaseModel):
         default="text", description="Column type"
     )
     sortable: bool = Field(default=False, description="Whether column is sortable")
-    role: Literal["display", "metadata"] = Field(
-        default="display", description="Whether the column is visible or metadata"
+    visible: bool = Field(default=True, description="Whether the column is visible")
+    external_link: bool = Field(
+        default=False,
+        description="Whether the value can represent an external link",
+    )
+    related_column: str | None = Field(
+        default=None,
+        description="Related entity/display column key",
     )
 
 

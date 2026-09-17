@@ -19,7 +19,7 @@
     fitContent?: boolean;
   } = $props();
 
-  let visibleColumns = $derived(columns.filter((column) => column.role !== 'metadata'));
+  let visibleColumns = $derived(columns.filter((column) => column.visible));
 
   function getEntityMetadata(row: ResultRow, cellKey: string): CellMetadata | undefined {
     const direct = row[cellKey]?.metadata;
@@ -38,10 +38,10 @@
       if (metadata?.entity_id) return metadata;
     }
 
-    const metadataColumns = columns.filter((column) => column.role === 'metadata');
+    const metadataColumns = columns.filter((column) => !column.visible);
     if (metadataColumns.length !== 1) return undefined;
     for (const column of columns) {
-      if (column.role !== 'metadata') continue;
+      if (column.visible) continue;
       const metadata = row[column.key]?.metadata;
       if (metadata?.entity_id) return metadata;
     }
@@ -134,6 +134,10 @@
     return String(a).localeCompare(String(b));
   }
 
+  function isAbsoluteHttpUrl(value: string | number): boolean {
+    return typeof value === 'string' && /^https?:\/\//i.test(value);
+  }
+
   let sortedRows = $derived.by(() => {
     if (!sortField) return rows;
     if (!visibleColumns.some((column) => column.key === sortField)) return rows;
@@ -188,7 +192,14 @@
                 data-entity-type={getEntityMetadata(row, column.key)?.entity_type}
                 onclick={cell.question ? () => handleCellClick(cell.question, column.key, row, i) : undefined}
               >
-                {#if column.type === 'badge'}
+                {#if column.external_link && isAbsoluteHttpUrl(cell.value)}
+                  <a
+                    href={String(cell.value)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onclick={(event) => event.stopPropagation()}
+                  >{cell.value}</a>
+                {:else if column.type === 'badge'}
                   <span class="cell-badge">{cell.value}</span>
                 {:else}
                   {cell.value}

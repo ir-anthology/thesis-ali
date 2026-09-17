@@ -50,7 +50,7 @@ class ResultAnalysisService:
     def _generate_questions(
         self, context: ExplorationContext
     ) -> list[dict[str, CellValue]]:
-        columns = [column for column in context.result_columns if column.role == "display"]
+        columns = [column for column in context.result_columns if column.visible]
         raw_rows = context.query_result.rows  # type: ignore[union-attr]
         all_rows: list[dict[str, CellValue]] = []
 
@@ -71,7 +71,7 @@ class ResultAnalysisService:
                     if column.key not in original_row:
                         continue
                     original_cell = original_row[column.key]
-                    if column.role == "metadata":
+                    if not column.visible:
                         analysed[column.key] = CellValue(
                             value=str(raw_row.get(column.key, "")),
                             question="",
@@ -210,7 +210,7 @@ class ResultAnalysisService:
         context: ExplorationContext,
         rows_with_questions: list[dict[str, CellValue]],
     ) -> list[str]:
-        columns = [column for column in context.result_columns if column.role == "display"]
+        columns = [column for column in context.result_columns if column.visible]
         # Use first 20 rows for observation generation
         sample_rows = rows_with_questions[:20]
 

@@ -33,10 +33,10 @@ WHERE {
 """
 
 COLUMNS = [
-    ResultColumn(key="author", label="Author", type="number", sortable=True, role="display"),
-    ResultColumn(key="publications", label="Publications", type="number", sortable=True, role="display"),
-    ResultColumn(key="venue", label="Venue", type="number", sortable=True, role="display"),
-    ResultColumn(key="year", label="Year", type="number", sortable=True, role="display"),
+    ResultColumn(key="author", label="Author", type="number", sortable=True),
+    ResultColumn(key="publications", label="Publications", type="number", sortable=True),
+    ResultColumn(key="venue", label="Venue", type="number", sortable=True),
+    ResultColumn(key="year", label="Year", type="number", sortable=True),
 ]
 
 

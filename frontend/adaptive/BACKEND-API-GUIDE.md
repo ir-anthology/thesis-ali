@@ -147,7 +147,9 @@ The response is a flat object. All fields are optional except the backend should
 | `label` | string | Display label |
 | `type` | string | `"text"`, `"number"`, `"badge"`, or `"link"` |
 | `sortable` | boolean | Whether users can sort by this column |
-| `role` | `"display"` \| `"metadata"` | Whether the column is visible or hidden metadata; defaults to `"display"` |
+| `visible` | boolean | Whether the column is rendered in the result table |
+| `external_link` | boolean | Whether the value is an external identifier such as ORCID, DOI, or ISSN |
+| `related_column` | string | null | Display-column key related to an external identifier; `null` when no matching column exists |
 
 ### CellValue
 
@@ -159,7 +161,9 @@ Each cell in a row is a `CellValue` object with a display value and a clickable 
 | `question` | string | The question sent as a user message when the cell is clicked. If empty/null, no tooltip or click handler. |
 | `metadata` | object | Optional hidden entity metadata used for direct-ID drill-down |
 
-Metadata objects may contain `entity_id` and `entity_type` (`author`, `venue`, `publication`, or `entity`). Metadata columns are retained in API rows but are not rendered by the frontend.
+Metadata objects may contain `entity_id` and `entity_type` (`author`, `venue`, `publication`, or `entity`). Columns with `visible: false` are retained in API rows but are not rendered by the frontend. URI columns use `visible: false` and `external_link: false`. The `orcid`, `doi`, and `issn` columns use `external_link: true`; the frontend creates an external anchor only when the returned value is already an absolute HTTP(S) URL.
+
+External identifier columns also expose their entity relationship through `related_column`. For example, `orcid` may return `related_column: "author_name"`, `doi` may return `related_column: "title"`, and `issn` may return `related_column: "venue_name"`. Ordinary and unmatched columns return `related_column: null`.
 
 ### Entity interaction
 
@@ -356,6 +360,9 @@ class ResultColumn(BaseModel):
     label: str
     type: str  # "text", "number", "badge", "link"
     sortable: bool = False
+    visible: bool = True
+    external_link: bool = False
+    related_column: Optional[str] = None
 
 class CellValue(BaseModel):
     value: str | int | float
@@ -395,7 +402,10 @@ interface ResultColumn {
   key: string;
   label: string;
   type: 'text' | 'number' | 'badge' | 'link';
-  sortable?: boolean;
+  sortable: boolean;
+  visible: boolean;
+  external_link: boolean;
+  related_column: string | null;
 }
 
 interface CellValue {

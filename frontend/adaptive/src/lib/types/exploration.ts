@@ -30,8 +30,10 @@ export interface ResultColumn {
   key: string;
   label: string;
   type: 'text' | 'number' | 'badge' | 'link';
-  sortable?: boolean;
-  role?: 'display' | 'metadata';
+  sortable: boolean;
+  visible: boolean;
+  external_link: boolean;
+  related_column: string | null;
 }
 
 export type EntityType = 'author' | 'venue' | 'publication' | 'entity';
