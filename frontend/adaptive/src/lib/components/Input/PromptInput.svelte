@@ -80,6 +80,7 @@
     border: 1px solid var(--border);
     border-radius: 1.5rem;
     margin-top: 1rem;
+    background-color: var(--bg-primary);
   }
 
   textarea {

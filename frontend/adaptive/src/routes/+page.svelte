@@ -72,9 +72,9 @@
     position: sticky;
     bottom: 0;
     z-index: 10;
-    width: 100%;
+    width: 60%;
+    margin: 0 auto;
     padding-bottom: 0.75rem;
-    background-color: var(--bg-secondary);
   }
 
   @media (max-width: 640px) {
@@ -83,6 +83,7 @@
     }
 
     .input-container {
+      width: 100%;
       padding: 0 0.75rem;
     }
   }
