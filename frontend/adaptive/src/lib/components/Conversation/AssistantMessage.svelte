@@ -50,13 +50,6 @@
         <p class="interpretation-text">{interpretation}</p>
       {/if}
 
-      {#if message.streaming}
-        <div class="streaming-status">
-          <Spinner size={12} />
-          <span>{message.streamingMessage}</span>
-        </div>
-      {/if}
-
       {#if columns && rows && !message.error}
         <ResultBox {columns} {rows} {sparqlQuery} {onCellClick} {disabled} />
       {/if}
@@ -69,6 +62,13 @@
 
       {#if suggestions && suggestions.length > 0}
         <SuggestionChips {suggestions} onSelect={onSelectSuggestion} {disabled} />
+      {/if}
+
+      {#if message.streaming}
+        <div class="streaming-status">
+          <Spinner size={12} />
+          <span>{message.streamingMessage}</span>
+        </div>
       {/if}
 
       {#if message.error}

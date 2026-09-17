@@ -48,7 +48,9 @@
     bind:this={textarea}
     bind:value={inputValue}
     onkeydown={handleKeydown}
-    placeholder="Ask about IR publications..."
+    placeholder={disabled
+      ? 'Please wait — interactions are paused until the response finishes streaming.'
+      : 'Ask about IR Anthology'}
     rows="1"
     {disabled}
   ></textarea>
