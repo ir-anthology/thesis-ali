@@ -52,9 +52,8 @@
   .app {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
+    min-height: 100vh;
+    min-height: 100dvh;
     background-color: var(--bg-secondary);
   }
 
@@ -65,13 +64,17 @@
     width: 80%;
     max-width: none;
     margin: 0 auto;
-    overflow: hidden;
     position: relative;
     z-index: 1;
   }
 
   .input-container {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
     width: 100%;
+    padding-bottom: 0.75rem;
+    background-color: var(--bg-secondary);
   }
 
   @media (max-width: 640px) {

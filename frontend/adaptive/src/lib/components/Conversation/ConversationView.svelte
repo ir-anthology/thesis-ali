@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import type { ConversationTurn, EntityInteraction, ResultColumn, ResultRow, StatisticsResponse } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
@@ -31,7 +32,6 @@
     activePath: ConversationTurn[];
   } = $props();
 
-  let container: HTMLDivElement | undefined = $state();
   let statistics = $state<StatisticsResponse | null>(null);
   let statsLoading = $state(true);
   let statsError = $state<string | null>(null);
@@ -62,9 +62,14 @@
   }
 
   $effect(() => {
-    activePath.length;
-    if (container) {
-      container.scrollTop = container.scrollHeight;
+    const turnCount = activePath.length;
+    if (turnCount > 0) {
+      tick().then(() => {
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth'
+        });
+      });
     }
   });
 </script>
@@ -72,7 +77,6 @@
 <div
   class="conversation-container"
   class:has-conversation={conversation.length > 0}
-  bind:this={container}
   role="log"
   aria-label="Conversation history"
   aria-live="polite"
@@ -140,7 +144,6 @@
 <style>
   .conversation-container {
     flex: 1;
-    overflow-y: auto;
     padding: 1rem;
     background-color: var(--bg-secondary);
     display: flex;
