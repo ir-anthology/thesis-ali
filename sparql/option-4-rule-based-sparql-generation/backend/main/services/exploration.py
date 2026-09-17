@@ -6,7 +6,10 @@ runs the pipeline, and converts the internal context to the frontend response.
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from collections.abc import AsyncIterator
+from typing import Any
 
 from backend.main.context.builder import ContextBuilder
 from backend.main.schema.provider import DBLPSchemaProvider
@@ -67,6 +70,118 @@ class ExplorationService:
 
         # In-scope path
         return await self._handle_in_scope(context)
+
+    async def explore_stream(self, request: ChatRequest) -> AsyncIterator[dict[str, Any]]:
+        """Process an exploration request and yield completed pipeline stages."""
+        context = await asyncio.to_thread(self._context_builder.build, request)
+
+        interpretation = await asyncio.to_thread(
+            self._interpretation.run, context
+        )
+        context.set_interpretation(interpretation)
+        yield {"event": "interpretation", "data": {"text": interpretation.message}}
+
+        if interpretation.scope == "ambiguous":
+            if interpretation.suggestions:
+                yield {
+                    "event": "suggestions",
+                    "data": {"items": interpretation.suggestions},
+                }
+            yield {"event": "complete", "data": {}}
+            return
+
+        if interpretation.scope == "out_of_scope":
+            suggestions = await asyncio.to_thread(self._suggestions.run, context)
+            context.set_suggestions(suggestions)
+            if suggestions:
+                yield {"event": "suggestions", "data": {"items": suggestions}}
+            yield {"event": "complete", "data": {}}
+            return
+
+        sparql_gen = await asyncio.to_thread(self._sparql_generation.run, context)
+        if sparql_gen is None:
+            yield {
+                "event": "error",
+                "data": {"message": "SPARQL generation failed."},
+            }
+            return
+
+        extended_query = extend_with_external_identifier(sparql_gen.query)
+        context.set_sparql(extended_query)
+        yield {"event": "sparql", "data": {"query": extended_query}}
+
+        validation = await asyncio.to_thread(
+            self._sparql_validator.validate, extended_query
+        )
+        if not validation.valid:
+            yield {
+                "event": "error",
+                "data": {
+                    "message": f"Generated query is invalid: {'; '.join(validation.errors)}"
+                },
+            }
+            return
+
+        try:
+            query_result = await asyncio.to_thread(
+                self._sparql_client.execute, extended_query
+            )
+        except SPARQLError as exc:
+            yield {"event": "error", "data": {"message": f"Query execution failed: {exc}"}}
+            return
+
+        context.set_query_result(query_result)
+        columns = format_result_columns(query_result)
+        initial_rows = format_result_rows(query_result)
+        context.set_result_table(columns, initial_rows)
+        yield {
+            "event": "result",
+            "data": {
+                "columns": [column.model_dump() for column in columns],
+                "rows": self._serialize_rows(initial_rows),
+            },
+        }
+
+        enriched_rows: list[dict[str, CellValue]] = []
+        if query_result.row_count > 0:
+            for offset in range(0, query_result.row_count, self._result_analysis.batch_size):
+                batch_rows = await asyncio.to_thread(
+                    self._result_analysis.generate_question_batch,
+                    context,
+                    offset,
+                )
+                enriched_rows.extend(batch_rows)
+                context.set_result_table(columns, enriched_rows)
+                yield {
+                    "event": "row_questions",
+                    "data": {
+                        "offset": offset,
+                        "rows": self._serialize_rows(batch_rows),
+                    },
+                }
+
+            observations = await asyncio.to_thread(
+                self._result_analysis.generate_observations,
+                context,
+                enriched_rows,
+            )
+            context.set_observations(observations)
+            if observations:
+                yield {"event": "observations", "data": {"items": observations}}
+
+        suggestions = await asyncio.to_thread(self._suggestions.run, context)
+        context.set_suggestions(suggestions)
+        if suggestions:
+            yield {"event": "suggestions", "data": {"items": suggestions}}
+
+        yield {"event": "complete", "data": {}}
+
+    @staticmethod
+    def _serialize_rows(rows: list[dict[str, CellValue]]) -> list[dict[str, Any]]:
+        return [
+            {key: cell.model_dump() for key, cell in row.items()}
+            for row in rows
+        ]
 
     # ------------------------------------------------------------------
     # Scope handlers

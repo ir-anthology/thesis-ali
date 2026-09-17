@@ -22,6 +22,7 @@ export interface ConversationTurn {
   content: string;
   timestamp: Date;
   loading?: boolean;
+  streaming?: boolean;
   error?: boolean;
   branchCount?: number;
 }

@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import logging
+import json
+from collections.abc import AsyncIterator
 
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 
 from backend.main.schemas.requests import ChatRequest
 from backend.main.schemas.responses import ExplorationResponse
@@ -34,3 +37,33 @@ async def explore(request: ChatRequest) -> ExplorationResponse:
                 "Check if the entity names are correct",
             ],
         )
+
+
+def _encode_sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+async def _stream_events(request: ChatRequest) -> AsyncIterator[str]:
+    try:
+        async for item in _service.explore_stream(request):
+            yield _encode_sse(item["event"], item["data"])
+    except Exception:
+        logger.exception("Streaming pipeline failed")
+        yield _encode_sse(
+            "error",
+            {"message": "An error occurred while processing your query."},
+        )
+
+
+@router.post("/api/exploration/stream")
+async def explore_stream(request: ChatRequest) -> StreamingResponse:
+    """Stream exploration stages as Server-Sent Events."""
+    return StreamingResponse(
+        _stream_events(request),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

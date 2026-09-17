@@ -44,28 +44,35 @@
     </div>
 
     <div class="message-body">
-      {#if message.loading}
+      {#if message.loading && !interpretation}
         <div class="loading">
           <Spinner size={14} />
           <span>Thinking about the question...</span>
         </div>
-      {:else}
-        {#if interpretation}
-          <p class="interpretation-text">{interpretation}</p>
-        {/if}
       {/if}
 
-      {#if columns && rows && !message.loading && !message.error}
+      {#if interpretation}
+        <p class="interpretation-text">{interpretation}</p>
+      {/if}
+
+      {#if message.streaming}
+        <div class="streaming-status">
+          <Spinner size={12} />
+          <span>Preparing more details…</span>
+        </div>
+      {/if}
+
+      {#if columns && rows && !message.error}
         <ResultBox {columns} {rows} {sparqlQuery} {onCellClick} />
       {/if}
 
-      {#if observations && observations.length > 0 && !message.loading}
+      {#if observations && observations.length > 0}
         {#each observations as text, i (i)}
           <ObservationCard {text} />
         {/each}
       {/if}
 
-      {#if suggestions && suggestions.length > 0 && !message.loading}
+      {#if suggestions && suggestions.length > 0}
         <SuggestionChips {suggestions} onSelect={onSelectSuggestion} />
       {/if}
 
@@ -154,6 +161,15 @@
     gap: 0.5rem;
     color: var(--text-secondary);
     font-size: 0.8125rem;
+  }
+
+  .streaming-status {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
   }
 
   .error-text {

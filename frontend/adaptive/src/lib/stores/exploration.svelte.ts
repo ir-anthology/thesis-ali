@@ -14,7 +14,6 @@ import type {
   ConversationTurn,
   ResultColumn,
   ResultRow,
-  ExplorationResponse,
   HistoryTurn,
   EntityInteraction
 } from '$lib/types/exploration';
@@ -26,6 +25,7 @@ function createExplorationStore() {
   let loading = $state(false);
   let error = $state<string | null>(null);
   let headTurnId = $state<string | null>(null);
+  let abortController: AbortController | null = null;
 
   let interpretationByTurn = $state<Map<string, string>>(new Map());
   let columnsByTurn = $state<Map<string, ResultColumn[]>>(new Map());
@@ -69,6 +69,26 @@ function createExplorationStore() {
     });
   }
 
+  function parseSseEvent(raw: string): { event: string; data: any } | null {
+    let event = 'message';
+    let data = '';
+
+    for (const line of raw.split(/\r?\n/)) {
+      if (line.startsWith('event:')) event = line.slice(6).trim();
+      if (line.startsWith('data:')) data += line.slice(5).trim();
+    }
+
+    if (!data) return null;
+    return { event, data: JSON.parse(data) };
+  }
+
+  function patchRows(turnId: string, offset: number, incoming: ResultRow[]): void {
+    const current = rowsByTurn.get(turnId) || [];
+    const next = [...current];
+    next.splice(offset, incoming.length, ...incoming);
+    rowsByTurn = new Map(rowsByTurn).set(turnId, next);
+  }
+
   async function sendMessage(
     content: string,
     fromTurnId?: string | null,
@@ -100,55 +120,101 @@ function createExplorationStore() {
       role: 'assistant',
       content: '',
       timestamp: new Date(),
-      loading: true
+      loading: true,
+      streaming: true
     };
     conversation = [...conversation, assistantTurn];
     headTurnId = assistantTurn.id;
     loading = true;
     error = null;
+    abortController = new AbortController();
 
     const history = buildHistory();
 
     try {
-      const res = await fetch(`${API_BASE}/api/exploration`, {
+      const res = await fetch(`${API_BASE}/api/exploration/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content, history, interaction })
+        body: JSON.stringify({ message: content, history, interaction }),
+        signal: abortController.signal
       });
 
-      if (!res.ok) {
+      if (!res.ok || !res.body) {
         throw new Error(`API error: ${res.status}`);
       }
 
-      const response: ExplorationResponse = await res.json();
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let completed = false;
 
-      const displayText = response.interpretation || '';
+      const handleEvent = (event: string, data: any): void => {
+        switch (event) {
+          case 'interpretation':
+            conversation = conversation.map((t) =>
+              t.id === assistantTurn.id ? { ...t, content: data.text } : t
+            );
+            interpretationByTurn = new Map(interpretationByTurn).set(assistantTurn.id, data.text);
+            break;
+          case 'sparql':
+            sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, data.query);
+            break;
+          case 'result':
+            columnsByTurn = new Map(columnsByTurn).set(assistantTurn.id, data.columns);
+            rowsByTurn = new Map(rowsByTurn).set(assistantTurn.id, data.rows);
+            break;
+          case 'row_questions':
+            patchRows(assistantTurn.id, data.offset, data.rows);
+            break;
+          case 'observations':
+            observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, data.items);
+            break;
+          case 'suggestions':
+            suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, data.items);
+            break;
+          case 'complete':
+            completed = true;
+            conversation = conversation.map((t) =>
+              t.id === assistantTurn.id ? { ...t, loading: false, streaming: false } : t
+            );
+            break;
+          case 'error':
+            completed = true;
+            const streamMessage = data.message || 'The stream failed.';
+            conversation = conversation.map((t) =>
+              t.id === assistantTurn.id
+                ? { ...t, content: streamMessage, loading: false, streaming: false, error: true }
+                : t
+            );
+            error = streamMessage;
+            break;
+        }
+      };
 
-      conversation = conversation.map((t) =>
-        t.id === assistantTurn.id
-          ? { ...t, content: displayText, loading: false }
-          : t
-      );
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-      if (response.interpretation) {
-        interpretationByTurn = new Map(interpretationByTurn).set(assistantTurn.id, response.interpretation);
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        buffer = chunks.pop() || '';
+
+        for (const chunk of chunks) {
+          const parsed = parseSseEvent(chunk);
+          if (parsed) handleEvent(parsed.event, parsed.data);
+        }
       }
-      if (response.columns) {
-        columnsByTurn = new Map(columnsByTurn).set(assistantTurn.id, response.columns);
+
+      if (buffer.trim()) {
+        const parsed = parseSseEvent(buffer);
+        if (parsed) handleEvent(parsed.event, parsed.data);
       }
-      if (response.rows) {
-        rowsByTurn = new Map(rowsByTurn).set(assistantTurn.id, response.rows);
-      }
-      if (response.observations) {
-        observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, response.observations);
-      }
-      if (response.suggestions) {
-        suggestionsByTurn = new Map(suggestionsByTurn).set(assistantTurn.id, response.suggestions);
-      }
-      if (response.sparql_query) {
-        sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, response.sparql_query);
+
+      if (!completed) {
+        throw new Error('The streaming response ended before completion.');
       }
     } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
       const message = e instanceof Error ? e.message : 'Unknown error';
       conversation = conversation.map((t) =>
         t.id === assistantTurn.id
@@ -156,6 +222,7 @@ function createExplorationStore() {
               ...t,
               content: `Failed to get response: ${message}`,
               loading: false,
+              streaming: false,
               error: true
             }
           : t
@@ -164,6 +231,7 @@ function createExplorationStore() {
     }
 
     loading = false;
+    abortController = null;
   }
 
   function selectSuggestion(
@@ -185,6 +253,8 @@ function createExplorationStore() {
   }
 
   function clearExploration(): void {
+    abortController?.abort();
+    abortController = null;
     conversation = [];
     headTurnId = null;
     loading = false;

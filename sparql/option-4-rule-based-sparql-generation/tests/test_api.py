@@ -169,6 +169,59 @@ def test_exploration_endpoint_with_history(client):
     assert data["interpretation"] == "Let me find papers by Geoffrey Hinton from 2023"
 
 
+def test_exploration_stream_endpoint_emits_ordered_events(client):
+    async def fake_stream(_request):
+        yield {"event": "interpretation", "data": {"text": "Understanding"}}
+        yield {"event": "sparql", "data": {"query": "SELECT * WHERE {}"}}
+        yield {"event": "result", "data": {"columns": [], "rows": []}}
+        yield {"event": "suggestions", "data": {"items": ["Try again"]}}
+        yield {"event": "complete", "data": {}}
+
+    with patch(
+        "backend.main.api.exploration._service.explore_stream",
+        side_effect=fake_stream,
+    ):
+        response = client.post(
+            "/api/exploration/stream",
+            json={"message": "test query", "history": []},
+        )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/event-stream")
+    body = response.text
+    event_names = [
+        line.removeprefix("event: ")
+        for line in body.splitlines()
+        if line.startswith("event:")
+    ]
+    assert event_names == [
+        "interpretation",
+        "sparql",
+        "result",
+        "suggestions",
+        "complete",
+    ]
+
+
+def test_exploration_stream_endpoint_reports_pipeline_errors(client):
+    async def failing_stream(_request):
+        yield {"event": "interpretation", "data": {"text": "Understanding"}}
+        raise RuntimeError("pipeline failed")
+
+    with patch(
+        "backend.main.api.exploration._service.explore_stream",
+        side_effect=failing_stream,
+    ):
+        response = client.post(
+            "/api/exploration/stream",
+            json={"message": "test query", "history": []},
+        )
+
+    assert response.status_code == 200
+    assert "event: error" in response.text
+    assert "pipeline failed" not in response.text
+
+
 def test_chat_request_accepts_direct_entity_interaction():
     request = ChatRequest(
         message="Show this author's publications",

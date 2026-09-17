@@ -7,6 +7,7 @@ results.  Receives the full accumulated context.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 
 from backend.main.config import QUESTION_BATCH_SIZE
 from backend.main.llm.client import LLMClient, load_prompt
@@ -50,40 +51,82 @@ class ResultAnalysisService:
     def _generate_questions(
         self, context: ExplorationContext
     ) -> list[dict[str, CellValue]]:
-        columns = [column for column in context.result_columns if column.visible]
-        raw_rows = context.query_result.rows  # type: ignore[union-attr]
         all_rows: list[dict[str, CellValue]] = []
 
-        for batch_start in range(0, len(raw_rows), self._batch_size):
-            batch = raw_rows[batch_start : batch_start + self._batch_size]
-            batch_result = self._generate_questions_batch(
-                context, columns, batch, batch_start
-            )
-            for row_index, (analysed, raw_row) in enumerate(zip(batch_result, batch)):
-                original_index = batch_start + row_index
-                original_row = context.result_rows[original_index] if original_index < len(context.result_rows) else {}
-                for column in columns:
-                    if column.key in original_row and original_row[column.key].metadata:
-                        analysed[column.key] = analysed[column.key].model_copy(
-                            update={"metadata": original_row[column.key].metadata}
-                        )
-                for column in context.result_columns:
-                    if column.key not in original_row:
-                        continue
-                    original_cell = original_row[column.key]
-                    if not column.visible:
-                        analysed[column.key] = CellValue(
-                            value=str(raw_row.get(column.key, "")),
-                            question="",
-                            metadata=original_cell.metadata,
-                        )
-                    elif original_cell.metadata and column.key in analysed:
-                        analysed[column.key] = analysed[column.key].model_copy(
-                            update={"metadata": original_cell.metadata}
-                        )
-                all_rows.append(analysed)
+        for _, batch_rows in self.iter_question_batches(context):
+            all_rows.extend(batch_rows)
 
         return all_rows
+
+    @property
+    def batch_size(self) -> int:
+        """Configured number of result rows processed per LLM call."""
+        return self._batch_size
+
+    def iter_question_batches(
+        self, context: ExplorationContext
+    ) -> Iterator[tuple[int, list[dict[str, CellValue]]]]:
+        """Generate enriched row batches while preserving their source offsets.
+
+        The method is intentionally synchronous because the underlying LLM
+        client is synchronous.  The streaming orchestrator runs each batch in
+        a worker thread and emits it as soon as it is ready.
+        """
+        if not context.query_result or context.query_result.row_count == 0:
+            return
+
+        for offset in range(0, len(context.query_result.rows), self._batch_size):
+            yield offset, self.generate_question_batch(context, offset)
+
+    def generate_question_batch(
+        self, context: ExplorationContext, offset: int
+    ) -> list[dict[str, CellValue]]:
+        """Generate and enrich one result batch starting at *offset*."""
+        columns = [column for column in context.result_columns if column.visible]
+        raw_rows = context.query_result.rows  # type: ignore[union-attr]
+        batch = raw_rows[offset : offset + self._batch_size]
+        batch_result = self._generate_questions_batch(
+            context, columns, batch, offset
+        )
+
+        enriched: list[dict[str, CellValue]] = []
+        for row_index, (analysed, raw_row) in enumerate(zip(batch_result, batch)):
+            original_index = offset + row_index
+            original_row = (
+                context.result_rows[original_index]
+                if original_index < len(context.result_rows)
+                else {}
+            )
+            for column in columns:
+                if column.key in original_row and original_row[column.key].metadata:
+                    analysed[column.key] = analysed[column.key].model_copy(
+                        update={"metadata": original_row[column.key].metadata}
+                    )
+            for column in context.result_columns:
+                if column.key not in original_row:
+                    continue
+                original_cell = original_row[column.key]
+                if not column.visible:
+                    analysed[column.key] = CellValue(
+                        value=str(raw_row.get(column.key, "")),
+                        question="",
+                        metadata=original_cell.metadata,
+                    )
+                elif original_cell.metadata and column.key in analysed:
+                    analysed[column.key] = analysed[column.key].model_copy(
+                        update={"metadata": original_cell.metadata}
+                    )
+            enriched.append(analysed)
+
+        return enriched
+
+    def generate_observations(
+        self,
+        context: ExplorationContext,
+        rows_with_questions: list[dict[str, CellValue]],
+    ) -> list[str]:
+        """Generate observations for already-enriched rows."""
+        return self._generate_observations(context, rows_with_questions)
 
     def _generate_questions_batch(
         self,
