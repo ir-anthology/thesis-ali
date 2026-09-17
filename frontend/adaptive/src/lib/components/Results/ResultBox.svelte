@@ -7,12 +7,14 @@
     columns,
     rows,
     sparqlQuery,
-    onCellClick
+    onCellClick,
+    disabled = false
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
     sparqlQuery?: string;
     onCellClick?: (question: string) => void;
+    disabled?: boolean;
   } = $props();
 
   let showSparql = $state(false);
@@ -48,7 +50,7 @@
     </div>
   {:else}
     <div role="tabpanel">
-      <FacetTable {columns} {rows} {onCellClick} fitContent={true} />
+      <FacetTable {columns} {rows} {onCellClick} {disabled} fitContent={true} />
     </div>
   {/if}
 </div>

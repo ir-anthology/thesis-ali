@@ -15,6 +15,7 @@
     observationsByTurn,
     suggestionsByTurn,
     sparqlByTurn,
+    disabled = false,
     onSelectSuggestion,
     activePath
   }: {
@@ -25,6 +26,7 @@
     observationsByTurn: Map<string, string[]>;
     suggestionsByTurn: Map<string, string[]>;
     sparqlByTurn: Map<string, string>;
+    disabled?: boolean;
     onSelectSuggestion: (suggestion: string, fromTurnId?: string | null, interaction?: EntityInteraction) => void;
     activePath: ConversationTurn[];
   } = $props();
@@ -55,6 +57,7 @@
   });
 
   function handleOverviewClick(question: string, interaction?: EntityInteraction): void {
+    if (disabled) return;
     onSelectSuggestion(question, null, interaction);
   }
 
@@ -107,6 +110,7 @@
             onCellClick={handleOverviewClick}
             tableId="stats-facet-table"
             dataMeta="statistics"
+            disabled={disabled}
           />
         </div>
       {/if}
@@ -124,6 +128,7 @@
           observations={observationsByTurn.get(turn.id)}
           suggestions={suggestionsByTurn.get(turn.id)}
           sparqlQuery={sparqlByTurn.get(turn.id)}
+          disabled={disabled}
           onSelectSuggestion={(s) => onSelectSuggestion(s, turn.id)}
           onCellClick={(q, interaction) => onSelectSuggestion(q, turn.id, interaction)}
         />

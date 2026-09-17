@@ -75,6 +75,7 @@ class ExplorationService:
         """Process an exploration request and yield completed pipeline stages."""
         context = await asyncio.to_thread(self._context_builder.build, request)
 
+        yield self._stage_event("interpreting", "Interpreting your query…")
         interpretation = await asyncio.to_thread(
             self._interpretation.run, context
         )
@@ -83,6 +84,7 @@ class ExplorationService:
 
         if interpretation.scope == "ambiguous":
             if interpretation.suggestions:
+                yield self._stage_event("creating_suggestions", "Creating suggestions…")
                 yield {
                     "event": "suggestions",
                     "data": {"items": interpretation.suggestions},
@@ -91,6 +93,7 @@ class ExplorationService:
             return
 
         if interpretation.scope == "out_of_scope":
+            yield self._stage_event("creating_suggestions", "Creating suggestions…")
             suggestions = await asyncio.to_thread(self._suggestions.run, context)
             context.set_suggestions(suggestions)
             if suggestions:
@@ -98,6 +101,7 @@ class ExplorationService:
             yield {"event": "complete", "data": {}}
             return
 
+        yield self._stage_event("generating_sparql", "Generating a SPARQL query…")
         sparql_gen = await asyncio.to_thread(self._sparql_generation.run, context)
         if sparql_gen is None:
             yield {
@@ -122,6 +126,7 @@ class ExplorationService:
             }
             return
 
+        yield self._stage_event("obtaining_results", "Obtaining results…")
         try:
             query_result = await asyncio.to_thread(
                 self._sparql_client.execute, extended_query
@@ -144,6 +149,22 @@ class ExplorationService:
 
         enriched_rows: list[dict[str, CellValue]] = []
         if query_result.row_count > 0:
+            yield self._stage_event(
+                "generating_observations", "Generating observations…"
+            )
+
+            observations = await asyncio.to_thread(
+                self._result_analysis.generate_observations,
+                context,
+                initial_rows,
+            )
+            context.set_observations(observations)
+            if observations:
+                yield {"event": "observations", "data": {"items": observations}}
+
+            yield self._stage_event(
+                "formulating_questions", "Formulating follow-up questions…"
+            )
             for offset in range(0, query_result.row_count, self._result_analysis.batch_size):
                 batch_rows = await asyncio.to_thread(
                     self._result_analysis.generate_question_batch,
@@ -160,21 +181,17 @@ class ExplorationService:
                     },
                 }
 
-            observations = await asyncio.to_thread(
-                self._result_analysis.generate_observations,
-                context,
-                enriched_rows,
-            )
-            context.set_observations(observations)
-            if observations:
-                yield {"event": "observations", "data": {"items": observations}}
-
+        yield self._stage_event("creating_suggestions", "Creating suggestions…")
         suggestions = await asyncio.to_thread(self._suggestions.run, context)
         context.set_suggestions(suggestions)
         if suggestions:
             yield {"event": "suggestions", "data": {"items": suggestions}}
 
         yield {"event": "complete", "data": {}}
+
+    @staticmethod
+    def _stage_event(stage: str, message: str) -> dict[str, Any]:
+        return {"event": "stage", "data": {"stage": stage, "message": message}}
 
     @staticmethod
     def _serialize_rows(rows: list[dict[str, CellValue]]) -> list[dict[str, Any]]:

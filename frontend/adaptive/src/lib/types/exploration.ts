@@ -15,6 +15,14 @@
 /** The role of a message in the conversation */
 export type MessageRole = 'user' | 'assistant';
 
+export type StreamStage =
+  | 'interpreting'
+  | 'generating_sparql'
+  | 'obtaining_results'
+  | 'formulating_questions'
+  | 'generating_observations'
+  | 'creating_suggestions';
+
 export interface ConversationTurn {
   id: string;
   parentId: string | null;
@@ -23,6 +31,8 @@ export interface ConversationTurn {
   timestamp: Date;
   loading?: boolean;
   streaming?: boolean;
+  streamingStage?: StreamStage;
+  streamingMessage?: string;
   error?: boolean;
   branchCount?: number;
 }

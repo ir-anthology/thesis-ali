@@ -8,7 +8,8 @@
     onCellClick,
     tableId,
     dataMeta,
-    fitContent = false
+    fitContent = false,
+    disabled = false
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
@@ -17,6 +18,7 @@
     tableId?: string;
     dataMeta?: string;
     fitContent?: boolean;
+    disabled?: boolean;
   } = $props();
 
   const HTTP_URL_RE = /^https?:\/\/[^\s]+$/i;
@@ -92,7 +94,7 @@
     const interaction = metadata?.entity_id
       ? { entity_id: metadata.entity_id, entity_type: metadata.entity_type }
       : undefined;
-    onCellClick?.(question, interaction);
+    if (!disabled) onCellClick?.(question, interaction);
   }
 
   function handleKeydown(event: KeyboardEvent, rowIndex: number): void {
@@ -202,12 +204,12 @@
               {@const externalLinks = getExternalLinks(row, column.key)}
               <td
                 role="gridcell"
-                class:clickable={!!onCellClick && !!cell.question}
+                class:clickable={!disabled && !!onCellClick && !!cell.question}
                 class:focused={focusedCellKey === column.key && focusedCellRow === i}
                 title={cell.question || undefined}
                 data-entity-id={getEntityMetadata(row, column.key)?.entity_id}
                 data-entity-type={getEntityMetadata(row, column.key)?.entity_type}
-                onclick={cell.question ? () => handleCellClick(cell.question, column.key, row, i) : undefined}
+                onclick={!disabled && cell.question ? () => handleCellClick(cell.question, column.key, row, i) : undefined}
               >
                 {#if column.type === 'badge'}
                   <span class="cell-badge">{cell.value}</span>

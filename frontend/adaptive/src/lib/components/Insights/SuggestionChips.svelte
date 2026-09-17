@@ -1,10 +1,12 @@
 <script lang="ts">
   let {
     suggestions,
-    onSelect
+    onSelect,
+    disabled = false
   }: {
     suggestions: string[];
     onSelect: (suggestion: string) => void;
+    disabled?: boolean;
   } = $props();
 </script>
 
@@ -15,6 +17,7 @@
         <button
           class="suggestion-chip"
           onclick={() => onSelect(suggestion)}
+          disabled={disabled}
           aria-label="Ask: {suggestion}"
         >
           {suggestion}

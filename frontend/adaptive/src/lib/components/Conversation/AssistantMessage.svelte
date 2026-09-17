@@ -13,6 +13,7 @@
     observations,
     suggestions,
     sparqlQuery,
+    disabled = false,
     onSelectSuggestion,
     onCellClick
   }: {
@@ -23,6 +24,7 @@
     observations?: string[];
     suggestions?: string[];
     sparqlQuery?: string;
+    disabled?: boolean;
     onSelectSuggestion: (suggestion: string) => void;
     onCellClick?: (question: string, interaction?: EntityInteraction) => void;
   } = $props();
@@ -44,13 +46,6 @@
     </div>
 
     <div class="message-body">
-      {#if message.loading && !interpretation}
-        <div class="loading">
-          <Spinner size={14} />
-          <span>Thinking about the question...</span>
-        </div>
-      {/if}
-
       {#if interpretation}
         <p class="interpretation-text">{interpretation}</p>
       {/if}
@@ -58,12 +53,12 @@
       {#if message.streaming}
         <div class="streaming-status">
           <Spinner size={12} />
-          <span>Preparing more details…</span>
+          <span>{message.streamingMessage}</span>
         </div>
       {/if}
 
       {#if columns && rows && !message.error}
-        <ResultBox {columns} {rows} {sparqlQuery} {onCellClick} />
+        <ResultBox {columns} {rows} {sparqlQuery} {onCellClick} {disabled} />
       {/if}
 
       {#if observations && observations.length > 0}
@@ -73,7 +68,7 @@
       {/if}
 
       {#if suggestions && suggestions.length > 0}
-        <SuggestionChips {suggestions} onSelect={onSelectSuggestion} />
+        <SuggestionChips {suggestions} onSelect={onSelectSuggestion} {disabled} />
       {/if}
 
       {#if message.error}
@@ -153,14 +148,6 @@
 
   .interpretation-text {
     margin-bottom: 0.75rem;
-  }
-
-  .loading {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
   }
 
   .streaming-status {

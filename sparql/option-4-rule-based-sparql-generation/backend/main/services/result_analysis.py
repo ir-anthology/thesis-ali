@@ -39,8 +39,10 @@ class ResultAnalysisService:
 
         logger.info("Stage 3: Analysing %d rows", context.query_result.row_count)
 
+        # Observations depend only on the result values and columns, so they
+        # can be generated before the slower cell-question enrichment.
+        observations = self._generate_observations(context, context.result_rows)
         rows_with_questions = self._generate_questions(context)
-        observations = self._generate_observations(context, rows_with_questions)
 
         return rows_with_questions, observations
 

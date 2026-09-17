@@ -171,9 +171,13 @@ def test_exploration_endpoint_with_history(client):
 
 def test_exploration_stream_endpoint_emits_ordered_events(client):
     async def fake_stream(_request):
+        yield {"event": "stage", "data": {"stage": "interpreting", "message": "Interpreting your query…"}}
         yield {"event": "interpretation", "data": {"text": "Understanding"}}
+        yield {"event": "stage", "data": {"stage": "generating_sparql", "message": "Generating a SPARQL query…"}}
         yield {"event": "sparql", "data": {"query": "SELECT * WHERE {}"}}
+        yield {"event": "stage", "data": {"stage": "obtaining_results", "message": "Obtaining results…"}}
         yield {"event": "result", "data": {"columns": [], "rows": []}}
+        yield {"event": "stage", "data": {"stage": "creating_suggestions", "message": "Creating suggestions…"}}
         yield {"event": "suggestions", "data": {"items": ["Try again"]}}
         yield {"event": "complete", "data": {}}
 
@@ -195,9 +199,13 @@ def test_exploration_stream_endpoint_emits_ordered_events(client):
         if line.startswith("event:")
     ]
     assert event_names == [
+        "stage",
         "interpretation",
+        "stage",
         "sparql",
+        "stage",
         "result",
+        "stage",
         "suggestions",
         "complete",
     ]

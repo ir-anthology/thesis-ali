@@ -18,7 +18,7 @@
         </a>
       </div>
       {#if exploration.conversation.length > 0}
-        <button class="new-explo-btn" onclick={() => exploration.clearExploration()}>
+        <button class="new-explo-btn" onclick={() => exploration.clearExploration()} disabled={exploration.loading}>
           New Exploration
         </button>
       {/if}
@@ -34,6 +34,7 @@
       observationsByTurn={exploration.observationsByTurn}
       suggestionsByTurn={exploration.suggestionsByTurn}
       sparqlByTurn={exploration.sparqlByTurn}
+      disabled={exploration.loading}
       onSelectSuggestion={(s, fromTurnId) => exploration.selectSuggestion(s, fromTurnId)}
       activePath={exploration.getActivePath()}
     />
@@ -102,6 +103,11 @@
 
   .new-explo-btn:hover {
     background-color: #f9fafb;
+  }
+
+  .new-explo-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .new-explo-btn:focus-visible {

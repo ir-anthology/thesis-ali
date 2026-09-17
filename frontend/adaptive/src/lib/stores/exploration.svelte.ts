@@ -15,7 +15,8 @@ import type {
   ResultColumn,
   ResultRow,
   HistoryTurn,
-  EntityInteraction
+  EntityInteraction,
+  StreamStage
 } from '$lib/types/exploration';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
@@ -156,6 +157,18 @@ function createExplorationStore() {
             );
             interpretationByTurn = new Map(interpretationByTurn).set(assistantTurn.id, data.text);
             break;
+          case 'stage':
+            conversation = conversation.map((t) =>
+              t.id === assistantTurn.id
+                ? {
+                    ...t,
+                    streaming: true,
+                    streamingStage: data.stage as StreamStage,
+                    streamingMessage: data.message
+                  }
+                : t
+            );
+            break;
           case 'sparql':
             sparqlByTurn = new Map(sparqlByTurn).set(assistantTurn.id, data.query);
             break;
@@ -175,7 +188,15 @@ function createExplorationStore() {
           case 'complete':
             completed = true;
             conversation = conversation.map((t) =>
-              t.id === assistantTurn.id ? { ...t, loading: false, streaming: false } : t
+              t.id === assistantTurn.id
+                ? {
+                    ...t,
+                    loading: false,
+                    streaming: false,
+                    streamingStage: undefined,
+                    streamingMessage: undefined
+                  }
+                : t
             );
             break;
           case 'error':
@@ -183,7 +204,15 @@ function createExplorationStore() {
             const streamMessage = data.message || 'The stream failed.';
             conversation = conversation.map((t) =>
               t.id === assistantTurn.id
-                ? { ...t, content: streamMessage, loading: false, streaming: false, error: true }
+                ? {
+                    ...t,
+                    content: streamMessage,
+                    loading: false,
+                    streaming: false,
+                    streamingStage: undefined,
+                    streamingMessage: undefined,
+                    error: true
+                  }
                 : t
             );
             error = streamMessage;
@@ -223,6 +252,8 @@ function createExplorationStore() {
               content: `Failed to get response: ${message}`,
               loading: false,
               streaming: false,
+              streamingStage: undefined,
+              streamingMessage: undefined,
               error: true
             }
           : t
