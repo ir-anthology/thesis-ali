@@ -33,7 +33,7 @@ _WHERE_RE = re.compile(r"\bWHERE\s*\{", re.IGNORECASE)
 
 
 def extend_with_external_identifier(sparql: str) -> str:
-    """Add the preferred optional identifier for a supported grouped entity.
+    """Add preferred optional identifiers to supported result queries.
 
     The function is intentionally best-effort.  If the query is not a shape
     produced by the supported generator patterns, it is returned unchanged so
@@ -44,7 +44,7 @@ def extend_with_external_identifier(sparql: str) -> str:
 
     group_match = _GROUP_BY_RE.search(sparql)
     if group_match is None:
-        return sparql
+        return _extend_publication_listing(sparql)
 
     grouped_variables = [
         match.group("name")
@@ -110,6 +110,85 @@ def extend_with_external_identifier(sparql: str) -> str:
         result = result[:where_close] + optional + result[where_close:]
 
     return result
+
+
+def _extend_publication_listing(sparql: str) -> str:
+    """Add an optional DOI to a non-aggregate publication listing."""
+    where_match = _WHERE_RE.search(sparql)
+    if where_match is None:
+        return sparql
+
+    select_start = re.search(r"\bSELECT\b", sparql, re.IGNORECASE)
+    if select_start is None:
+        return sparql
+    select_clause = sparql[select_start.end() : where_match.start()]
+
+    aggregate_re = re.compile(
+        r"\b(?:COUNT|SUM|AVG|MIN|MAX|GROUP_CONCAT|SAMPLE)\s*\(",
+        re.IGNORECASE,
+    )
+    if aggregate_re.search(select_clause):
+        return sparql
+
+    where_close = _where_close_index(sparql, where_match)
+    if where_close is None:
+        return sparql
+    where = sparql[where_match.end() : where_close]
+    entity_variable = _find_publication_entity(where)
+    if entity_variable is None:
+        return sparql
+
+    if re.search(r"\bdblp:doi\b", where, re.IGNORECASE):
+        return sparql
+
+    result = sparql
+    if not re.search(r"\?doi\b", select_clause):
+        insert_at = where_match.start()
+        while insert_at > select_start.end() and result[insert_at - 1].isspace():
+            insert_at -= 1
+        result = result[:insert_at] + " ?doi" + result[insert_at:]
+
+    refreshed_where = _WHERE_RE.search(result)
+    if refreshed_where is None:
+        return sparql
+    refreshed_close = _where_close_index(result, refreshed_where)
+    if refreshed_close is None:
+        return sparql
+
+    optional = (
+        "OPTIONAL { "
+        f"{entity_variable} dblp:doi ?doi . "
+        "}\n"
+    )
+    return result[:refreshed_close] + optional + result[refreshed_close:]
+
+
+def _find_publication_entity(where: str) -> str | None:
+    """Find a publication subject in a non-aggregate result query."""
+    type_match = re.search(
+        r"(?P<entity>\?\w+)\s+(?:a|rdf:type)\s+dblp:Publication\b",
+        where,
+        re.IGNORECASE,
+    )
+    if type_match:
+        return type_match.group("entity")
+
+    title_match = re.search(
+        r"(?P<entity>\?\w+)\s+dblp:title\s+\?\w+\b",
+        where,
+        re.IGNORECASE,
+    )
+    if title_match:
+        return title_match.group("entity")
+
+    variable_match = re.search(
+        r"\?(?P<name>publication(?:_id)?|pub|paper|article)\b",
+        where,
+        re.IGNORECASE,
+    )
+    if variable_match:
+        return f"?{variable_match.group('name')}"
+    return None
 
 
 def _find_candidate(

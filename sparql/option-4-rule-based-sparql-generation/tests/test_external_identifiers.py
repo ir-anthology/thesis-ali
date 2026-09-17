@@ -93,6 +93,84 @@ def test_query_without_group_by_is_unchanged():
     assert extend_with_external_identifier(query) == query
 
 
+def test_non_grouped_publication_listing_adds_optional_doi():
+    query = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT DISTINCT ?publication_id ?title ?year
+WHERE {
+  ?publication_id a dblp:Publication .
+  ?publication_id dblp:title ?title .
+  ?publication_id dblp:yearOfPublication ?year .
+}
+ORDER BY DESC(?year)
+LIMIT 10
+"""
+
+    extended = extend_with_external_identifier(query)
+
+    assert "SELECT DISTINCT ?publication_id ?title ?year ?doi" in extended
+    assert "OPTIONAL { ?publication_id dblp:doi ?doi . }" in extended
+    assert "GROUP BY" not in extended
+    assert "ORDER BY DESC(?year)\nLIMIT 10" in extended
+    assert extended.index("OPTIONAL") < extended.index("}\nORDER BY")
+
+
+@pytest.mark.parametrize("entity_variable", ["publication_id", "publication", "pub"])
+def test_non_grouped_publication_variable_names_add_doi(entity_variable):
+    query = f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT ?{entity_variable} ?title
+WHERE {{
+  ?{entity_variable} dblp:title ?title .
+}}
+LIMIT 10
+"""
+
+    extended = extend_with_external_identifier(query)
+
+    assert "?doi" in extended.split("WHERE", 1)[0]
+    assert f"OPTIONAL {{ ?{entity_variable} dblp:doi ?doi . }}" in extended
+
+
+def test_non_grouped_publication_listing_with_existing_doi_is_idempotent():
+    query = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT ?publication_id ?title ?doi
+WHERE {
+  ?publication_id a dblp:Publication .
+  ?publication_id dblp:title ?title .
+  OPTIONAL { ?publication_id dblp:doi ?doi . }
+}
+LIMIT 10
+"""
+
+    assert extend_with_external_identifier(query) == query
+
+
+def test_non_grouped_aggregate_publication_query_is_unchanged():
+    query = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT (COUNT(?publication_id) AS ?count)
+WHERE {
+  ?publication_id a dblp:Publication .
+}
+"""
+
+    assert extend_with_external_identifier(query) == query
+
+
+def test_non_grouped_publication_listing_passes_validator():
+    query = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT ?publication_id ?title ?year
+WHERE {
+  ?publication_id a dblp:Publication .
+  ?publication_id dblp:title ?title .
+  ?publication_id dblp:yearOfPublication ?year .
+}
+ORDER BY DESC(?year)
+LIMIT 10
+"""
+
+    validation = SPARQLValidator().validate(extend_with_external_identifier(query))
+    assert validation.valid, validation.errors
+
+
 def test_existing_identifier_is_not_duplicated_and_other_groups_are_preserved():
     query = """PREFIX dblp: <https://dblp.org/rdf/schema#>
 SELECT ?author_name ?year ?orcid (COUNT(?publication) AS ?count)

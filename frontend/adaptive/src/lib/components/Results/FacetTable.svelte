@@ -19,7 +19,27 @@
     fitContent?: boolean;
   } = $props();
 
-  let visibleColumns = $derived(columns.filter((column) => column.visible));
+  const HTTP_URL_RE = /^https?:\/\/[^\s]+$/i;
+
+  let visibleColumns = $derived(
+    columns.filter((column) => column.visible && !column.external_link)
+  );
+
+  function getExternalLinks(
+    row: ResultRow,
+    relatedColumnKey: string
+  ): Array<{ key: string; label: string; href: string }> {
+    return columns
+      .filter(
+        (column) =>
+          column.external_link && column.related_column === relatedColumnKey
+      )
+      .flatMap((column) => {
+        const value = row[column.key]?.value;
+        if (typeof value !== 'string' || !HTTP_URL_RE.test(value)) return [];
+        return [{ key: column.key, label: column.label, href: value }];
+      });
+  }
 
   function getEntityMetadata(row: ResultRow, cellKey: string): CellMetadata | undefined {
     const direct = row[cellKey]?.metadata;
@@ -134,10 +154,6 @@
     return String(a).localeCompare(String(b));
   }
 
-  function isAbsoluteHttpUrl(value: string | number): boolean {
-    return typeof value === 'string' && /^https?:\/\//i.test(value);
-  }
-
   let sortedRows = $derived.by(() => {
     if (!sortField) return rows;
     if (!visibleColumns.some((column) => column.key === sortField)) return rows;
@@ -183,6 +199,7 @@
           >
             {#each visibleColumns as column, j (j)}
               {@const cell = row[column.key]}
+              {@const externalLinks = getExternalLinks(row, column.key)}
               <td
                 role="gridcell"
                 class:clickable={!!onCellClick && !!cell.question}
@@ -192,18 +209,39 @@
                 data-entity-type={getEntityMetadata(row, column.key)?.entity_type}
                 onclick={cell.question ? () => handleCellClick(cell.question, column.key, row, i) : undefined}
               >
-                {#if column.external_link && isAbsoluteHttpUrl(cell.value)}
-                  <a
-                    href={String(cell.value)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onclick={(event) => event.stopPropagation()}
-                  >{cell.value}</a>
-                {:else if column.type === 'badge'}
+                {#if column.type === 'badge'}
                   <span class="cell-badge">{cell.value}</span>
                 {:else}
                   {cell.value}
                 {/if}
+                {#each externalLinks as externalLink (externalLink.key)}
+                  <a
+                    class="external-link"
+                    href={externalLink.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${externalLink.label}`}
+                    title={`Open ${externalLink.label}`}
+                    onclick={(event) => event.stopPropagation()}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    </svg>
+                  </a>
+                {/each}
               </td>
             {/each}
           </tr>
@@ -323,5 +361,23 @@
     background-color: var(--bg-tertiary);
     border-radius: 9999px;
     color: var(--text-secondary);
+  }
+
+  .external-link {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.375rem;
+    color: var(--accent);
+    vertical-align: -0.1em;
+  }
+
+  .external-link:hover {
+    color: var(--accent-hover);
+  }
+
+  .external-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 </style>
