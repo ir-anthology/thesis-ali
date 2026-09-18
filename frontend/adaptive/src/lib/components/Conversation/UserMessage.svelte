@@ -78,7 +78,7 @@
       <circle cx="12" cy="7" r="4"></circle>
     </svg>
   </div>
-  <div class="content">
+  <div class="content" class:editing>
     <div class="message-header">
       <span class="role">You</span>
       <span class="time">{formatTime(message.timestamp)}</span>
@@ -103,7 +103,7 @@
             onclick={saveEdit}
             disabled={!editValue.trim() || editValue.trim() === message.content || disabled}
           >
-            Save
+            Send
           </button>
         </div>
       {:else}
@@ -159,6 +159,10 @@
     padding: 0.625rem 0.875rem;
     background-color: var(--user-bubble);
     border-radius: 12px 12px 2px 12px;
+  }
+
+  .content.editing {
+    background-color: transparent;
   }
 
   .message-header {
