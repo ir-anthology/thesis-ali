@@ -97,11 +97,25 @@ function createExplorationStore() {
   ): Promise<void> {
     if (!content.trim() || loading) return;
 
-    const parentId = fromTurnId !== undefined ? fromTurnId : headTurnId;
+    await createMessageBranch(content, fromTurnId !== undefined ? fromTurnId : headTurnId, {
+      branchSourceId: fromTurnId && fromTurnId !== headTurnId ? fromTurnId : undefined,
+      interaction
+    });
+  }
 
-    if (fromTurnId && fromTurnId !== headTurnId) {
+  async function createMessageBranch(
+    content: string,
+    parentId: string | null,
+    options: {
+      branchSourceId?: string;
+      interaction?: EntityInteraction;
+    } = {}
+  ): Promise<void> {
+    if (!content.trim() || loading) return;
+
+    if (options.branchSourceId) {
       conversation = conversation.map(t =>
-        t.id === fromTurnId ? { ...t, branchCount: (t.branchCount || 0) + 1 } : t
+        t.id === options.branchSourceId ? { ...t, branchCount: (t.branchCount || 0) + 1 } : t
       );
     }
 
@@ -136,7 +150,7 @@ function createExplorationStore() {
       const res = await fetch(`${API_BASE}/api/exploration/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content, history, interaction }),
+        body: JSON.stringify({ message: content, history, interaction: options.interaction }),
         signal: abortController.signal
       });
 
@@ -265,6 +279,17 @@ function createExplorationStore() {
     abortController = null;
   }
 
+  function editUserPrompt(turnId: string, editedContent: string): void {
+    const originalTurn = conversation.find((t) => t.id === turnId);
+    const content = editedContent.trim();
+
+    if (!originalTurn || originalTurn.role !== 'user' || !content || content === originalTurn.content || loading) {
+      return;
+    }
+
+    createMessageBranch(content, originalTurn.parentId, { branchSourceId: originalTurn.id });
+  }
+
   function selectSuggestion(
     suggestion: string,
     fromTurnId?: string | null,
@@ -331,6 +356,7 @@ function createExplorationStore() {
     },
     getActivePath,
     sendMessage,
+    editUserPrompt,
     selectSuggestion,
     retry,
     clearExploration

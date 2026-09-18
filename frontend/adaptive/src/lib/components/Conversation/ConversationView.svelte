@@ -18,6 +18,7 @@
     sparqlByTurn,
     disabled = false,
     onSelectSuggestion,
+    onEditUserPrompt,
     activePath
   }: {
     conversation: ConversationTurn[];
@@ -29,6 +30,7 @@
     sparqlByTurn: Map<string, string>;
     disabled?: boolean;
     onSelectSuggestion: (suggestion: string, fromTurnId?: string | null, interaction?: EntityInteraction) => void;
+    onEditUserPrompt?: (turnId: string, content: string) => void;
     activePath: ConversationTurn[];
   } = $props();
 
@@ -122,7 +124,7 @@
 
     {#each activePath as turn (turn.id)}
       {#if turn.role === 'user'}
-        <UserMessage message={turn} />
+        <UserMessage message={turn} {disabled} onEdit={onEditUserPrompt} />
       {:else}
         <AssistantMessage
           message={turn}
