@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ConversationTurn } from '$lib/types/exploration';
+  import Spinner from '$lib/components/Shared/Spinner.svelte';
 
   let {
     message,
@@ -106,6 +107,11 @@
             Send
           </button>
         </div>
+      {:else if message.pending}
+        <div class="pending-status">
+          <Spinner size={14} />
+          <span>{message.pendingMessage || message.content}</span>
+        </div>
       {:else}
         <p>{message.content}</p>
       {/if}
@@ -194,6 +200,12 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     padding-right: 1.375rem;
+  }
+
+  .pending-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .edit-btn {

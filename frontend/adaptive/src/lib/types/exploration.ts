@@ -19,7 +19,6 @@ export type StreamStage =
   | 'interpreting'
   | 'generating_sparql'
   | 'obtaining_results'
-  | 'formulating_questions'
   | 'generating_observations'
   | 'creating_suggestions';
 
@@ -33,6 +32,8 @@ export interface ConversationTurn {
   streaming?: boolean;
   streamingStage?: StreamStage;
   streamingMessage?: string;
+  pending?: boolean;
+  pendingMessage?: string;
   error?: boolean;
   branchCount?: number;
 }
@@ -53,6 +54,14 @@ export interface CellMetadata {
   entity_id?: string;
   entity_type?: EntityType;
   [key: string]: string | number | boolean | undefined;
+}
+
+export interface CellQuestionContext {
+  column: string;
+  value: string | number;
+  row: Record<string, string | number>;
+  metadata?: Record<string, CellMetadata>;
+  interpretation?: string;
 }
 
 export interface CellValue {

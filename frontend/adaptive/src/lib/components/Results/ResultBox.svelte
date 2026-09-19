@@ -1,19 +1,25 @@
 <script lang="ts">
-  import type { ResultColumn, ResultRow } from '$lib/types/exploration';
+  import type { CellQuestionContext, EntityInteraction, ResultColumn, ResultRow } from '$lib/types/exploration';
   import FacetTable from './FacetTable.svelte';
   import SparqlBlock from './SparqlBlock.svelte';
 
   let {
     columns,
     rows,
+    interpretation,
     sparqlQuery,
     onCellClick,
     disabled = false
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
+    interpretation?: string;
     sparqlQuery?: string;
-    onCellClick?: (question: string) => void;
+    onCellClick?: (
+      context: CellQuestionContext,
+      interaction?: EntityInteraction,
+      existingQuestion?: string
+    ) => void;
     disabled?: boolean;
   } = $props();
 
@@ -50,7 +56,7 @@
     </div>
   {:else}
     <div role="tabpanel">
-      <FacetTable {columns} {rows} {onCellClick} {disabled} fitContent={true} />
+      <FacetTable {columns} {rows} {interpretation} {onCellClick} {disabled} fitContent={true} />
     </div>
   {/if}
 </div>

@@ -85,3 +85,35 @@ def test_observations_are_still_capped_at_three():
     )
 
     assert observations == ["one", "two", "three"]
+
+
+def test_cell_question_prompt_uses_only_cell_context():
+    llm = CapturingLLM(
+        response={
+            "cell_questions": [
+                {
+                    "publication_count": {
+                        "value": "2709",
+                        "question": "Which publications appeared at ECIR?",
+                    }
+                }
+            ],
+            "observations": [],
+        }
+    )
+
+    question = ResultAnalysisService(llm=llm).generate_cell_question(
+        column="publication_count",
+        value="2709",
+        row={
+            "venue_name": "European Conference on Advances in Information Retrieval (ECIR)",
+            "publication_count": "2709",
+        },
+        metadata=None,
+        interpretation="Let me show venues and publication counts.",
+    )
+
+    assert question == "Which publications appeared at ECIR?"
+    assert "SINGLE CELL MODE" in llm.prompts[0]
+    assert "Let me show venues and publication counts." in llm.prompts[0]
+    assert "ORIGINAL QUESTION:" not in llm.prompts[0]

@@ -74,3 +74,9 @@ class StatisticsResponse(BaseModel):
 
     columns: list[ResultColumn] = Field(description="Column definitions")
     rows: list[dict[str, CellValue]] = Field(description="Data rows")
+
+
+class CellQuestionResponse(BaseModel):
+    """Response containing one lazily generated cell follow-up question."""
+
+    question: str = Field(description="Generated follow-up question")

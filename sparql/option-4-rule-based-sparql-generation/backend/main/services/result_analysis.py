@@ -26,6 +26,55 @@ class ResultAnalysisService:
         self._llm = llm or LLMClient()
         self._batch_size = QUESTION_BATCH_SIZE
 
+    def generate_cell_question(
+        self,
+        *,
+        column: str,
+        value: str | int | float,
+        row: dict[str, str | int | float],
+        metadata: dict[str, dict[str, str | int | float | bool | None]] | None,
+        interpretation: str | None,
+    ) -> str:
+        """Generate one follow-up question for a clicked result cell."""
+        row_context = ", ".join(f"{key}: {item}" for key, item in row.items())
+        metadata_context = metadata or {}
+        user_prompt = (
+            "SINGLE CELL MODE\n\n"
+            f"INTERPRETATION: {interpretation or '(none provided)'}\n\n"
+            f"COLUMNS: {column}\n\n"
+            f"COLUMN: {column}\n"
+            f"VALUE: {value}\n\n"
+            f"ROW: {row_context}\n\n"
+            f"METADATA: {metadata_context}\n\n"
+            "CELL:"
+        )
+
+        data = self._llm.generate_json(
+            system_prompt=_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+        )
+        question = self._extract_single_question(data, column)
+        if question:
+            return question
+
+        return f"Tell me about {value}" if value else f"Tell me about this {column}"
+
+    @staticmethod
+    def _extract_single_question(data: dict | None, column: str) -> str:
+        if not data:
+            return ""
+        cell_questions = data.get("cell_questions")
+        if not isinstance(cell_questions, list) or not cell_questions:
+            return ""
+        first_row = cell_questions[0]
+        if not isinstance(first_row, dict):
+            return ""
+        cell = first_row.get(column)
+        if not isinstance(cell, dict):
+            return ""
+        question = cell.get("question")
+        return question.strip() if isinstance(question, str) else ""
+
     def run(
         self, context: ExplorationContext
     ) -> tuple[list[dict[str, CellValue]], list[str]]:

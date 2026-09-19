@@ -14,7 +14,7 @@ from typing import Any
 from backend.main.context.builder import ContextBuilder
 from backend.main.schema.provider import DBLPSchemaProvider
 from backend.main.schemas.context import ExplorationContext
-from backend.main.schemas.requests import ChatRequest
+from backend.main.schemas.requests import CellQuestionRequest, ChatRequest
 from backend.main.schemas.responses import ExplorationResponse, ResultColumn, CellValue
 from backend.main.services.interpretation import InterpretationService
 from backend.main.services.sparql_generation import SPARQLGenerationService
@@ -43,6 +43,17 @@ class ExplorationService:
         self._suggestions = SuggestionService()
         self._sparql_client = SPARQLClient()
         self._sparql_validator = SPARQLValidator()
+
+    async def generate_cell_question(self, request: CellQuestionRequest) -> str:
+        """Generate a question for one clicked result cell."""
+        return await asyncio.to_thread(
+            self._result_analysis.generate_cell_question,
+            column=request.column,
+            value=request.value,
+            row=request.row,
+            metadata=request.metadata,
+            interpretation=request.interpretation,
+        )
 
     async def explore(self, request: ChatRequest) -> ExplorationResponse:
         """Process an exploration request through the full pipeline."""
@@ -147,7 +158,6 @@ class ExplorationService:
             },
         }
 
-        enriched_rows: list[dict[str, CellValue]] = []
         if query_result.row_count > 0:
             yield self._stage_event(
                 "generating_observations", "Generating observations…"
@@ -161,25 +171,6 @@ class ExplorationService:
             context.set_observations(observations)
             if observations:
                 yield {"event": "observations", "data": {"items": observations}}
-
-            yield self._stage_event(
-                "formulating_questions", "Formulating follow-up questions…"
-            )
-            for offset in range(0, query_result.row_count, self._result_analysis.batch_size):
-                batch_rows = await asyncio.to_thread(
-                    self._result_analysis.generate_question_batch,
-                    context,
-                    offset,
-                )
-                enriched_rows.extend(batch_rows)
-                context.set_result_table(columns, enriched_rows)
-                yield {
-                    "event": "row_questions",
-                    "data": {
-                        "offset": offset,
-                        "rows": self._serialize_rows(batch_rows),
-                    },
-                }
 
         yield self._stage_event("creating_suggestions", "Creating suggestions…")
         suggestions = await asyncio.to_thread(self._suggestions.run, context)
@@ -264,14 +255,12 @@ class ExplorationService:
         columns = format_result_columns(query_result)
         context.set_result_table(columns, format_result_rows(query_result))
 
-        # C3 — result analysis (questions + observations)
+        # C3 — result analysis (observations only; cell questions are lazy)
         if query_result.row_count > 0:
             logger.info("[Stage 3/4] Result Analysis")
-            rows_with_questions, observations = self._result_analysis.run(context)
-            logger.info("  → rows_with_questions count: %d", len(rows_with_questions))
-            if rows_with_questions:
-                logger.info("  → First row sample: %s", rows_with_questions[0])
-            context.set_result_table(columns, rows_with_questions)
+            observations = self._result_analysis.generate_observations(
+                context, context.result_rows
+            )
             context.set_observations(observations)
             logger.info("  → Generated %d observations", len(observations))
             logger.info("  → context.result_rows count: %d", len(context.result_rows))

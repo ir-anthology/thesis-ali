@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import logging
 import json
+import asyncio
 from collections.abc import AsyncIterator
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
-from backend.main.schemas.requests import ChatRequest
-from backend.main.schemas.responses import ExplorationResponse
+from backend.main.schemas.requests import CellQuestionRequest, ChatRequest
+from backend.main.schemas.responses import CellQuestionResponse, ExplorationResponse
 from backend.main.services.exploration import ExplorationService
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,14 @@ async def explore(request: ChatRequest) -> ExplorationResponse:
                 "Check if the entity names are correct",
             ],
         )
+
+
+@router.post("/api/cell-question", response_model=CellQuestionResponse)
+async def cell_question(request: CellQuestionRequest) -> CellQuestionResponse:
+    """Generate one follow-up question for a clicked result cell."""
+    logger.info("Generating cell question for column: %s", request.column)
+    question = await _service.generate_cell_question(request)
+    return CellQuestionResponse(question=question)
 
 
 def _encode_sse(event: str, data: dict) -> str:

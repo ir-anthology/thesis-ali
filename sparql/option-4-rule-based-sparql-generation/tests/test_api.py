@@ -169,6 +169,57 @@ def test_exploration_endpoint_with_history(client):
     assert data["interpretation"] == "Let me find papers by Geoffrey Hinton from 2023"
 
 
+def test_cell_question_endpoint_generates_one_question(client):
+    with patch(
+        "backend.main.api.exploration._service.generate_cell_question",
+        new_callable=AsyncMock,
+        return_value="Which publications appeared at ECIR?",
+    ) as generate_question:
+        response = client.post(
+            "/api/cell-question",
+            json={
+                "column": "publication_count",
+                "value": "2709",
+                "row": {
+                    "venue_name": "European Conference on Advances in Information Retrieval (ECIR)",
+                    "publication_count": "2709",
+                },
+                "metadata": {
+                    "venue_name": {
+                        "entity_id": "https://dblp.org/streams/conf/ecir",
+                        "entity_type": "venue",
+                    }
+                },
+                "interpretation": "Let me show venues and publication counts.",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"question": "Which publications appeared at ECIR?"}
+    request = generate_question.await_args.args[0]
+    assert request.interpretation == "Let me show venues and publication counts."
+    assert not hasattr(request, "prompt")
+
+
+def test_cell_question_endpoint_rejects_invalid_entity_metadata(client):
+    response = client.post(
+        "/api/cell-question",
+        json={
+            "column": "author",
+            "value": "Unknown",
+            "row": {"author": "Unknown"},
+            "metadata": {
+                "author": {
+                    "entity_id": "https://example.com/entity",
+                    "entity_type": "author",
+                }
+            },
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_exploration_stream_endpoint_emits_ordered_events(client):
     async def fake_stream(_request):
         yield {"event": "stage", "data": {"stage": "interpreting", "message": "Interpreting your query…"}}

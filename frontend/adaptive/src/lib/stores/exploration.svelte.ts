@@ -16,6 +16,7 @@ import type {
   ResultRow,
   HistoryTurn,
   EntityInteraction,
+  CellQuestionContext,
   StreamStage
 } from '$lib/types/exploration';
 
@@ -83,13 +84,6 @@ function createExplorationStore() {
     return { event, data: JSON.parse(data) };
   }
 
-  function patchRows(turnId: string, offset: number, incoming: ResultRow[]): void {
-    const current = rowsByTurn.get(turnId) || [];
-    const next = [...current];
-    next.splice(offset, incoming.length, ...incoming);
-    rowsByTurn = new Map(rowsByTurn).set(turnId, next);
-  }
-
   async function sendMessage(
     content: string,
     fromTurnId?: string | null,
@@ -109,29 +103,43 @@ function createExplorationStore() {
     options: {
       branchSourceId?: string;
       interaction?: EntityInteraction;
-    } = {}
+    } = {},
+    existingUserTurnId?: string
   ): Promise<void> {
-    if (!content.trim() || loading) return;
+    if (!content.trim() || (loading && !existingUserTurnId)) return;
 
-    if (options.branchSourceId) {
+    if (options.branchSourceId && !existingUserTurnId) {
       conversation = conversation.map(t =>
         t.id === options.branchSourceId ? { ...t, branchCount: (t.branchCount || 0) + 1 } : t
       );
     }
 
-    const userTurn: ConversationTurn = {
+    const userTurn = existingUserTurnId
+      ? conversation.find((turn) => turn.id === existingUserTurnId)
+      : undefined;
+    if (existingUserTurnId && (!userTurn || userTurn.role !== 'user')) return;
+
+    const resolvedUserTurn: ConversationTurn = userTurn || {
       id: generateId(),
       parentId,
       role: 'user',
       content: content.trim(),
       timestamp: new Date()
     };
-    conversation = [...conversation, userTurn];
-    headTurnId = userTurn.id;
+    if (userTurn) {
+      conversation = conversation.map((turn) =>
+        turn.id === userTurn.id
+          ? { ...turn, content: content.trim(), pending: false, pendingMessage: undefined }
+          : turn
+      );
+    } else {
+      conversation = [...conversation, resolvedUserTurn];
+    }
+    headTurnId = resolvedUserTurn.id;
 
     const assistantTurn: ConversationTurn = {
       id: generateId(),
-      parentId: userTurn.id,
+      parentId: resolvedUserTurn.id,
       role: 'assistant',
       content: '',
       timestamp: new Date(),
@@ -189,9 +197,6 @@ function createExplorationStore() {
           case 'result':
             columnsByTurn = new Map(columnsByTurn).set(assistantTurn.id, data.columns);
             rowsByTurn = new Map(rowsByTurn).set(assistantTurn.id, data.rows);
-            break;
-          case 'row_questions':
-            patchRows(assistantTurn.id, data.offset, data.rows);
             break;
           case 'observations':
             observationsByTurn = new Map(observationsByTurn).set(assistantTurn.id, data.items);
@@ -279,6 +284,69 @@ function createExplorationStore() {
     abortController = null;
   }
 
+  async function selectCell(
+    context: CellQuestionContext,
+    fromTurnId: string,
+    interaction?: EntityInteraction
+  ): Promise<void> {
+    if (loading) return;
+
+    const userTurn: ConversationTurn = {
+      id: generateId(),
+      parentId: fromTurnId,
+      role: 'user',
+      content: '',
+      timestamp: new Date(),
+      pending: true,
+      pendingMessage: 'Formulating follow-up questions…'
+    };
+    if (fromTurnId !== headTurnId) {
+      conversation = conversation.map((turn) =>
+        turn.id === fromTurnId
+          ? { ...turn, branchCount: (turn.branchCount || 0) + 1 }
+          : turn
+      );
+    }
+    conversation = [...conversation, userTurn];
+    headTurnId = userTurn.id;
+    loading = true;
+    error = null;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/cell-question`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(context)
+      });
+      if (!res.ok) throw new Error(`Cell-question API error: ${res.status}`);
+
+      const data: { question?: string } = await res.json();
+      if (!data.question?.trim()) throw new Error('The backend returned no follow-up question.');
+
+      await createMessageBranch(
+        data.question,
+        fromTurnId,
+        { interaction },
+        userTurn.id
+      );
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      conversation = conversation.map((turn) =>
+        turn.id === userTurn.id
+          ? {
+              ...turn,
+              content: `Failed to formulate follow-up question: ${message}`,
+              pending: false,
+              pendingMessage: undefined,
+              error: true
+            }
+          : turn
+      );
+      error = message;
+      loading = false;
+    }
+  }
+
   function editUserPrompt(turnId: string, editedContent: string): void {
     const originalTurn = conversation.find((t) => t.id === turnId);
     const content = editedContent.trim();
@@ -358,6 +426,7 @@ function createExplorationStore() {
     sendMessage,
     editUserPrompt,
     selectSuggestion,
+    selectCell,
     retry,
     clearExploration
   };

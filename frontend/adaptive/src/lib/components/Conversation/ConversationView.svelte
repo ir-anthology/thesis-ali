@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import type { ConversationTurn, EntityInteraction, ResultColumn, ResultRow, StatisticsResponse } from '$lib/types/exploration';
+  import type { CellQuestionContext, ConversationTurn, EntityInteraction, ResultColumn, ResultRow, StatisticsResponse } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
@@ -18,6 +18,7 @@
     sparqlByTurn,
     disabled = false,
     onSelectSuggestion,
+    onCellQuestion,
     onEditUserPrompt,
     activePath
   }: {
@@ -30,6 +31,11 @@
     sparqlByTurn: Map<string, string>;
     disabled?: boolean;
     onSelectSuggestion: (suggestion: string, fromTurnId?: string | null, interaction?: EntityInteraction) => void;
+    onCellQuestion: (
+      context: CellQuestionContext,
+      fromTurnId: string,
+      interaction?: EntityInteraction
+    ) => void;
     onEditUserPrompt?: (turnId: string, content: string) => void;
     activePath: ConversationTurn[];
   } = $props();
@@ -58,9 +64,13 @@
     fetchStatistics();
   });
 
-  function handleOverviewClick(question: string, interaction?: EntityInteraction): void {
+  function handleOverviewClick(
+    _context: CellQuestionContext,
+    interaction?: EntityInteraction,
+    existingQuestion?: string
+  ): void {
     if (disabled) return;
-    onSelectSuggestion(question, null, interaction);
+    if (existingQuestion) onSelectSuggestion(existingQuestion, null, interaction);
   }
 
   $effect(() => {
@@ -136,7 +146,13 @@
           sparqlQuery={sparqlByTurn.get(turn.id)}
           disabled={disabled}
           onSelectSuggestion={(s) => onSelectSuggestion(s, turn.id)}
-          onCellClick={(q, interaction) => onSelectSuggestion(q, turn.id, interaction)}
+          onCellClick={(context, interaction, existingQuestion) => {
+            if (existingQuestion) {
+              onSelectSuggestion(existingQuestion, turn.id, interaction);
+            } else {
+              onCellQuestion(context, turn.id, interaction);
+            }
+          }}
         />
       {/if}
     {/each}

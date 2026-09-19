@@ -1,9 +1,16 @@
 <script lang="ts">
-  import type { CellMetadata, EntityInteraction, ResultColumn, ResultRow } from '$lib/types/exploration';
+  import type {
+    CellMetadata,
+    CellQuestionContext,
+    EntityInteraction,
+    ResultColumn,
+    ResultRow
+  } from '$lib/types/exploration';
 
   let {
     columns,
     rows,
+    interpretation,
     title,
     onCellClick,
     tableId,
@@ -13,8 +20,13 @@
   }: {
     columns: ResultColumn[];
     rows: ResultRow[];
+    interpretation?: string;
     title?: string;
-    onCellClick?: (question: string, interaction?: EntityInteraction) => void;
+    onCellClick?: (
+      context: CellQuestionContext,
+      interaction?: EntityInteraction,
+      existingQuestion?: string
+    ) => void;
     tableId?: string;
     dataMeta?: string;
     fitContent?: boolean;
@@ -70,6 +82,26 @@
     return undefined;
   }
 
+  function getCellContext(row: ResultRow, cellKey: string): CellQuestionContext {
+    const rowValues: Record<string, string | number> = {};
+    const rowMetadata: Record<string, CellMetadata> = {};
+
+    for (const [key, cell] of Object.entries(row)) {
+      rowValues[key] = cell.value;
+      if (cell.metadata) {
+        rowMetadata[key] = cell.metadata;
+      }
+    }
+
+    return {
+      column: cellKey,
+      value: row[cellKey]?.value ?? '',
+      row: rowValues,
+      ...(Object.keys(rowMetadata).length > 0 ? { metadata: rowMetadata } : {}),
+      ...(interpretation ? { interpretation } : {})
+    };
+  }
+
   let sortField = $state<string | null>(null);
   let sortDirection = $state<'asc' | 'desc'>('asc');
   let focusedRowIndex = $state(-1);
@@ -87,14 +119,16 @@
     }
   }
 
-  function handleCellClick(question: string, columnKey: string, row: ResultRow, rowIndex: number): void {
+  function handleCellClick(columnKey: string, row: ResultRow, rowIndex: number): void {
     focusedCellKey = columnKey;
     focusedCellRow = rowIndex;
     const metadata = getEntityMetadata(row, columnKey);
     const interaction = metadata?.entity_id
       ? { entity_id: metadata.entity_id, entity_type: metadata.entity_type }
       : undefined;
-    if (!disabled) onCellClick?.(question, interaction);
+    if (!disabled && onCellClick) {
+      onCellClick(getCellContext(row, columnKey), interaction, row[columnKey]?.question);
+    }
   }
 
   function handleKeydown(event: KeyboardEvent, rowIndex: number): void {
@@ -204,12 +238,13 @@
               {@const externalLinks = getExternalLinks(row, column.key)}
               <td
                 role="gridcell"
-                class:clickable={!disabled && !!onCellClick && !!cell.question}
+                class:clickable={!disabled && !!onCellClick}
                 class:focused={focusedCellKey === column.key && focusedCellRow === i}
-                title={cell.question || undefined}
+                title={cell.question || 'Click to generate a follow-up question. Please wait for the stream to finish.'}
+                data-cell-context={JSON.stringify(getCellContext(row, column.key))}
                 data-entity-id={getEntityMetadata(row, column.key)?.entity_id}
                 data-entity-type={getEntityMetadata(row, column.key)?.entity_type}
-                onclick={!disabled && cell.question ? () => handleCellClick(cell.question, column.key, row, i) : undefined}
+                onclick={!disabled && onCellClick ? () => handleCellClick(column.key, row, i) : undefined}
               >
                 {#if column.type === 'badge'}
                   <span class="cell-badge">{cell.value}</span>

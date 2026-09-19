@@ -59,3 +59,36 @@ class ChatRequest(BaseModel):
     interaction: EntityInteraction | None = Field(
         default=None, description="Optional entity selected from a result cell"
     )
+
+
+class CellQuestionRequest(BaseModel):
+    """Prompt data for generating one follow-up question on demand."""
+
+    column: str = Field(description="Selected result column key")
+    value: str | int | float = Field(description="Selected cell value")
+    row: dict[str, str | int | float] = Field(
+        description="All values from the selected result row"
+    )
+    metadata: dict[str, dict[str, str | int | float | bool | None]] | None = Field(
+        default=None,
+        description="Non-question metadata associated with result cells",
+    )
+    interpretation: str | None = Field(
+        default=None,
+        description="Interpretation displayed above the result table",
+    )
+
+    @field_validator("metadata")
+    @classmethod
+    def validate_metadata(cls, value):
+        if value is None:
+            return value
+        for cell_metadata in value.values():
+            entity_id = cell_metadata.get("entity_id")
+            if entity_id is not None and (
+                not isinstance(entity_id, str)
+                or not entity_id.startswith("https://dblp.org/")
+                or any(character.isspace() for character in entity_id)
+            ):
+                raise ValueError("metadata entity_id must be an absolute DBLP IRI")
+        return value
