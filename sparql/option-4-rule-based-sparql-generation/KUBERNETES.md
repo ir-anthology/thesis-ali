@@ -172,7 +172,6 @@ data:
   LLM_TEMPERATURE: "0.0"
   LLM_MAX_TOKENS: "2000"
   DBLP_SPARQL_ENDPOINT: "https://sparql.dblp.org/sparql"
-  MAX_RESULT_ROWS: "50"
   QUESTION_BATCH_SIZE: "10"
   API_HOST: "0.0.0.0"
   API_PORT: "8000"

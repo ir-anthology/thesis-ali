@@ -58,7 +58,6 @@ OPENAI_API_KEY=your-api-key-here
 LLM_MODEL=gpt-5.6-luna
 API_HOST=0.0.0.0
 API_PORT=8000
-MAX_RESULT_ROWS=50
 QUESTION_BATCH_SIZE=10
 ```
 
@@ -305,6 +304,5 @@ The system detects and reports limitations for queries that require:
 | `DBLP_SPARQL_ENDPOINT` | `https://sparql.dblp.org/sparql` | DBLP SPARQL endpoint |
 | `API_HOST` | `0.0.0.0` | FastAPI server host |
 | `API_PORT` | `8000` | FastAPI server port |
-| `MAX_RESULT_ROWS` | `50` | Maximum rows from SPARQL |
 | `QUESTION_BATCH_SIZE` | `10` | Rows per LLM call for question generation |
 | `RELOAD` | `false` | Enable uvicorn hot-reload (development only) |

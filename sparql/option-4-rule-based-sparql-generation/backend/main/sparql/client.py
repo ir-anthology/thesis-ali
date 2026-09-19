@@ -9,7 +9,7 @@ import logging
 
 import httpx
 
-from backend.main.config import DBLP_SPARQL_ENDPOINT, MAX_RESULT_ROWS
+from backend.main.config import DBLP_SPARQL_ENDPOINT
 from backend.main.schemas.context import QueryResult
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,6 @@ class SPARQLClient:
 
     def __init__(self) -> None:
         self.endpoint = DBLP_SPARQL_ENDPOINT
-        self.max_rows = MAX_RESULT_ROWS
         self._client = httpx.Client(timeout=30.0)
 
     def execute(self, sparql_query: str) -> QueryResult:
@@ -37,15 +36,10 @@ class SPARQLClient:
         """
         logger.info("Executing SPARQL against %s", self.endpoint)
 
-        query = sparql_query.strip()
-        if "LIMIT" not in query.upper():
-            query = f"{query.rstrip()}\nLIMIT {self.max_rows}"
-            logger.info("Added LIMIT %d to query", self.max_rows)
-
         try:
             response = self._client.post(
                 self.endpoint,
-                content=query,
+                content=sparql_query,
                 headers={
                     "Content-Type": "application/sparql-query",
                     "Accept": "application/sparql-results+json",

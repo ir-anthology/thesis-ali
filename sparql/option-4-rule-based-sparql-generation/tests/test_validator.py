@@ -14,7 +14,8 @@ def test_valid_query(validator):
 SELECT ?pub ?title WHERE {
   ?pub dblp:authoredBy <https://dblp.org/pid/10/3248> .
   ?pub dblp:title ?title .
-}"""
+}
+LIMIT 1"""
     result = validator.validate(sparql)
     assert result.valid is True
     assert len(result.errors) == 0
@@ -24,7 +25,8 @@ def test_known_class_with_a_is_not_treated_as_predicate(validator):
     sparql = """PREFIX dblp: <https://dblp.org/rdf/schema#>
 SELECT ?pub WHERE {
   ?pub a dblp:Publication .
-}"""
+}
+LIMIT 1"""
     result = validator.validate(sparql)
     assert result.valid is True
     assert result.errors == []
@@ -35,7 +37,8 @@ def test_known_class_with_rdf_type_is_not_treated_as_predicate(validator):
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT ?pub WHERE {
   ?pub rdf:type dblp:Publication .
-}"""
+}
+LIMIT 1"""
     result = validator.validate(sparql)
     assert result.valid is True
     assert result.errors == []
@@ -133,17 +136,39 @@ def test_select_star_warning(validator):
     sparql = """PREFIX dblp: <https://dblp.org/rdf/schema#>
 SELECT * WHERE {
   ?pub dblp:title ?title .
-}"""
+}
+LIMIT 1"""
     result = validator.validate(sparql)
     assert result.valid is True
     assert any("SELECT *" in w for w in result.warnings)
 
 
-def test_missing_limit_warning(validator):
+def test_missing_limit_is_valid_for_non_aggregate_query(validator):
     sparql = """PREFIX dblp: <https://dblp.org/rdf/schema#>
 SELECT ?pub ?title WHERE {
+  ?pub dblp:title ?title .
+    }"""
+    result = validator.validate(sparql)
+    assert result.valid is True
+    assert result.errors == []
+
+
+def test_missing_limit_is_valid_for_single_aggregate_query(validator):
+    sparql = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT (COUNT(DISTINCT ?pub) AS ?publications) WHERE {
+  ?pub a dblp:Publication .
+}"""
+    result = validator.validate(sparql)
+    assert result.valid is True
+    assert result.errors == []
+
+
+def test_complete_result_query_without_limit_is_valid(validator):
+    sparql = """PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT DISTINCT ?pub ?title WHERE {
+  ?pub a dblp:Publication .
   ?pub dblp:title ?title .
 }"""
     result = validator.validate(sparql)
     assert result.valid is True
-    assert any("limit" in w.lower() for w in result.warnings)
+    assert result.errors == []

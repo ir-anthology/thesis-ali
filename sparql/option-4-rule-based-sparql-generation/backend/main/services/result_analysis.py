@@ -256,8 +256,16 @@ class ResultAnalysisService:
         rows_with_questions: list[dict[str, CellValue]],
     ) -> list[str]:
         columns = [column for column in context.result_columns if column.visible]
+        actual_result_count = (
+            context.query_result.row_count if context.query_result else len(rows_with_questions)
+        )
         # Use first 20 rows for observation generation
         sample_rows = rows_with_questions[:20]
+        data_label = (
+            "DATA SAMPLE"
+            if actual_result_count > len(sample_rows)
+            else "DATA"
+        )
 
         columns_str = ", ".join(c.label for c in columns)
         rows_context: list[str] = []
@@ -271,7 +279,8 @@ class ResultAnalysisService:
         user_prompt = (
             f"ORIGINAL QUESTION: {context.user_message}\n\n"
             f"COLUMNS: {columns_str}\n\n"
-            f"DATA:\n{chr(10).join(rows_context)}"
+            f"ACTUAL RESULT COUNT: {actual_result_count}\n\n"
+            f"{data_label}:\n{chr(10).join(rows_context)}"
         )
 
         data = self._llm.generate_json(

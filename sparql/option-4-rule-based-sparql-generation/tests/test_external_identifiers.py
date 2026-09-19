@@ -208,6 +208,7 @@ WHERE {
   ?author dblp:primaryCreatorName ?author_name .
 }
 GROUP BY ?author_name
+LIMIT 10
 """
 
     validation = SPARQLValidator().validate(extend_with_external_identifier(query))

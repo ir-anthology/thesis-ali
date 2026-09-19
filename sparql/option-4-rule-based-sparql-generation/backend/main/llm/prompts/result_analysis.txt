@@ -73,11 +73,17 @@ Return cell_questions as an empty list and populate observations with zero to
 three concise strings.
 
 - Derive every statement only from the supplied rows and original question.
+- ACTUAL RESULT COUNT is the total number of rows returned by SPARQL. It is
+  authoritative and is separate from the number of rows included in DATA or
+  DATA SAMPLE.
 - Mention concrete displayed names and values when useful.
 - Compare highest, lowest, ordering, or visible ranges only when the supplied
   values support the comparison.
-- Treat the input as a displayed sample that may be limited or truncated. Say
-  "shown" or "returned" when needed.
+- When the section is DATA SAMPLE, the supplied rows are only a sample of the
+  actual result. Never treat the sample row count as the total result count.
+  Say "among the shown rows" or "among the returned results" when needed.
+  Use wording such as "all returned rows" only when the supplied rows cover
+  the ACTUAL RESULT COUNT.
 - Do not infer global totals, percentages, averages, trends outside the displayed
   years, exhaustiveness, causation, importance, influence, or facts absent from
   the data.

@@ -41,7 +41,9 @@ class SPARQLValidator:
         errors.extend(self._validate_prefixes(sparql))
         errors.extend(self._validate_predicates(sparql))
         errors.extend(self._validate_classes(sparql))
-        warnings.extend(self._validate_structure(sparql))
+        structure_errors, structure_warnings = self._validate_structure(sparql)
+        errors.extend(structure_errors)
+        warnings.extend(structure_warnings)
 
         valid = len(errors) == 0
         if valid:
@@ -118,13 +120,11 @@ class SPARQLValidator:
         return errors
 
     @staticmethod
-    def _validate_structure(sparql: str) -> list[str]:
+    def _validate_structure(sparql: str) -> tuple[list[str], list[str]]:
         warnings: list[str] = []
         if "SELECT *" in sparql.upper():
             warnings.append("Consider using explicit variables instead of SELECT *")
-        if "LIMIT" not in sparql.upper() and "COUNT" not in sparql.upper():
-            warnings.append("Consider adding LIMIT to restrict result size")
-        return warnings
+        return [], warnings
 
 
 def _extract_where_clause(sparql: str) -> str:

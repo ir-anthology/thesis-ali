@@ -127,6 +127,87 @@ RESULT COLUMN CONTRACT
   same result row.
 - Do not use SELECT *.
 
+RESULT LIMIT POLICY
+
+When generating a query, independently decide whether a LIMIT is necessary and,
+if necessary, what value it should have. Do not use a predefined default or
+fixed fallback. LIMIT controls only the number of structured SPARQL solution
+rows; it does not limit explanations, textual detail, abstracts, full text, or
+other unstructured information.
+
+1. Understand the user's intent:
+   - Identify any explicit result quantity, whether the request is singular,
+     exploratory, ranked, aggregated, grouped, paginated, or exhaustive.
+   - Decide whether returning all matching results is necessary to preserve the
+     meaning of the request.
+
+2. Explicit quantities:
+   - If the user requests returned records, preserve the quantity exactly:
+     "show 5 authors" → LIMIT 5, "top 20 publications" → LIMIT 20, and
+     "list 3 venues" → LIMIT 3.
+   - Treat numbers as row limits only when they refer to returned records. Do
+     not convert years, dates, publication counts, or unrelated numeric values
+     into LIMIT.
+
+3. Implicit quantities:
+   - Interpret expressions such as "a few", "some", or "many" in context; do
+     not map them to a predefined numeric value.
+   - Consider how many rows are needed, whether the user wants examples or a
+     comprehensive collection, and whether the quantity is clear enough to
+     infer. Do not invent a number when the intent is not reliable; the
+     interpretation stage must clarify the request before query generation.
+   - The user may not know the result count in advance. For broad, exploratory,
+     or open-ended requests, prefer a bounded sample when it is sufficient for
+     exploration instead of returning every matching row. Derive that limit
+     dynamically from the filters, query shape, expected result size, and the
+     amount of data needed to make the exploration useful.
+
+4. Singular requests:
+   - Use LIMIT 1 when one final result is sufficient, including a single
+     requested entity or an example. For ranking or aggregation, complete the
+     grouping, calculation, and ordering before applying LIMIT 1.
+
+5. Ranking, aggregation, and grouping:
+   - Apply an explicit ranking quantity when provided. If no ranking quantity is
+     stated and the user is exploring a ranked subset, choose a dynamic LIMIT
+     rather than returning every ranked row. Omit LIMIT only when the ranking
+     request explicitly requires complete results or limiting would change its
+     meaning.
+   - Complete GROUP BY, COUNT, SUM, AVG, MIN, MAX, and ORDER BY operations
+     before limiting the final result rows. Do not limit underlying data before
+     aggregation unless the user explicitly requests a limited sample.
+
+6. Complete results and pagination:
+   - If the user explicitly requests all matching results, omit LIMIT.
+   - If the user requests a page, page size, or offset, derive LIMIT and OFFSET
+     from those instructions. Do not assume a page size or pagination strategy.
+
+7. Query efficiency and wording:
+   - Add a limit only when it is semantically justified by the user's intent or
+     necessary query semantics; do not add one merely because the graph is large.
+   - An unspecified quantity does not mean that every matching row must be
+     returned. For implicit exploration, prefer a useful bounded sample when it
+     answers the request without changing its meaning.
+   - If a limit is used, do not claim that the returned result is exhaustive.
+   - LIMIT does not make unavailable DBLP information available.
+
+8. Final decision:
+   - Apply this hierarchy: (1) honor explicit quantity or pagination; (2) honor
+     explicit exhaustive-result requests; (3) for implicit exploratory requests,
+     prefer a useful bounded sample; (4) omit LIMIT only when complete results
+     are required or limiting is semantically inappropriate; and (5) never
+     invent a fixed default number.
+   - Decide the result scope, determine whether all results are required, account
+     for grouping or aggregation, and then include LIMIT only when justified.
+     Every query must reflect an intentional LIMIT decision, including the
+     intentional decision to omit it.
+
+Strict prohibitions:
+   - Do not use a predefined default LIMIT or fixed fallback.
+   - Do not add LIMIT merely because other queries contain one.
+   - Do not apply LIMIT before required grouping or aggregation.
+   - Do not use LIMIT to compensate for an incorrectly designed query.
+
 QUERY RULES
 
 - Use DISTINCT when joins can duplicate rows.
@@ -134,13 +215,9 @@ QUERY RULES
   explicitly requires a different unit.
 - Use GROUP BY for non-aggregate selected columns and ORDER BY DESC for ranked
   counts or newest-first requests.
-- Honor an explicit positive result count from the question. Otherwise use
-  LIMIT 15 for row listings and rankings. A single aggregate result does not need
-  a semantic limit.
 - Use OPTIONAL only for fields whose absence must not remove the main result.
 - Use FILTER for string and date constraints.
 - Use "2023"^^xsd:gYear for gYear equality or range comparisons.
-- Do not claim that a limited result set is exhaustive.
 
 For conference years, prefer the project-specific event year and fall back to
 the publication year:
@@ -168,7 +245,7 @@ For ordered author lists, use:
            dblp:signatureCreator ?author_id ;
            dblp:signatureDblpName ?author_name .
 
-Extract entities, requested fields, years, publication types, ordering, and count
-limits from the question. Resolve pronouns only from clear recent conversation or
+Extract entities, requested fields, years, publication types, and ordering from
+the question. Resolve pronouns only from clear recent conversation or
 selected-entity context. If context does not justify a constraint, do not invent
 one.

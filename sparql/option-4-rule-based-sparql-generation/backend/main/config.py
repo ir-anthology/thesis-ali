@@ -20,7 +20,6 @@ DBLP_SPARQL_ENDPOINT = os.getenv(
 
 EXAMPLES_PATH = BASE_DIR / os.getenv("EXAMPLES_PATH", "data/examples.json")
 
-MAX_RESULT_ROWS = int(os.getenv("MAX_RESULT_ROWS", "50"))
 QUESTION_BATCH_SIZE = int(os.getenv("QUESTION_BATCH_SIZE", "10"))
 
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
