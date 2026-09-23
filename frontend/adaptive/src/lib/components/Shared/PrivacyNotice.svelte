@@ -18,52 +18,60 @@
     visible = false;
   }
 
-  function openSettings(): void {
-    visible = true;
-  }
 </script>
 
 {#if visible}
-  <aside class="privacy-notice" aria-label="Data collection notice">
-    <div class="notice-copy">
-      <strong>Help us improve IR Anthology Chat</strong>
-      <p>
-        We collect conversations and usage information to improve this service.
-        Data is stored anonymously and you can opt out at any time.
-      </p>
+  <div class="privacy-backdrop">
+    <div class="privacy-notice" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
+      <div class="notice-copy">
+        <strong id="privacy-title">Help us improve IR Anthology Chat</strong>
+        <p>
+          We collect conversations and usage information to improve this service.
+          Data is stored anonymously and you can opt out at any time.
+        </p>
+      </div>
+      <div class="notice-actions">
+        <button class="notice-button allow-button" onclick={() => choose(true)}>Allow data collection</button>
+        <button class="notice-button" onclick={() => choose(false)}>Opt out</button>
+      </div>
     </div>
-    <div class="notice-actions">
-      <button class="notice-button allow-button" onclick={() => choose(true)}>Allow data collection</button>
-      <button class="notice-button" onclick={() => choose(false)}>Opt out</button>
-    </div>
-  </aside>
-{:else}
-  <button class="privacy-settings" onclick={openSettings} aria-label="Open data collection settings">
-    Privacy settings
-  </button>
+  </div>
 {/if}
 
 <style>
+  .privacy-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.42);
+  }
+
   .privacy-notice {
     display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: center;
-    padding: 0.75rem 1rem;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: min(100%, 34rem);
+    padding: 1.5rem;
     border: 1px solid #b6d4fe;
     border-radius: 8px;
     background: #f0f7ff;
     color: var(--text-primary);
-    font-size: 0.75rem;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
+    font-size: 0.95rem;
   }
 
   .notice-copy { min-width: 0; }
-  .notice-copy p { margin-top: 0.2rem; color: var(--text-secondary); }
-  .notice-actions { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
-  .notice-button, .privacy-settings {
+  .notice-copy strong { display: block; font-size: 1.05rem; }
+  .notice-copy p { margin-top: 0.5rem; color: var(--text-secondary); line-height: 1.5; }
+  .notice-actions { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+  .notice-button {
     border: 1px solid var(--border);
     border-radius: 5px;
-    padding: 0.3rem 0.55rem;
+    padding: 0.45rem 0.7rem;
     background: var(--bg-primary);
     color: var(--text-primary);
     cursor: pointer;
@@ -71,9 +79,9 @@
   }
   .allow-button { background: var(--accent); border-color: var(--accent); color: white; }
   .allow-button:hover { background: var(--accent-hover); }
-  .privacy-settings { align-self: flex-end; margin-top: 0.35rem; color: var(--text-secondary); }
   @media (max-width: 640px) {
-    .privacy-notice { align-items: flex-start; flex-direction: column; }
-    .notice-actions { width: 100%; justify-content: space-between; }
+    .privacy-backdrop { align-items: flex-start; padding-top: 5rem; }
+    .notice-actions { width: 100%; justify-content: stretch; flex-direction: column; }
+    .notice-button { width: 100%; }
   }
 </style>
