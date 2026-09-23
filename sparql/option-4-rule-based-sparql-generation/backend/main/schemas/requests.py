@@ -41,6 +41,13 @@ class AnalyticsInteraction(BaseModel):
     details: dict[str, Any] | None = None
 
 
+class FeedbackRequest(BaseModel):
+    """Anonymous feedback for one rendered assistant answer."""
+
+    answer_turn_id: str = Field(min_length=1)
+    feedback: Literal["positive", "negative"]
+
+
 class HistoryTurn(BaseModel):
     """A single turn in the conversation history sent by the frontend."""
 

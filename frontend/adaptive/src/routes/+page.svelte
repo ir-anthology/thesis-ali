@@ -39,6 +39,7 @@
       onSelectSuggestion={(s, fromTurnId, interaction, analyticsInteraction) => exploration.selectSuggestion(s, fromTurnId, interaction, analyticsInteraction)}
       onCellQuestion={(context, fromTurnId, interaction) => exploration.selectCell(context, fromTurnId, interaction)}
       onEditUserPrompt={(turnId, content) => exploration.editUserPrompt(turnId, content)}
+      onFeedback={(answerTurnId, feedback) => exploration.submitFeedback(answerTurnId, feedback)}
       activePath={exploration.getActivePath()}
     />
 

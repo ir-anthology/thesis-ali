@@ -1,16 +1,30 @@
 """Tests for the FastAPI API endpoints (new module structure)."""
 
 import pytest
+import shutil
+import uuid
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from backend.main.main import app
 from backend.main.schemas.responses import ExplorationResponse, ResultColumn, CellValue
 from backend.main.schemas.requests import ChatRequest
+from backend.main.analytics import AnalyticsRepository
 
 
 @pytest.fixture
 def client():
     return TestClient(app)
+
+
+@pytest.fixture
+def feedback_repository():
+    directory = Path.cwd() / f".feedback-test-{uuid.uuid4().hex}"
+    directory.mkdir()
+    try:
+        yield AnalyticsRepository(directory / "feedback.sqlite3")
+    finally:
+        shutil.rmtree(directory, ignore_errors=True)
 
 
 def test_health_endpoint(client):
@@ -357,3 +371,91 @@ def test_chat_request_rejects_non_dblp_entity_id():
             message="Show this entity",
             interaction={"entity_id": "https://example.com/entity"},
         )
+
+
+def test_feedback_endpoint_persists_each_enabled_click(client, feedback_repository, monkeypatch):
+    repository = feedback_repository
+    monkeypatch.setattr("backend.main.api.feedback._analytics", repository)
+    headers = {
+        "X-Analytics-Enabled": "true",
+        "X-Session-Id": "123e4567-e89b-12d3-a456-426614174000",
+    }
+
+    for feedback in ("positive", "negative", "positive"):
+        response = client.post(
+            "/api/feedback",
+            json={"answer_turn_id": "answer-123", "feedback": feedback},
+            headers=headers,
+        )
+        assert response.status_code == 204
+
+    import sqlite3
+
+    with sqlite3.connect(repository.db_path) as connection:
+        rows = connection.execute(
+            "SELECT answer_turn_id, feedback FROM answer_feedback"
+        ).fetchall()
+    assert rows == [
+        ("answer-123", "positive"),
+        ("answer-123", "negative"),
+        ("answer-123", "positive"),
+    ]
+
+
+def test_feedback_endpoint_does_not_store_opted_out_or_invalid_sessions(client, feedback_repository, monkeypatch):
+    repository = feedback_repository
+    monkeypatch.setattr("backend.main.api.feedback._analytics", repository)
+
+    response = client.post(
+        "/api/feedback",
+        json={"answer_turn_id": "answer-123", "feedback": "positive"},
+        headers={"X-Analytics-Enabled": "false"},
+    )
+    assert response.status_code == 204
+
+    response = client.post(
+        "/api/feedback",
+        json={"answer_turn_id": "answer-123", "feedback": "positive"},
+        headers={
+            "X-Analytics-Enabled": "true",
+            "X-Session-Id": "not-a-session",
+        },
+    )
+    assert response.status_code == 204
+
+    import sqlite3
+
+    with sqlite3.connect(repository.db_path) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM answer_feedback").fetchone()[0] == 0
+
+
+def test_feedback_endpoint_rejects_invalid_feedback(client):
+    response = client.post(
+        "/api/feedback",
+        json={"answer_turn_id": "answer-123", "feedback": "maybe"},
+        headers={
+            "X-Analytics-Enabled": "true",
+            "X-Session-Id": "123e4567-e89b-12d3-a456-426614174000",
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_feedback_storage_failure_does_not_break_endpoint(client, feedback_repository, monkeypatch):
+    monkeypatch.setattr("backend.main.api.feedback._analytics", feedback_repository)
+    monkeypatch.setattr(
+        feedback_repository,
+        "record_feedback",
+        lambda _event: (_ for _ in ()).throw(RuntimeError("storage unavailable")),
+    )
+
+    response = client.post(
+        "/api/feedback",
+        json={"answer_turn_id": "answer-123", "feedback": "positive"},
+        headers={
+            "X-Analytics-Enabled": "true",
+            "X-Session-Id": "123e4567-e89b-12d3-a456-426614174000",
+        },
+    )
+
+    assert response.status_code == 204

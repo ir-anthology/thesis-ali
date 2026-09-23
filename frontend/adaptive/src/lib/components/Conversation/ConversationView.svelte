@@ -21,6 +21,7 @@
     onSelectSuggestion,
     onCellQuestion,
     onEditUserPrompt,
+    onFeedback,
     activePath
   }: {
     conversation: ConversationTurn[];
@@ -38,6 +39,7 @@
       interaction?: EntityInteraction
     ) => void;
     onEditUserPrompt?: (turnId: string, content: string) => void;
+    onFeedback?: (answerTurnId: string, feedback: 'positive' | 'negative') => void;
     activePath: ConversationTurn[];
   } = $props();
 
@@ -158,6 +160,7 @@
           suggestions={suggestionsByTurn.get(turn.id)}
           sparqlQuery={sparqlByTurn.get(turn.id)}
           disabled={disabled}
+          {onFeedback}
           onSelectSuggestion={(s) => onSelectSuggestion(s, turn.id)}
           onCellClick={(context, interaction, existingQuestion) => {
             if (existingQuestion) {

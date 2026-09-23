@@ -10,6 +10,7 @@ import pytest
 from backend.main.analytics import (
     AnalyticsEvent,
     AnalyticsRepository,
+    FeedbackEvent,
     utc_now,
     validate_session_id,
 )
@@ -92,3 +93,37 @@ def test_cleanup_removes_expired_events_and_orphan_sessions(analytics_path: Path
     with sqlite3.connect(analytics_path) as connection:
         assert connection.execute("SELECT COUNT(*) FROM conversation_events").fetchone()[0] == 0
         assert connection.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] == 0
+
+
+def test_repository_persists_repeated_feedback_clicks(analytics_path: Path):
+    repository = AnalyticsRepository(analytics_path)
+    created_at = utc_now()
+
+    repository.record_feedback(
+        FeedbackEvent(SESSION_ID, "answer-123", "positive", created_at)
+    )
+    repository.record_feedback(
+        FeedbackEvent(SESSION_ID, "answer-123", "negative", created_at)
+    )
+
+    with sqlite3.connect(analytics_path) as connection:
+        rows = connection.execute(
+            "SELECT session_id, answer_turn_id, feedback FROM answer_feedback"
+        ).fetchall()
+
+    assert rows == [
+        (SESSION_ID, "answer-123", "positive"),
+        (SESSION_ID, "answer-123", "negative"),
+    ]
+
+
+def test_cleanup_removes_expired_feedback(analytics_path: Path, monkeypatch):
+    monkeypatch.setattr("backend.main.analytics.ANALYTICS_RETENTION_DAYS", 30)
+    repository = AnalyticsRepository(analytics_path)
+    old = utc_now() - timedelta(days=31)
+    repository.record_feedback(FeedbackEvent(SESSION_ID, "answer-123", "positive", old))
+
+    repository.cleanup()
+
+    with sqlite3.connect(analytics_path) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM answer_feedback").fetchone()[0] == 0

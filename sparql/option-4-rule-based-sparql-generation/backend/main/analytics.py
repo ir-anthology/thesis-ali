@@ -41,6 +41,14 @@ class AnalyticsEvent:
     interaction: dict[str, Any] | None = None
 
 
+@dataclass(frozen=True)
+class FeedbackEvent:
+    session_id: str
+    answer_turn_id: str
+    feedback: str
+    created_at: datetime
+
+
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -102,6 +110,19 @@ class AnalyticsRepository:
                     ON conversation_events(session_id);
                 CREATE INDEX IF NOT EXISTS idx_events_started
                     ON conversation_events(started_at);
+
+                CREATE TABLE IF NOT EXISTS answer_feedback (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    answer_turn_id TEXT NOT NULL,
+                    feedback TEXT NOT NULL CHECK (feedback IN ('positive', 'negative')),
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_feedback_session
+                    ON answer_feedback(session_id);
+                CREATE INDEX IF NOT EXISTS idx_feedback_created
+                    ON answer_feedback(created_at);
                 """
             )
 
@@ -149,6 +170,21 @@ class AnalyticsRepository:
                     ),
                 )
 
+    def record_feedback(self, event: FeedbackEvent) -> None:
+        with self._lock:
+            with self._connect() as connection:
+                connection.execute(
+                    """INSERT INTO answer_feedback(
+                        session_id, answer_turn_id, feedback, created_at
+                    ) VALUES (?, ?, ?, ?)""",
+                    (
+                        event.session_id,
+                        event.answer_turn_id,
+                        event.feedback,
+                        event.created_at.isoformat(),
+                    ),
+                )
+
     def cleanup(self, now: datetime | None = None) -> int:
         if ANALYTICS_RETENTION_DAYS is None:
             return 0
@@ -157,6 +193,10 @@ class AnalyticsRepository:
             with self._connect() as connection:
                 cursor = connection.execute(
                     "DELETE FROM conversation_events WHERE started_at < ?",
+                    (cutoff.isoformat(),),
+                )
+                connection.execute(
+                    "DELETE FROM answer_feedback WHERE created_at < ?",
                     (cutoff.isoformat(),),
                 )
                 connection.execute(
@@ -171,3 +211,11 @@ def safe_record(repository: AnalyticsRepository, event: AnalyticsEvent) -> None:
         repository.record(event)
     except Exception:
         logger.exception("Analytics persistence failed")
+
+
+def safe_record_feedback(repository: AnalyticsRepository, event: FeedbackEvent) -> None:
+    """Persist feedback without allowing analytics to affect the API."""
+    try:
+        repository.record_feedback(event)
+    except Exception:
+        logger.exception("Feedback persistence failed")

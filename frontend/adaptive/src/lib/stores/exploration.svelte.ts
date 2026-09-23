@@ -161,6 +161,15 @@ function createExplorationStore() {
     abortController = new AbortController();
 
     const history = buildHistory();
+    const analyticsInteraction = options.analyticsInteraction
+      ? {
+          ...options.analyticsInteraction,
+          details: {
+            ...options.analyticsInteraction.details,
+            assistant_turn_id: assistantTurn.id
+          }
+        }
+      : undefined;
 
     try {
       const res = await fetch(`${API_BASE}/api/exploration/stream`, {
@@ -173,7 +182,7 @@ function createExplorationStore() {
           message: content,
           history,
           interaction: options.interaction,
-          analytics_interaction: options.analyticsInteraction
+          analytics_interaction: analyticsInteraction
         }),
         signal: abortController.signal
       });
@@ -298,6 +307,27 @@ function createExplorationStore() {
 
     loading = false;
     abortController = null;
+  }
+
+  async function submitFeedback(
+    answerTurnId: string,
+    feedback: 'positive' | 'negative'
+  ): Promise<void> {
+    try {
+      await fetch(`${API_BASE}/api/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...analyticsHeaders()
+        },
+        body: JSON.stringify({
+          answer_turn_id: answerTurnId,
+          feedback
+        })
+      });
+    } catch {
+      // Feedback is optional and must never affect the conversation.
+    }
   }
 
   async function selectCell(
@@ -485,6 +515,7 @@ function createExplorationStore() {
     selectSuggestion,
     selectCell,
     retry,
+    submitFeedback,
     clearExploration
   };
 }

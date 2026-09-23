@@ -15,7 +15,8 @@
     sparqlQuery,
     disabled = false,
     onSelectSuggestion,
-    onCellClick
+    onCellClick,
+    onFeedback
   }: {
     message: ConversationTurn;
     interpretation?: string;
@@ -31,10 +32,20 @@
       interaction?: EntityInteraction,
       existingQuestion?: string
     ) => void;
+    onFeedback?: (answerTurnId: string, feedback: 'positive' | 'negative') => void;
   } = $props();
+
+  let feedbackMessage = $state<string | null>(null);
 
   function formatTime(date: Date): string {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function submitFeedback(feedback: 'positive' | 'negative'): void {
+    feedbackMessage = feedback === 'positive'
+      ? 'Thanks — your feedback helps us improve the service.'
+      : 'Thanks — your feedback will help us improve future answers.';
+    onFeedback?.(message.id, feedback);
   }
 </script>
 
@@ -77,6 +88,34 @@
 
       {#if message.error}
         <p class="error-text">Please try again or rephrase your question.</p>
+      {/if}
+
+      {#if onFeedback && !message.loading && !message.streaming && !message.error}
+        {#if feedbackMessage}
+          <p class="feedback-message" role="status">{feedbackMessage}</p>
+        {:else}
+          <div class="feedback" aria-label="Answer feedback">
+            <span class="feedback-label">Was this answer helpful?</span>
+            <button
+              type="button"
+              class="feedback-btn"
+              onclick={() => submitFeedback('positive')}
+              aria-label="Helpful answer"
+              title="Helpful answer"
+            >
+              👍
+            </button>
+            <button
+              type="button"
+              class="feedback-btn"
+              onclick={() => submitFeedback('negative')}
+              aria-label="Not helpful answer"
+              title="Not helpful answer"
+            >
+              👎
+            </button>
+          </div>
+        {/if}
       {/if}
     </div>
   </div>
@@ -167,6 +206,35 @@
     color: var(--error);
     font-size: 0.8125rem;
     margin-top: 0.5rem;
+  }
+
+  .feedback {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-top: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+  }
+
+  .feedback-btn {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: transparent;
+    padding: 0.125rem 0.3rem;
+    cursor: pointer;
+    line-height: 1.2;
+  }
+
+  .feedback-btn:hover,
+  .feedback-btn:focus-visible {
+    background-color: var(--bg-tertiary);
+  }
+
+  .feedback-message {
+    margin: 0.375rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
   }
 
   @keyframes fadeIn {

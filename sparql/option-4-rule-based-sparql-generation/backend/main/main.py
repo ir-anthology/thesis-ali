@@ -13,6 +13,7 @@ from backend.main.api.exploration import router as exploration_router
 from backend.main.api.health import router as health_router
 from backend.main.api.statistics import router as statistics_router
 from backend.main.api.privacy import router as privacy_router
+from backend.main.api.feedback import router as feedback_router
 from backend.main.config import API_HOST, API_PORT
 
 RELOAD = os.getenv("RELOAD", "false").lower() == "true"
@@ -41,6 +42,7 @@ app.include_router(exploration_router)
 app.include_router(health_router)
 app.include_router(statistics_router)
 app.include_router(privacy_router)
+app.include_router(feedback_router)
 
 
 def run() -> None:
