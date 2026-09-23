@@ -59,6 +59,9 @@ LLM_MODEL=gpt-5.6-luna
 API_HOST=0.0.0.0
 API_PORT=8000
 QUESTION_BATCH_SIZE=10
+ANALYTICS_DB_PATH=data/analytics.sqlite3
+# Leave empty for indefinite retention; set an approved number of days to enable cleanup.
+ANALYTICS_RETENTION_DAYS=
 ```
 
 ## Usage

@@ -40,6 +40,10 @@ env/
 
 # Data files (keep examples, ignore cache)
 data/entity_cache.json
+data/analytics.sqlite3
+data/analytics.sqlite3-shm
+data/analytics.sqlite3-wal
+.analytics-test-*/
 
 # OS
 .DS_Store

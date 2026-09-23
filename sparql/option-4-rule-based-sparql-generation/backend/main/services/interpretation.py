@@ -24,7 +24,7 @@ class InterpretationService:
 
     def run(self, context: ExplorationContext) -> Interpretation:
         """Interpret the user message and return an Interpretation."""
-        logger.info("Stage 1: Interpreting query: %s", context.user_message)
+        logger.info("Stage 1: Interpreting query")
 
         user_prompt = self._build_user_prompt(context)
 

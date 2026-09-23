@@ -61,6 +61,41 @@ def test_exploration_endpoint_success(client):
     assert len(data["suggestions"]) == 1
 
 
+def test_exploration_records_only_opted_in_sessions(client):
+    mock_response = ExplorationResponse(interpretation="Done")
+    session_id = "123e4567-e89b-12d3-a456-426614174000"
+
+    with patch(
+        "backend.main.api.exploration._service.explore",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ), patch("backend.main.api.exploration._record_event") as record_event:
+        client.post(
+            "/api/exploration",
+            json={"message": "test", "history": []},
+            headers={"X-Analytics-Enabled": "false", "X-Session-Id": session_id},
+        )
+        record_event.assert_not_called()
+
+        client.post(
+            "/api/exploration",
+            json={"message": "test", "history": []},
+            headers={"X-Analytics-Enabled": "true", "X-Session-Id": session_id},
+        )
+        record_event.assert_called_once()
+
+
+def test_privacy_endpoint_describes_collection_policy(client):
+    response = client.get("/api/privacy")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["analytics_enabled_by_default"] is True
+    assert data["anonymous"] is True
+    assert data["stores_full_conversations"] is True
+    assert data["opt_out_supported"] is True
+
+
 def test_exploration_endpoint_out_of_scope(client):
     mock_response = ExplorationResponse(
         interpretation="DBLP does not track citation counts.",

@@ -9,3 +9,4 @@ tests/
 API-ENDPOINTS.md
 nul
 .gitignore
+data/analytics.sqlite3

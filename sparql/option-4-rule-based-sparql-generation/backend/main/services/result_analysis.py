@@ -206,7 +206,7 @@ class ResultAnalysisService:
             user_prompt=user_prompt,
         )
 
-        logger.info("Stage 3: LLM response: %s", data)
+        logger.info("Stage 3: Cell-question response received")
 
         # Parse whatever the LLM returned (may be None or incomplete)
         parsed = self._parse_cell_questions(data, col_keys, batch_rows)
@@ -292,7 +292,7 @@ class ResultAnalysisService:
                     value=value,
                     question=f"Tell me about {value}",
                 )
-                logger.info("Stage 3: Filled missing question for %s='%s'", k, value)
+                logger.info("Stage 3: Filled missing question for column %s", k)
         return rows
 
     # ------------------------------------------------------------------

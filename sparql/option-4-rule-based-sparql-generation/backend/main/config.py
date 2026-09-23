@@ -22,5 +22,11 @@ EXAMPLES_PATH = BASE_DIR / os.getenv("EXAMPLES_PATH", "data/examples.json")
 
 QUESTION_BATCH_SIZE = int(os.getenv("QUESTION_BATCH_SIZE", "10"))
 
+ANALYTICS_DB_PATH = Path(
+    os.getenv("ANALYTICS_DB_PATH", str(BASE_DIR / "data" / "analytics.sqlite3"))
+)
+_retention = os.getenv("ANALYTICS_RETENTION_DAYS", "")
+ANALYTICS_RETENTION_DAYS = int(_retention) if _retention.strip() else None
+
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", "8000"))

@@ -19,6 +19,7 @@ import type {
   CellQuestionContext,
   StreamStage
 } from '$lib/types/exploration';
+import { analyticsHeaders } from '$lib/analytics';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
@@ -157,7 +158,10 @@ function createExplorationStore() {
     try {
       const res = await fetch(`${API_BASE}/api/exploration/stream`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...analyticsHeaders()
+        },
         body: JSON.stringify({ message: content, history, interaction: options.interaction }),
         signal: abortController.signal
       });
@@ -315,7 +319,10 @@ function createExplorationStore() {
     try {
       const res = await fetch(`${API_BASE}/api/cell-question`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...analyticsHeaders()
+        },
         body: JSON.stringify(context)
       });
       if (!res.ok) throw new Error(`Cell-question API error: ${res.status}`);

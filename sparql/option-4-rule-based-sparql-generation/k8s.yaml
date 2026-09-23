@@ -10,6 +10,9 @@ data:
   LLM_MAX_TOKENS: "2000"
   DBLP_SPARQL_ENDPOINT: "https://database-ir-anthology.srv.webis.de/"
   QUESTION_BATCH_SIZE: "10"
+  ANALYTICS_DB_PATH: "/data/analytics.sqlite3"
+  # Empty means indefinite retention until an approved policy sets a number.
+  ANALYTICS_RETENTION_DAYS: ""
   API_HOST: "0.0.0.0"
   API_PORT: "8000"
   RELOAD: "false"
@@ -48,6 +51,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: ir-anthology-chat-api-config
+          volumeMounts:
+            - name: analytics-data
+              mountPath: /data
           livenessProbe:
             httpGet:
               path: /api/health
@@ -64,6 +70,23 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
+      volumes:
+        - name: analytics-data
+          persistentVolumeClaim:
+            claimName: ir-anthology-chat-api-analytics
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ir-anthology-chat-api-analytics
+  namespace: webisstud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 
 ---
 apiVersion: v1

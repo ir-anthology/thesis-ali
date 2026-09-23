@@ -58,7 +58,7 @@ class ExplorationService:
     async def explore(self, request: ChatRequest) -> ExplorationResponse:
         """Process an exploration request through the full pipeline."""
         logger.info("=" * 60)
-        logger.info("PIPELINE START: %s", request.message)
+        logger.info("PIPELINE START")
         logger.info("=" * 60)
 
         # C0 — initial context
@@ -69,7 +69,7 @@ class ExplorationService:
         interpretation = self._interpretation.run(context)
         context.set_interpretation(interpretation)
         logger.info("  → scope: %s", interpretation.scope)
-        logger.info("  → message: %s", interpretation.message)
+        logger.info("  → interpretation complete")
 
         # Scope routing
         logger.info("[Scope Routing] → %s", interpretation.scope.upper())
@@ -265,9 +265,7 @@ class ExplorationService:
             logger.info("  → Generated %d observations", len(observations))
             logger.info("  → context.result_rows count: %d", len(context.result_rows))
             if context.result_rows:
-                logger.info(
-                    "  → context.result_rows[0] sample: %s", context.result_rows[0]
-                )
+                logger.info("  → first result row prepared")
         else:
             logger.info("[Stage 3/4] Result Analysis — skipped (0 rows)")
 
@@ -337,9 +335,7 @@ class ExplorationService:
             "[_build_response] context.result_rows count: %d", len(context.result_rows)
         )
         if context.result_rows:
-            logger.info(
-                "[_build_response] First result_row sample: %s", context.result_rows[0]
-            )
+            logger.info("[_build_response] first result row prepared")
 
         return ExplorationResponse(
             interpretation=interpretation_text,

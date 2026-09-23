@@ -2,6 +2,7 @@
   import ConversationView from '$lib/components/Conversation/ConversationView.svelte';
   import PromptInput from '$lib/components/Input/PromptInput.svelte';
   import { exploration } from '$lib/stores/exploration.svelte';
+  import PrivacyNotice from '$lib/components/Shared/PrivacyNotice.svelte';
 </script>
 
 <svelte:head>
@@ -41,12 +42,13 @@
       activePath={exploration.getActivePath()}
     />
 
-    <div class="input-container">
+      <div class="input-container">
       <PromptInput
         onSend={(msg) => exploration.sendMessage(msg)}
         disabled={exploration.loading}
       />
-    </div>
+      </div>
+      <PrivacyNotice />
   </div>
 </div>
 

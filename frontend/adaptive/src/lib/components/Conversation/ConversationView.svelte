@@ -5,6 +5,7 @@
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
   import FacetTable from '$lib/components/Results/FacetTable.svelte';
+  import { analyticsHeaders } from '$lib/analytics';
 
   const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
@@ -48,7 +49,9 @@
     try {
       statsLoading = true;
       statsError = null;
-      const res = await fetch(`${API_BASE}/api/statistics`);
+      const res = await fetch(`${API_BASE}/api/statistics`, {
+        headers: analyticsHeaders()
+      });
       if (!res.ok) {
         throw new Error(`Failed to fetch statistics: ${res.status}`);
       }
