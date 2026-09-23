@@ -36,7 +36,7 @@
       suggestionsByTurn={exploration.suggestionsByTurn}
       sparqlByTurn={exploration.sparqlByTurn}
       disabled={exploration.loading}
-      onSelectSuggestion={(s, fromTurnId, interaction) => exploration.selectSuggestion(s, fromTurnId, interaction)}
+      onSelectSuggestion={(s, fromTurnId, interaction, analyticsInteraction) => exploration.selectSuggestion(s, fromTurnId, interaction, analyticsInteraction)}
       onCellQuestion={(context, fromTurnId, interaction) => exploration.selectCell(context, fromTurnId, interaction)}
       onEditUserPrompt={(turnId, content) => exploration.editUserPrompt(turnId, content)}
       activePath={exploration.getActivePath()}

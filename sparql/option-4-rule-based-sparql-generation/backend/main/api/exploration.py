@@ -67,6 +67,11 @@ def _record_event(
             outcome=_outcome(response) if error_category is None else "backend_error",
             result_rows=len(response.rows or []),
             error_category=error_category,
+            interaction=(
+                request.analytics_interaction.model_dump(mode="json")
+                if request.analytics_interaction is not None
+                else None
+            ),
         ),
     )
 

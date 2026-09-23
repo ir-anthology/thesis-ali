@@ -99,6 +99,19 @@ export interface EntityInteraction {
   entity_type?: EntityType;
 }
 
+export type AnalyticsInteractionType =
+  | 'typed'
+  | 'suggestion_click'
+  | 'cell_click'
+  | 'edit'
+  | 'retry';
+
+export interface AnalyticsInteraction {
+  type: AnalyticsInteractionType;
+  from_turn_id?: string | null;
+  details?: Record<string, string | number | boolean | null>;
+}
+
 export interface StatisticsResponse {
   columns: ResultColumn[];
   rows: ResultRow[];

@@ -38,6 +38,7 @@ class AnalyticsEvent:
     outcome: str
     result_rows: int | None
     error_category: str | None = None
+    interaction: dict[str, Any] | None = None
 
 
 def utc_now() -> datetime:
@@ -93,6 +94,7 @@ class AnalyticsRepository:
                     outcome TEXT NOT NULL,
                     result_rows INTEGER,
                     error_category TEXT,
+                    interaction_json TEXT,
                     FOREIGN KEY(session_id) REFERENCES sessions(session_id)
                 );
 
@@ -127,8 +129,9 @@ class AnalyticsRepository:
                 connection.execute(
                     """INSERT INTO conversation_events(
                         session_id, started_at, finished_at, latency_ms, message,
-                        history_json, response_json, outcome, result_rows, error_category
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        history_json, response_json, outcome, result_rows, error_category,
+                        interaction_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         event.session_id,
                         started,
@@ -140,6 +143,9 @@ class AnalyticsRepository:
                         event.outcome,
                         event.result_rows,
                         event.error_category,
+                        json.dumps(event.interaction, ensure_ascii=False)
+                        if event.interaction is not None
+                        else None,
                     ),
                 )
 

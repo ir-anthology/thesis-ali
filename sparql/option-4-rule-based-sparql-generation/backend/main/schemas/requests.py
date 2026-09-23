@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -25,6 +25,20 @@ class EntityInteraction(BaseModel):
         ):
             raise ValueError("entity_id must be an absolute DBLP IRI")
         return value
+
+
+class AnalyticsInteraction(BaseModel):
+    """Meaningful frontend action that led to an exploration request."""
+
+    type: Literal[
+        "typed",
+        "suggestion_click",
+        "cell_click",
+        "edit",
+        "retry",
+    ]
+    from_turn_id: str | None = None
+    details: dict[str, Any] | None = None
 
 
 class HistoryTurn(BaseModel):
@@ -58,6 +72,9 @@ class ChatRequest(BaseModel):
     )
     interaction: EntityInteraction | None = Field(
         default=None, description="Optional entity selected from a result cell"
+    )
+    analytics_interaction: AnalyticsInteraction | None = Field(
+        default=None, description="Optional meaningful frontend action metadata"
     )
 
 

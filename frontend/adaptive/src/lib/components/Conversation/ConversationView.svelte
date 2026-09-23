@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import type { CellQuestionContext, ConversationTurn, EntityInteraction, ResultColumn, ResultRow, StatisticsResponse } from '$lib/types/exploration';
+  import type { AnalyticsInteraction, CellQuestionContext, ConversationTurn, EntityInteraction, ResultColumn, ResultRow, StatisticsResponse } from '$lib/types/exploration';
   import UserMessage from './UserMessage.svelte';
   import AssistantMessage from './AssistantMessage.svelte';
   import EmptyState from '$lib/components/Shared/EmptyState.svelte';
@@ -31,7 +31,7 @@
     suggestionsByTurn: Map<string, string[]>;
     sparqlByTurn: Map<string, string>;
     disabled?: boolean;
-    onSelectSuggestion: (suggestion: string, fromTurnId?: string | null, interaction?: EntityInteraction) => void;
+    onSelectSuggestion: (suggestion: string, fromTurnId?: string | null, interaction?: EntityInteraction, analyticsInteraction?: AnalyticsInteraction) => void;
     onCellQuestion: (
       context: CellQuestionContext,
       fromTurnId: string,
@@ -73,7 +73,17 @@
     existingQuestion?: string
   ): void {
     if (disabled) return;
-    if (existingQuestion) onSelectSuggestion(existingQuestion, null, interaction);
+    if (existingQuestion) {
+      onSelectSuggestion(existingQuestion, null, interaction, {
+        type: 'cell_click',
+        details: {
+          column: _context.column,
+          value: _context.value,
+          ...(interaction?.entity_id ? { entity_id: interaction.entity_id } : {}),
+          ...(interaction?.entity_type ? { entity_type: interaction.entity_type } : {})
+        }
+      });
+    }
   }
 
   $effect(() => {
@@ -151,7 +161,16 @@
           onSelectSuggestion={(s) => onSelectSuggestion(s, turn.id)}
           onCellClick={(context, interaction, existingQuestion) => {
             if (existingQuestion) {
-              onSelectSuggestion(existingQuestion, turn.id, interaction);
+              onSelectSuggestion(existingQuestion, turn.id, interaction, {
+                type: 'cell_click',
+                from_turn_id: turn.id,
+                details: {
+                  column: context.column,
+                  value: context.value,
+                  ...(interaction?.entity_id ? { entity_id: interaction.entity_id } : {}),
+                  ...(interaction?.entity_type ? { entity_type: interaction.entity_type } : {})
+                }
+              });
             } else {
               onCellQuestion(context, turn.id, interaction);
             }

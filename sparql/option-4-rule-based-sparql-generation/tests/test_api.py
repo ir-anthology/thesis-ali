@@ -329,6 +329,28 @@ def test_chat_request_accepts_direct_entity_interaction():
     assert request.interaction.entity_id.endswith("10/3248")
 
 
+def test_chat_request_accepts_analytics_interaction():
+    request = ChatRequest(
+        message="Show this author's publications",
+        analytics_interaction={
+            "type": "cell_click",
+            "from_turn_id": "turn-123",
+            "details": {"column": "author", "value": "Alice"},
+        },
+    )
+
+    assert request.analytics_interaction is not None
+    assert request.analytics_interaction.type == "cell_click"
+
+
+def test_chat_request_rejects_unknown_analytics_interaction_type():
+    with pytest.raises(ValueError):
+        ChatRequest(
+            message="Show this entity",
+            analytics_interaction={"type": "hover"},
+        )
+
+
 def test_chat_request_rejects_non_dblp_entity_id():
     with pytest.raises(ValueError):
         ChatRequest(

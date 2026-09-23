@@ -1,6 +1,8 @@
 from datetime import timedelta
 from pathlib import Path
 import shutil
+import json
+import sqlite3
 import uuid
 
 import pytest
@@ -39,14 +41,17 @@ def test_repository_creates_and_persists_conversation_event(analytics_path: Path
             response={"interpretation": "Let me check."},
             outcome="success",
             result_rows=3,
+            interaction={
+                "type": "cell_click",
+                "from_turn_id": "turn-123",
+                "details": {"column": "author", "value": "Alice"},
+            },
         )
     )
 
-    import sqlite3
-
     with sqlite3.connect(analytics_path) as connection:
         event = connection.execute(
-            "SELECT session_id, message, history_json, response_json, outcome, result_rows, latency_ms FROM conversation_events"
+            "SELECT session_id, message, history_json, response_json, outcome, result_rows, latency_ms, interaction_json FROM conversation_events"
         ).fetchone()
         session = connection.execute(
             "SELECT request_count FROM sessions WHERE session_id = ?", (SESSION_ID,)
@@ -56,7 +61,12 @@ def test_repository_creates_and_persists_conversation_event(analytics_path: Path
     assert event[1] == "Who are the most prolific authors?"
     assert '"role": "user"' in event[2]
     assert '"interpretation": "Let me check."' in event[3]
-    assert event[4:] == ("success", 3, 25)
+    assert event[4:7] == ("success", 3, 25)
+    assert json.loads(event[7]) == {
+        "type": "cell_click",
+        "from_turn_id": "turn-123",
+        "details": {"column": "author", "value": "Alice"},
+    }
     assert session == (1,)
 
 

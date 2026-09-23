@@ -16,6 +16,7 @@ import type {
   ResultRow,
   HistoryTurn,
   EntityInteraction,
+  AnalyticsInteraction,
   CellQuestionContext,
   StreamStage
 } from '$lib/types/exploration';
@@ -88,13 +89,18 @@ function createExplorationStore() {
   async function sendMessage(
     content: string,
     fromTurnId?: string | null,
-    interaction?: EntityInteraction
+    interaction?: EntityInteraction,
+    analyticsInteraction?: AnalyticsInteraction
   ): Promise<void> {
     if (!content.trim() || loading) return;
 
     await createMessageBranch(content, fromTurnId !== undefined ? fromTurnId : headTurnId, {
       branchSourceId: fromTurnId && fromTurnId !== headTurnId ? fromTurnId : undefined,
-      interaction
+      interaction,
+      analyticsInteraction: analyticsInteraction || {
+        type: 'typed',
+        from_turn_id: fromTurnId ?? null
+      }
     });
   }
 
@@ -104,6 +110,7 @@ function createExplorationStore() {
     options: {
       branchSourceId?: string;
       interaction?: EntityInteraction;
+      analyticsInteraction?: AnalyticsInteraction;
     } = {},
     existingUserTurnId?: string
   ): Promise<void> {
@@ -162,7 +169,12 @@ function createExplorationStore() {
           'Content-Type': 'application/json',
           ...analyticsHeaders()
         },
-        body: JSON.stringify({ message: content, history, interaction: options.interaction }),
+        body: JSON.stringify({
+          message: content,
+          history,
+          interaction: options.interaction,
+          analytics_interaction: options.analyticsInteraction
+        }),
         signal: abortController.signal
       });
 
@@ -333,7 +345,19 @@ function createExplorationStore() {
       await createMessageBranch(
         data.question,
         fromTurnId,
-        { interaction },
+        {
+          interaction,
+          analyticsInteraction: {
+            type: 'cell_click',
+            from_turn_id: fromTurnId,
+            details: {
+              column: context.column,
+              value: context.value,
+              ...(interaction?.entity_id ? { entity_id: interaction.entity_id } : {}),
+              ...(interaction?.entity_type ? { entity_type: interaction.entity_type } : {})
+            }
+          }
+        },
         userTurn.id
       );
     } catch (e) {
@@ -362,15 +386,32 @@ function createExplorationStore() {
       return;
     }
 
-    createMessageBranch(content, originalTurn.parentId, { branchSourceId: originalTurn.id });
+    createMessageBranch(content, originalTurn.parentId, {
+      branchSourceId: originalTurn.id,
+      analyticsInteraction: {
+        type: 'edit',
+        from_turn_id: originalTurn.id,
+        details: { edited_turn_id: originalTurn.id }
+      }
+    });
   }
 
   function selectSuggestion(
     suggestion: string,
     fromTurnId?: string | null,
-    interaction?: EntityInteraction
+    interaction?: EntityInteraction,
+    analyticsInteraction?: AnalyticsInteraction
   ): void {
-    sendMessage(suggestion, fromTurnId, interaction);
+    sendMessage(
+      suggestion,
+      fromTurnId,
+      interaction,
+      analyticsInteraction || {
+        type: 'suggestion_click',
+        from_turn_id: fromTurnId ?? null,
+        details: { suggestion }
+      }
+    );
   }
 
   function retry(): void {
@@ -379,7 +420,16 @@ function createExplorationStore() {
     if (lastUserTurn) {
       conversation = conversation.filter((t) => !t.loading && !(t.role === 'assistant' && t.error));
       headTurnId = lastUserTurn.parentId;
-      sendMessage(lastUserTurn.content, lastUserTurn.parentId ?? undefined);
+      sendMessage(
+        lastUserTurn.content,
+        lastUserTurn.parentId ?? undefined,
+        undefined,
+        {
+          type: 'retry',
+          from_turn_id: lastUserTurn.parentId,
+          details: { retried_turn_id: lastUserTurn.id }
+        }
+      );
     }
   }
 
