@@ -46,9 +46,9 @@ kubectl get pods -n webisstud -l app=ir-anthology-chat-api
 
 ## Useful Commands
 
-| Command | Description |
-|---------|-------------|
-| `kubectl get pods -n webisstud -l app=ir-anthology-chat-api` | Check pod status |
-| `kubectl logs -n webisstud -l app=ir-anthology-chat-api` | View pod logs |
+| Command                                                          | Description       |
+| ---------------------------------------------------------------- | ----------------- |
+| `kubectl get pods -n webisstud -l app=ir-anthology-chat-api`     | Check pod status  |
+| `kubectl logs -n webisstud -l app=ir-anthology-chat-api`         | View pod logs     |
 | `kubectl describe pod -n webisstud -l app=ir-anthology-chat-api` | Detailed pod info |
-| `kubectl exec -it <pod-name> -n webisstud -- /bin/sh` | Shell into pod |
+| `kubectl exec -it <pod-name> -n webisstud -- /bin/sh`            | Shell into pod    |
