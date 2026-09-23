@@ -47,6 +47,7 @@
       : 'Thanks — your feedback will help us improve future answers.';
     onFeedback?.(message.id, feedback);
   }
+
 </script>
 
 <div class="message assistant" class:error={message.error}>
