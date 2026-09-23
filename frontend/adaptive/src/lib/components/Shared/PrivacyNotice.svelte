@@ -36,6 +36,10 @@
       </div>
     </div>
   </div>
+{:else}
+  <button class="privacy-settings-button" onclick={() => (visible = true)}>
+    Privacy settings
+  </button>
 {/if}
 
 <style>
@@ -79,6 +83,27 @@
   }
   .allow-button { background: var(--accent); border-color: var(--accent); color: white; }
   .allow-button:hover { background: var(--accent-hover); }
+  .privacy-settings-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: white;
+    color: #374151;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .privacy-settings-button:hover { background-color: #f9fafb; }
+  .privacy-settings-button:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
   @media (max-width: 640px) {
     .privacy-backdrop { align-items: flex-start; padding-top: 5rem; }
     .notice-actions { width: 100%; justify-content: stretch; flex-direction: column; }

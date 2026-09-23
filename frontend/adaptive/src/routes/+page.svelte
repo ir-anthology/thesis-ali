@@ -18,11 +18,14 @@
           <span><span style="color:#951515"><b>IR</b></span> Anthology</span>
         </a>
       </div>
-      {#if exploration.conversation.length > 0}
-        <button class="new-explo-btn" onclick={() => exploration.clearExploration()} disabled={exploration.loading}>
-          New Exploration
-        </button>
-      {/if}
+      <div class="nav-actions">
+        {#if exploration.conversation.length > 0}
+          <button class="new-explo-btn" onclick={() => exploration.clearExploration()} disabled={exploration.loading}>
+            New Exploration
+          </button>
+        {/if}
+        <PrivacyNotice />
+      </div>
     </div>
   </nav>
 
@@ -49,7 +52,6 @@
         disabled={exploration.loading}
       />
       </div>
-      <PrivacyNotice />
   </div>
 </div>
 
@@ -122,5 +124,11 @@
   .new-explo-btn:focus-visible {
     outline: 2px solid #3b82f6;
     outline-offset: 2px;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 </style>
