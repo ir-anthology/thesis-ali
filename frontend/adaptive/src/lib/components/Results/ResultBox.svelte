@@ -3,6 +3,8 @@
   import FacetTable from './FacetTable.svelte';
   import SparqlBlock from './SparqlBlock.svelte';
 
+  const RESULT_PAGE_SIZE = 10;
+
   let {
     columns,
     rows,
@@ -56,7 +58,15 @@
     </div>
   {:else}
     <div role="tabpanel">
-      <FacetTable {columns} {rows} {interpretation} {onCellClick} {disabled} fitContent={true} />
+      <FacetTable
+        {columns}
+        {rows}
+        {interpretation}
+        {onCellClick}
+        {disabled}
+        fitContent={true}
+        pageSize={RESULT_PAGE_SIZE}
+      />
     </div>
   {/if}
 </div>

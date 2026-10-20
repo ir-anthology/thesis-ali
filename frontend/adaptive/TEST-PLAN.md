@@ -115,6 +115,16 @@ Open `http://localhost:5173` in browser.
 | | | 4. Press Home | - Focus moves to first row | |
 | | | 5. Press End | - Focus moves to last row | |
 | | | 6. Press Escape | - Focus leaves the table | |
+| TC-114 | Paginate long assistant results | 1. Use a test query/backend response with 25 rows | - Only 10 rows appear on page 1; pagination shows “Showing 1–10 of 25 rows” and “Page 1 of 3” | |
+| | | 2. Click Next twice | - Page 2 shows rows 11–20; page 3 shows rows 21–25 | |
+| | | 3. Click Previous | - Returns to the preceding page; Previous is disabled on page 1 and Next is disabled on the last page | |
+| TC-115 | Hide pagination for short results | 1. Load an assistant result with 10 or fewer rows | - All rows appear and pagination controls are hidden | |
+| | | 2. Check the knowledge graph overview | - The overview table remains unpaginated | |
+| TC-116 | Sort across paginated results | 1. Load an assistant result with more than 10 rows | - Sort order applies to the full result set before page slicing | |
+| | | 2. Navigate to page 2 and choose another sortable column | - Sorting changes and the table returns to page 1 | |
+| TC-117 | Preserve cell interactions across pages | 1. Navigate to a later page and click a result cell | - The follow-up uses the clicked row and its entity metadata | |
+| TC-118 | Pagination keyboard and narrow layout | 1. Use Tab to reach pagination controls and activate them with Enter or Space | - Controls are focusable and page navigation works; boundary buttons are disabled | |
+| | | 2. View a long result at mobile width | - Pagination wraps within the table and does not create page-level horizontal overflow | |
 
 ---
 
@@ -328,7 +338,7 @@ Before signing off, ensure:
 - TC-090 (Desktop layout)
 
 **Should Pass (P1):**
-- TC-030 to TC-035 (Table interactions)
+- TC-030 to TC-035 and TC-114 to TC-118 (Table interactions)
 - TC-040 to TC-043 (Filters)
 - TC-050 to TC-054 (Observations/Suggestions)
 - TC-091 to TC-093 (Responsive)

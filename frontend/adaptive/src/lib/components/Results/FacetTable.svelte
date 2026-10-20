@@ -16,6 +16,7 @@
     tableId,
     dataMeta,
     fitContent = false,
+    pageSize,
     disabled = false
   }: {
     columns: ResultColumn[];
@@ -30,6 +31,7 @@
     tableId?: string;
     dataMeta?: string;
     fitContent?: boolean;
+    pageSize?: number;
     disabled?: boolean;
   } = $props();
 
@@ -107,7 +109,14 @@
   let focusedRowIndex = $state(-1);
   let focusedCellKey = $state<string | null>(null);
   let focusedCellRow = $state(-1);
+  let currentPage = $state(1);
   let tableElement: HTMLTableElement | undefined = $state();
+
+  let effectivePageSize = $derived(
+    typeof pageSize === 'number' && Number.isFinite(pageSize) && pageSize >= 1
+      ? Math.floor(pageSize)
+      : undefined
+  );
 
   function handleSort(column: ResultColumn): void {
     if (!column.sortable) return;
@@ -117,6 +126,20 @@
       sortField = column.key;
       sortDirection = 'asc';
     }
+    currentPage = 1;
+    resetTableFocus();
+  }
+
+  function resetTableFocus(): void {
+    focusedRowIndex = -1;
+    focusedCellKey = null;
+    focusedCellRow = -1;
+  }
+
+  function changePage(nextPage: number): void {
+    if (nextPage < 1 || nextPage > pageCount) return;
+    currentPage = nextPage;
+    resetTableFocus();
   }
 
   function handleCellClick(columnKey: string, row: ResultRow, rowIndex: number): void {
@@ -200,6 +223,33 @@
       return sortDirection === 'asc' ? cmp : -cmp;
     });
   });
+
+  let pageCount = $derived(
+    effectivePageSize ? Math.max(1, Math.ceil(sortedRows.length / effectivePageSize)) : 1
+  );
+  let paginatedRows = $derived(
+    effectivePageSize
+      ? sortedRows.slice((currentPage - 1) * effectivePageSize, currentPage * effectivePageSize)
+      : sortedRows
+  );
+  let showPagination = $derived(
+    effectivePageSize !== undefined && sortedRows.length > effectivePageSize
+  );
+  let visibleRowRange = $derived.by(() => {
+    if (sortedRows.length === 0) return { start: 0, end: 0 };
+    const start = effectivePageSize ? (currentPage - 1) * effectivePageSize + 1 : 1;
+    const end = effectivePageSize
+      ? Math.min(currentPage * effectivePageSize, sortedRows.length)
+      : sortedRows.length;
+    return { start, end };
+  });
+
+  $effect(() => {
+    rows;
+    effectivePageSize;
+    currentPage = 1;
+    resetTableFocus();
+  });
 </script>
 
 <div class="table-container" class:fit-content-table={fitContent} id={tableId} data-meta={dataMeta}>
@@ -226,7 +276,7 @@
         </tr>
       </thead>
       <tbody>
-        {#each sortedRows as row, i (i)}
+        {#each paginatedRows as row, i (i)}
           <tr
             tabindex={focusedRowIndex === i ? 0 : -1}
             onkeydown={(e) => handleKeydown(e, i)}
@@ -286,6 +336,34 @@
       </tbody>
     </table>
   </div>
+  {#if showPagination}
+    <nav class="pagination" aria-label={title ? `${title} pagination` : 'Table pagination'}>
+      <span class="pagination-summary">
+        Showing {visibleRowRange.start}–{visibleRowRange.end} of {sortedRows.length} rows
+      </span>
+      <div class="pagination-controls">
+        <button
+          class="pagination-btn"
+          type="button"
+          onclick={() => changePage(currentPage - 1)}
+          disabled={currentPage === 1}
+          aria-label="Previous page"
+        >
+          Previous
+        </button>
+        <span class="page-indicator" aria-live="polite">Page {currentPage} of {pageCount}</span>
+        <button
+          class="pagination-btn"
+          type="button"
+          onclick={() => changePage(currentPage + 1)}
+          disabled={currentPage === pageCount}
+          aria-label="Next page"
+        >
+          Next
+        </button>
+      </div>
+    </nav>
+  {/if}
 </div>
 
 <style>
@@ -416,5 +494,52 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: 2px;
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid var(--border-light);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+  }
+
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .pagination-btn {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .pagination-btn:hover:not(:disabled) {
+    background-color: var(--bg-secondary);
+  }
+
+  .pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .pagination-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .page-indicator {
+    white-space: nowrap;
   }
 </style>
