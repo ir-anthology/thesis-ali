@@ -1,6 +1,7 @@
 """Privacy-aware conversation analytics backed by SQLite.
 
-Analytics failures are intentionally isolated from request handling.  The
+Conversation analytics failures are isolated from request handling; explicit
+SUS submissions report storage failures to their caller. The
 store contains only pseudonymous session identifiers and application data;
 request metadata such as IP addresses and authorization headers is never
 accepted by this module.
@@ -49,6 +50,17 @@ class FeedbackEvent:
     created_at: datetime
 
 
+@dataclass(frozen=True)
+class SUSSubmission:
+    submission_id: str
+    questionnaire: str
+    version: str
+    answers: list[int]
+    sus_score: float
+    session_id: str | None
+    submitted_at: datetime
+
+
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -64,7 +76,7 @@ def validate_session_id(value: str | None) -> str | None:
 
 
 class AnalyticsRepository:
-    """Small SQLite repository for anonymous conversation events."""
+    """SQLite repository for session-linked analytics and SUS submissions."""
 
     def __init__(self, db_path: Path | str = ANALYTICS_DB_PATH) -> None:
         self.db_path = Path(db_path)
@@ -123,6 +135,21 @@ class AnalyticsRepository:
                     ON answer_feedback(session_id);
                 CREATE INDEX IF NOT EXISTS idx_feedback_created
                     ON answer_feedback(created_at);
+
+                CREATE TABLE IF NOT EXISTS sus_submissions (
+                    submission_id TEXT PRIMARY KEY NOT NULL,
+                    questionnaire TEXT NOT NULL CHECK (questionnaire = 'SUS'),
+                    version TEXT NOT NULL CHECK (version = 'brooke-1996'),
+                    answers_json TEXT NOT NULL,
+                    sus_score REAL NOT NULL CHECK (sus_score BETWEEN 0 AND 100),
+                    session_id TEXT,
+                    submitted_at TEXT NOT NULL
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_sus_session
+                    ON sus_submissions(session_id);
+                CREATE INDEX IF NOT EXISTS idx_sus_submitted
+                    ON sus_submissions(submitted_at);
                 """
             )
 
@@ -200,9 +227,33 @@ class AnalyticsRepository:
                     (cutoff.isoformat(),),
                 )
                 connection.execute(
+                    "DELETE FROM sus_submissions WHERE submitted_at < ?",
+                    (cutoff.isoformat(),),
+                )
+                connection.execute(
                     "DELETE FROM sessions WHERE session_id NOT IN (SELECT DISTINCT session_id FROM conversation_events)"
                 )
                 return cursor.rowcount
+
+    def record_sus(self, submission: SUSSubmission) -> None:
+        """Commit a survey submission, allowing storage errors to propagate."""
+        with self._lock:
+            with self._connect() as connection:
+                connection.execute(
+                    """INSERT INTO sus_submissions(
+                        submission_id, questionnaire, version, answers_json,
+                        sus_score, session_id, submitted_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        submission.submission_id,
+                        submission.questionnaire,
+                        submission.version,
+                        json.dumps(submission.answers),
+                        submission.sus_score,
+                        submission.session_id,
+                        submission.submitted_at.isoformat(),
+                    ),
+                )
 
 
 def safe_record(repository: AnalyticsRepository, event: AnalyticsEvent) -> None:

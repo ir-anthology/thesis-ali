@@ -147,6 +147,58 @@ The response always has a single `interpretation` field that describes what happ
 
 ---
 
+### POST `/api/sus`
+
+Submit a completed System Usability Scale questionnaire when the participant
+presses **Submit answers**:
+
+```http
+POST /api/sus
+Content-Type: application/json
+X-Session-Id: 123e4567-e89b-12d3-a456-426614174000
+```
+
+```json
+{
+  "questionnaire": "SUS",
+  "version": "brooke-1996",
+  "answers": [4, 2, 4, 1, 5, 2, 4, 1, 4, 2]
+}
+```
+
+Exactly these fields are accepted. Answers must be exactly ten JSON integers
+from 1 through 5 in question order. Booleans, floats, and numeric strings are
+rejected. Conversation history and identity fields must not be included.
+
+Reuse the UUID sent with conversation requests as `X-Session-Id` so the results
+can be analyzed together. UUIDs are normalized to lowercase. The header is
+optional; submissions without it are stored with a null session ID. An invalid
+supplied header returns `400`. The ID is pseudonymous and does not authenticate
+the participant. CORS permits this header.
+
+Explicit survey submissions are stored independently of `X-Analytics-Enabled`.
+Each accepted submission creates a new record, including repeated submissions
+from the same session. Missing conversation records do not prevent submission.
+
+Odd items contribute `answer - 1`; even items contribute `5 - answer`. The sum
+is multiplied by 2.5, giving a score on the 0–100 scale, not a percentage. The
+example scores **82.5**. The server stores the ordered raw answers, score,
+questionnaire/version, optional session ID, submission UUID, and UTC timestamp.
+
+After the database transaction commits, return **201 Created**:
+
+```json
+{
+  "status": "accepted",
+  "submission_id": "server-generated-uuid"
+}
+```
+
+Invalid fields, ratings, malformed JSON, or an invalid supplied session ID
+return **400 Bad Request** with a `detail` message. Storage failure returns
+**500 Internal Server Error**. Show success only for an HTTP success response;
+otherwise keep the modal and answers available for retry.
+
 ### GET `/api/health`
 
 Health check endpoint.
@@ -319,7 +371,9 @@ User: "Only from 2023" (with history)
 
 | Code | Description |
 |------|-------------|
-| `200` | Success (all responses, including clarification/limitation) |
-| `500` | Server error (returns interpretation response with error message) |
+| `200` | Exploration success, including clarification/limitation |
+| `201` | SUS submission stored |
+| `400` | Invalid SUS submission or supplied session UUID |
+| `500` | Server error; SUS storage failures return a `detail` message |
 
 **Note:** Clarification and limitation responses return `200` status, not error codes. The response type is determined by the presence of `columns`/`rows` fields.

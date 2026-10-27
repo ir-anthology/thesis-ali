@@ -80,3 +80,10 @@ class CellQuestionResponse(BaseModel):
     """Response containing one lazily generated cell follow-up question."""
 
     question: str = Field(description="Generated follow-up question")
+
+
+class SUSSubmissionResponse(BaseModel):
+    """Acknowledgement returned after a SUS submission is committed."""
+
+    status: Literal["accepted"] = "accepted"
+    submission_id: str

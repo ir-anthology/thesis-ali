@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .responses import CellValue, ResultColumn
 
@@ -46,6 +46,25 @@ class FeedbackRequest(BaseModel):
 
     answer_turn_id: str = Field(min_length=1)
     feedback: Literal["positive", "negative"]
+
+
+class SUSSubmissionRequest(BaseModel):
+    """A complete SUS questionnaire, with ratings in question order."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    questionnaire: Literal["SUS"]
+    version: Literal["brooke-1996"]
+    answers: list[Annotated[int, Field(strict=True, ge=1, le=5)]] = Field(
+        min_length=10, max_length=10
+    )
+
+    def calculate_score(self) -> float:
+        """Return the SUS score on its 0–100 scale."""
+        return 2.5 * sum(
+            answer - 1 if index % 2 == 0 else 5 - answer
+            for index, answer in enumerate(self.answers)
+        )
 
 
 class HistoryTurn(BaseModel):

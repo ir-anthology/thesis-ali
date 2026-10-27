@@ -127,14 +127,14 @@ with sqlite3.connect("kubernetes-analytics.sqlite3") as connection:
 "@ | python -
 ```
 
-Count sessions, conversation events, and feedback:
+Count sessions, conversation events, feedback, and SUS submissions:
 
 ```powershell
 @"
 import sqlite3
 
 with sqlite3.connect("kubernetes-analytics.sqlite3") as connection:
-    for table in ("sessions", "conversation_events", "answer_feedback"):
+    for table in ("sessions", "conversation_events", "answer_feedback", "sus_submissions"):
         try:
             count = connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
             print(f"{table}: {count}")
@@ -182,6 +182,57 @@ with sqlite3.connect("kubernetes-analytics.sqlite3") as connection:
         print(row)
 "@ | python -
 ```
+
+### SUS Submissions and Session Analysis
+
+The API creates `sus_submissions` and its session/timestamp indexes at startup,
+including for an existing analytics database. No manual migration is required.
+Deploy the updated image to enable `/api/sus`. The table uses the existing
+analytics PVC and `ANALYTICS_RETENTION_DAYS`; an empty retention value preserves
+submissions indefinitely, while configured cleanup uses `submitted_at`.
+
+Each record contains `submission_id`, `questionnaire`, `version`,
+`answers_json` (ten raw ratings in order), `sus_score`, nullable `session_id`,
+and a server-generated UTC `submitted_at`. Survey records contain no conversation
+history. They do not require a conversation record or increment the conversation
+request count. Repeated submissions from a session are retained individually.
+
+Use the same normalized UUID session ID to correlate survey responses with the
+existing metrics. Run the following SQL on a database snapshot obtained above:
+
+```sql
+WITH conversation_metrics AS (
+    SELECT session_id,
+           COUNT(*) AS requests,
+           AVG(latency_ms) AS average_latency_ms,
+           SUM(CASE WHEN outcome = 'success' THEN 1 ELSE 0 END) AS successful_requests
+    FROM conversation_events
+    GROUP BY session_id
+), feedback_metrics AS (
+    SELECT session_id,
+           SUM(CASE WHEN feedback = 'positive' THEN 1 ELSE 0 END) AS positive_feedback,
+           SUM(CASE WHEN feedback = 'negative' THEN 1 ELSE 0 END) AS negative_feedback
+    FROM answer_feedback
+    GROUP BY session_id
+)
+SELECT sus.submission_id, sus.session_id, sus.submitted_at,
+       sus.questionnaire, sus.version, sus.answers_json, sus.sus_score,
+       COALESCE(conversations.requests, 0) AS requests,
+       conversations.average_latency_ms,
+       COALESCE(conversations.successful_requests, 0) AS successful_requests,
+       COALESCE(feedback.positive_feedback, 0) AS positive_feedback,
+       COALESCE(feedback.negative_feedback, 0) AS negative_feedback
+FROM sus_submissions AS sus
+LEFT JOIN conversation_metrics AS conversations ON conversations.session_id = sus.session_id
+LEFT JOIN feedback_metrics AS feedback ON feedback.session_id = sus.session_id
+ORDER BY sus.submitted_at;
+```
+
+This query returns one row per submission, including surveys with no matching
+metrics. Aggregating event tables before joining prevents multiple conversation
+events or feedback clicks from multiplying survey rows. Scores use a 0–100
+scale and are not percentages. Account for repeated submissions when choosing
+whether an analysis treats submissions or sessions as its unit.
 
 ## Kubernetes Configuration Changes Without Rebuilding
 
