@@ -263,7 +263,7 @@ authoritative context and must not be treated as ambiguous.
 
 The backend is **stateless**. The frontend sends a recent, tiered window of the active conversation path with each request. The current user message is sent separately in `message` and is not repeated in `history`.
 
-The frontend selects up to 12 total messages, including the current message, when context is at most 2,500 words; 8 total at up to 5,000 words; and 4 total at up to 10,000 words. Above 10,000 words it sends the current message and the newest result table, if one exists. It pins that table even when it falls outside the recent message window and includes all its rows; older result rows and SPARQL are omitted. The UI keeps the complete conversation and result tables locally. Since the newest table is not truncated, a very large table can still exceed the backend's request or model-context limit.
+The frontend selects up to 12 total messages, including the current message, when context is at most 2,500 words; 8 total at up to 5,000 words; and 4 total at up to 10,000 words. Above 10,000 words it sends the current message and the newest result table, if one exists. For assistant turns inside the window, it keeps the text, interpretation, SPARQL query, and observations, but omits table data and suggestions. It pins the newest result table even when it falls outside the recent message window and includes all its columns and rows. The UI keeps the complete conversation and result tables locally. Since the newest table is not truncated, a very large table can still exceed the backend's request or model-context limit.
 
 ### Context Flow
 
@@ -279,7 +279,7 @@ Request 2: { message: "Only consider the last five years", history: [
 
 Request 3: { message: "Which venues do they publish in?", history: [
     { role: "user", content: "Who are the most prolific authors?" },
-    { role: "assistant", content: "...", interpretation: "...", columns: [...], rows: [...] },
+    { role: "assistant", content: "...", interpretation: "...", observations: [...], sparql_query: "..." },
     { role: "user", content: "Only consider the last five years" },
     { role: "assistant", content: "...", interpretation: "...", columns: [...], rows: [...] }
   ]}
@@ -289,7 +289,7 @@ Request 3: { message: "Which venues do they publish in?", history: [
 ### Key Rules
 
 1. **Backend is stateless** — No server session is required for ordinary requests.
-2. **History is windowed and advisory** — It may omit older turns and result rows, while always retaining every row from the newest result table when one exists.
+2. **History is windowed and advisory** — Older assistant turns retain text, interpretation, SPARQL, and observations without tables; the newest result table, when one exists, retains all columns and rows.
 3. **First message has empty history** — `history: []` for the initial request.
 4. **Current message appears once** — It is sent in `message`, not repeated in `history`.
 5. **Loading turns are excluded** — The frontend filters out turns with `loading: true` from history.

@@ -7,6 +7,10 @@ const WINDOW_TIERS = [
   { maxWords: Number.POSITIVE_INFINITY, messageCount: 2 }
 ] as const;
 
+function isResultTurn(turn: HistoryTurn): boolean {
+  return turn.role === 'assistant' && Array.isArray(turn.columns) && Array.isArray(turn.rows);
+}
+
 function countWords(value: unknown): number {
   if (typeof value === 'string') {
     return value.trim().match(/\S+/gu)?.length ?? 0;
@@ -31,14 +35,7 @@ function countWords(value: unknown): number {
 }
 
 function compactHistory(history: HistoryTurn[]): HistoryTurn[] {
-  let newestResultIndex = -1;
-  for (let index = history.length - 1; index >= 0; index -= 1) {
-    const turn = history[index];
-    if (turn.role === 'assistant' && turn.rows?.length) {
-      newestResultIndex = index;
-      break;
-    }
-  }
+  const newestResultIndex = history.findLastIndex(isResultTurn);
 
   return history.map((turn, index) => {
     if (turn.role === 'user') {
@@ -48,15 +45,15 @@ function compactHistory(history: HistoryTurn[]): HistoryTurn[] {
     const compactTurn: HistoryTurn = {
       role: 'assistant',
       content: turn.content,
-      columns: turn.columns,
       observations: turn.observations,
-      suggestions: turn.suggestions,
+      sparql_query: turn.sparql_query,
       ...(turn.interpretation && turn.interpretation !== turn.content
         ? { interpretation: turn.interpretation }
         : {})
     };
 
-    if (index === newestResultIndex && turn.rows) {
+    if (index === newestResultIndex && isResultTurn(turn)) {
+      compactTurn.columns = turn.columns;
       compactTurn.rows = turn.rows;
     }
 
@@ -72,9 +69,7 @@ export function buildContextWindow(history: HistoryTurn[], currentMessage: strin
   const compacted = compactHistory(history);
   const contextWordCount = countWords({ history: compacted, message: currentMessage });
   const tier = WINDOW_TIERS.find(({ maxWords }) => contextWordCount <= maxWords)!;
-  const newestResultIndex = compacted.findLastIndex(
-    (turn) => turn.role === 'assistant' && !!turn.rows?.length
-  );
+  const newestResultIndex = compacted.findLastIndex(isResultTurn);
 
   if (contextWordCount > 10_000) {
     return newestResultIndex >= 0 ? [compacted[newestResultIndex]] : [];
