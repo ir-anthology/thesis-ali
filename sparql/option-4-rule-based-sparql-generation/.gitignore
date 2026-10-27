@@ -45,6 +45,11 @@ data/analytics.sqlite3-shm
 data/analytics.sqlite3-wal
 .analytics-test-*/
 
+# Snapshots pulled from the cluster (real conversation data — never commit)
+kubernetes-analytics.sqlite3
+kubernetes-analytics.sqlite3-shm
+kubernetes-analytics.sqlite3-wal
+
 # OS
 .DS_Store
 Thumbs.db

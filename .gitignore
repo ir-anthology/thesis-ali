@@ -18,6 +18,9 @@ dist/
 build/
 out/
 
+# Local-only documentation (not part of the repo)
+/docs/
+
 # Python
 __pycache__/
 *.py[cod]
