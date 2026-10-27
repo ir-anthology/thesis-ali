@@ -3,6 +3,13 @@
   import PromptInput from '$lib/components/Input/PromptInput.svelte';
   import { exploration } from '$lib/stores/exploration.svelte';
   import PrivacyNotice from '$lib/components/Shared/PrivacyNotice.svelte';
+  import SusSurvey from '$lib/components/Shared/SusSurvey.svelte';
+
+  let completedAssistantReplies = $derived(
+    exploration.getActivePath().filter((turn) =>
+      turn.role === 'assistant' && !turn.loading && !turn.streaming && !turn.error
+    ).length
+  );
 </script>
 
 <svelte:head>
@@ -12,7 +19,7 @@
 
 <div class="app">
   <nav class="w-full relative z-10" style="background: linear-gradient(to bottom, #f8f9fa, #e9ecef); box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);">
-    <div class="w-full h-17.5 flex items-center justify-between" style="padding: 0 1.5rem;">
+    <div class="header-inner w-full flex items-center justify-between">
       <div class="flex items-center gap-4">
         <a class="flex items-center h-10 text-xl font-normal text-black/90 no-underline" href="./">
           <span><span style="color:#951515"><b>IR</b></span> Anthology</span>
@@ -24,6 +31,7 @@
             New Exploration
           </button>
         {/if}
+        <SusSurvey {completedAssistantReplies} />
         <PrivacyNotice />
       </div>
     </div>
@@ -130,5 +138,26 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+
+  .header-inner {
+    min-height: 4.375rem;
+    padding: 0 1.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .header-inner {
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .nav-actions {
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
   }
 </style>
