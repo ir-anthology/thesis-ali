@@ -21,6 +21,7 @@ import type {
   StreamStage
 } from '$lib/types/exploration';
 import { analyticsHeaders } from '$lib/analytics';
+import { buildContextWindow } from '$lib/context-window';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
@@ -54,9 +55,9 @@ function createExplorationStore() {
     return path;
   }
 
-  function buildHistory(): HistoryTurn[] {
+  function buildHistory(excludeTurnId: string): HistoryTurn[] {
     const activePath = getActivePath();
-    return activePath.filter(turn => !turn.loading).map((turn) => {
+    return activePath.filter(turn => !turn.loading && turn.id !== excludeTurnId).map((turn) => {
       if (turn.role === 'user') {
         return { role: 'user', content: turn.content };
       }
@@ -160,7 +161,7 @@ function createExplorationStore() {
     error = null;
     abortController = new AbortController();
 
-    const history = buildHistory();
+    const history = buildContextWindow(buildHistory(resolvedUserTurn.id), content.trim());
     const analyticsInteraction = options.analyticsInteraction
       ? {
           ...options.analyticsInteraction,

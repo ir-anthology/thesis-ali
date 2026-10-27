@@ -1,0 +1,100 @@
+import type { HistoryTurn } from '$lib/types/exploration';
+
+const WINDOW_TIERS = [
+  { maxWords: 2_500, messageCount: 12 },
+  { maxWords: 5_000, messageCount: 8 },
+  { maxWords: 10_000, messageCount: 4 },
+  { maxWords: Number.POSITIVE_INFINITY, messageCount: 2 }
+] as const;
+
+function countWords(value: unknown): number {
+  if (typeof value === 'string') {
+    return value.trim().match(/\S+/gu)?.length ?? 0;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return 1;
+  }
+
+  if (Array.isArray(value)) {
+    return value.reduce((total, item) => total + countWords(item), 0);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value).reduce(
+      (total, [key, item]) => total + countWords(key) + countWords(item),
+      0
+    );
+  }
+
+  return 0;
+}
+
+function compactHistory(history: HistoryTurn[]): HistoryTurn[] {
+  let newestResultIndex = -1;
+  for (let index = history.length - 1; index >= 0; index -= 1) {
+    const turn = history[index];
+    if (turn.role === 'assistant' && turn.rows?.length) {
+      newestResultIndex = index;
+      break;
+    }
+  }
+
+  return history.map((turn, index) => {
+    if (turn.role === 'user') {
+      return { role: 'user', content: turn.content };
+    }
+
+    const compactTurn: HistoryTurn = {
+      role: 'assistant',
+      content: turn.content,
+      columns: turn.columns,
+      observations: turn.observations,
+      suggestions: turn.suggestions,
+      ...(turn.interpretation && turn.interpretation !== turn.content
+        ? { interpretation: turn.interpretation }
+        : {})
+    };
+
+    if (index === newestResultIndex && turn.rows) {
+      compactTurn.rows = turn.rows;
+    }
+
+    return compactTurn;
+  });
+}
+
+/**
+ * Returns a compact recent window for the API while leaving the full history
+ * and result data untouched in the UI store.
+ */
+export function buildContextWindow(history: HistoryTurn[], currentMessage: string): HistoryTurn[] {
+  const compacted = compactHistory(history);
+  const contextWordCount = countWords({ history: compacted, message: currentMessage });
+  const tier = WINDOW_TIERS.find(({ maxWords }) => contextWordCount <= maxWords)!;
+  const newestResultIndex = compacted.findLastIndex(
+    (turn) => turn.role === 'assistant' && !!turn.rows?.length
+  );
+
+  if (contextWordCount > 10_000) {
+    return newestResultIndex >= 0 ? [compacted[newestResultIndex]] : [];
+  }
+
+  const priorMessageCount = tier.messageCount - 1;
+  if (priorMessageCount === 0 || compacted.length === 0) return [];
+
+  const includedCount = Math.min(priorMessageCount, compacted.length);
+  const selectedIndexes = new Set(
+    Array.from({ length: includedCount }, (_, index) => compacted.length - includedCount + index)
+  );
+
+  if (newestResultIndex >= 0 && !selectedIndexes.has(newestResultIndex)) {
+    const oldestSelectedIndex = Math.min(...selectedIndexes);
+    selectedIndexes.delete(oldestSelectedIndex);
+    selectedIndexes.add(newestResultIndex);
+  }
+
+  return [...selectedIndexes]
+    .sort((a, b) => a - b)
+    .map((index) => compacted[index]);
+}

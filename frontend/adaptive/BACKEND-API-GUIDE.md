@@ -37,7 +37,7 @@ User Input (natural language)
 
 1. **Frontend does NOT construct SPARQL** — the backend handles all query generation
 2. **Response is flat** — optional fields for text, table data, observations, and suggestions
-3. **Backend is stateless** — frontend sends the full conversation history with each request
+3. **Backend is stateless** — frontend sends a recent, tiered conversation window with each request and pins the newest result table
 4. **LLM generates insights** — observations and follow-up questions come from the backend
 5. **Cell values include questions** — each table cell has a clickable question for drill-down
 
@@ -107,7 +107,7 @@ Health check endpoint.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `message` | string | Yes | User's natural language query |
-| `history` | HistoryTurn[] | Yes | Previous conversation turns (empty array for first message) |
+| `history` | HistoryTurn[] | Yes | Recent prior conversation turns (empty array for first message) |
 
 ### HistoryTurn
 
@@ -261,7 +261,9 @@ authoritative context and must not be treated as ambiguous.
 
 ## 7. Conversation Context
 
-The backend is **stateless**. The frontend sends the full conversation history with each request.
+The backend is **stateless**. The frontend sends a recent, tiered window of the active conversation path with each request. The current user message is sent separately in `message` and is not repeated in `history`.
+
+The frontend selects up to 12 total messages, including the current message, when context is at most 2,500 words; 8 total at up to 5,000 words; and 4 total at up to 10,000 words. Above 10,000 words it sends the current message and the newest result table, if one exists. It pins that table even when it falls outside the recent message window and includes all its rows; older result rows and SPARQL are omitted. The UI keeps the complete conversation and result tables locally. Since the newest table is not truncated, a very large table can still exceed the backend's request or model-context limit.
 
 ### Context Flow
 
@@ -286,10 +288,11 @@ Request 3: { message: "Which venues do they publish in?", history: [
 
 ### Key Rules
 
-1. **Backend is stateless** — No session storage needed. Each request contains all required context.
-2. **History is advisory** — The backend may ignore or modify context if the query requires it.
+1. **Backend is stateless** — No server session is required for ordinary requests.
+2. **History is windowed and advisory** — It may omit older turns and result rows, while always retaining every row from the newest result table when one exists.
 3. **First message has empty history** — `history: []` for the initial request.
-4. **Loading turns excluded** — The frontend filters out turns with `loading: true` from history.
+4. **Current message appears once** — It is sent in `message`, not repeated in `history`.
+5. **Loading turns are excluded** — The frontend filters out turns with `loading: true` from history.
 
 ---
 
