@@ -338,9 +338,6 @@
   </div>
   {#if showPagination}
     <nav class="pagination" aria-label={title ? `${title} pagination` : 'Table pagination'}>
-      <span class="pagination-summary">
-        Showing {visibleRowRange.start}–{visibleRowRange.end} of {sortedRows.length} rows
-      </span>
       <div class="pagination-controls">
         <button
           class="pagination-btn"
@@ -362,6 +359,9 @@
           Next
         </button>
       </div>
+      <span class="pagination-summary">
+        Showing {visibleRowRange.start}–{visibleRowRange.end} of {sortedRows.length} rows
+      </span>
     </nav>
   {/if}
 </div>
